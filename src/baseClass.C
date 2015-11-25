@@ -149,14 +149,16 @@ int baseClass::readInputList()
 
 	  //giulia test to count processed events
 	  TFile *f = TFile::Open(pName);
-	  string s0 = "dijets/TriggerPass";
-	  TriggerPass = (TH1F*)f->Get(s0.c_str());  
-	  if(f) STDOUT("file exists!");
-	  if(TriggerPass){
+/*	  string s0 = "dijets/TriggerPass";
+	  TriggerPass = (TH1F*)f->Get(s0.c_str());  //removed by Simone...
+	 */ if(f) STDOUT("file exists!");
+         
+	 /* if(TriggerPass){
 	    STDOUT("object exists");
 	  }
 	  else{
 	    STDOUT("ERROR: object doesn't exist!!"); 
+            break; //added by Simone
 	  }
 	  TriggerPass->Print();
 	  TriggerPass->SetName("TriggerPass");
@@ -172,21 +174,22 @@ int baseClass::readInputList()
       STDOUT("###############################################");
       STDOUT("total processed events: " << TriggerPass_sum->GetBinContent(1) << endl);
       //end giulia test
-
+*/
       tree_ = chain;
       int entries = chain->GetEntries();
       STDOUT("chain entries = " << entries);
       STDOUT("baseClass::readInputList: Finished reading list: " << *inputList_ );
-  
-      return TriggerPass_sum->GetBinContent(1);
-    }
-  else
-    {
-      STDOUT("baseClass::readInputList: ERROR opening inputList:" << *inputList_ );
-      return 0;
-      exit (1);
+       } 
+   //   return TriggerPass_sum->GetBinContent(1);  //removed by Simone...
+    } 
+      else
+        {
+          STDOUT("baseClass::readInputList: ERROR opening inputList:" << *inputList_ );
+          return 0;
+          exit (1);
       
-    }
+        } 
+    
   is.close();
 
 }

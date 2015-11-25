@@ -180,9 +180,56 @@ void analysisClass::Loop()
      resetCuts();
 
      double Jet=Jet_pt[0];
-     fillVariableWithValue("Jet",triggerResult->at(1));// HLT_QuadPFJet_VBF_v*
+     fillVariableWithValue("Jet",Jet_pt[0]);// HLT_QuadPFJet_VBF_v*
 
      CreateAndFillUserTH1D("First_Jet",100,-10.,10.,Jet_pt[0]);
+     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
+     std::cout<<"LA NONNA"<<std::endl;
+     for(int i=0; i<sizeof(GenPart_grandmotherId); ++i){
+
+         CreateAndFillUserTH1D("GrandMotherPDGId",100,-50,50,GenPart_grandmotherId[i]);
+         std::cout<<GenPart_grandmotherId[i]<<std::endl;
+        
+     }
+     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
+     std::cout<<"LA MAMMA"<<std::endl;
+     for(int i=0; i<sizeof(GenPart_motherId); ++i){
+         std::cout<<GenPart_motherId[i]<<std::endl;
+         CreateAndFillUserTH1D("MotherPDGId",100,-50,50,GenPart_motherId[i]);
+     }
+     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
+     std::cout<<"LA FIGLIA"<<std::endl;
+     for(int i=0; i<sizeof(GenPart_pdgId); ++i){
+       std::cout<<GenPart_pdgId[i]<<std::endl;
+       CreateAndFillUserTH1D("ParticlePDGId",100,-50,50,GenPart_pdgId[i]);
+
+       if(GenPart_pdgId[i]==5){
+         std::cout<<"Hey! We have a b quark"<<std::endl;
+         if(abs(GenPart_motherId[i])==25){
+           std::cout<<"From an Higgs Boson!"<<std::endl;
+         }
+       }else if(GenPart_pdgId[i]==-5){
+         std::cout<<"Hey! We have an anti-b quark"<<std::endl;
+         if(abs(GenPart_motherId[i])==25){
+           std::cout<<"From an Higgs Boson!"<<std::endl;
+         }
+       }else if(abs(GenPart_pdgId[i])==13){
+         std::cout<<"Hey! We have muon"<<std::endl;
+         if(abs(GenPart_motherId[i])==24 && (GenPart_motherId[i]*GenPart_pdgId[i]<0)){ //because mu-=+13 and W-=-24
+           std::cout<<"From a W boson!"<<std::endl;
+         }
+       }
+
+     }
+     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
+
+     
+
+    
+
+
+
+
 
      // Evaluate cuts (but do not apply them)
      evaluateCuts();
