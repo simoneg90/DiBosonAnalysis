@@ -8,6 +8,8 @@
 #include <TVector2.h>
 #include <TVector3.h>
 
+#define b_mass 4.20 //GeV
+
 analysisClass::analysisClass(string * inputList, string * cutFile, string * treeName, string * outputFileName, string * cutEfficFile)
   :baseClass(inputList, cutFile, treeName, outputFileName, cutEfficFile)
 {
@@ -161,6 +163,9 @@ void analysisClass::Loop()
    Long64_t nentries = fChain->GetEntriesFast();
    std::cout << "analysisClass::Loop(): nentries = " << nentries << std::endl;   
 
+   TLorentzVector b, anti_b, bReco, anti_bReco;
+   bool isB, isAntiB;
+
    ////// The following ~7 lines have been taken from rootNtupleClass->Loop() /////
    ////// If the root version is updated and rootNtupleClass regenerated,     /////
    ////// these lines may need to be updated.                                 /////    
@@ -207,11 +212,23 @@ void analysisClass::Loop()
          std::cout<<"Hey! We have a b quark"<<std::endl;
          if(abs(GenPart_motherId[i])==25){
            std::cout<<"From an Higgs Boson!"<<std::endl;
+           std::cout<<"Pt: "<<GenPart_pt[i]<<std::endl;
+           std::cout<<"Eta: "<<GenPart_eta[i]<<std::endl;
+           std::cout<<"Phi: "<<GenPart_phi[i]<<std::endl;
+           b.SetPtEtaPhiM(GenPart_pt[i],GenPart_eta[i],GenPart_phi[i],b_mass);
+           //bReco.SetPtEtaPhiM(Jet_pt[0],Jet_eta[0],Jet_phi[0],Jet_mass[0]);   //not good... 
+           isB=1;
          }
        }else if(GenPart_pdgId[i]==-5){
          std::cout<<"Hey! We have an anti-b quark"<<std::endl;
          if(abs(GenPart_motherId[i])==25){
            std::cout<<"From an Higgs Boson!"<<std::endl;
+           std::cout<<"Pt: "<<GenPart_pt[i]<<std::endl;
+           std::cout<<"Eta: "<<GenPart_eta[i]<<std::endl;
+           std::cout<<"Phi: "<<GenPart_phi[i]<<std::endl;
+           anti_b.SetPtEtaPhiM(GenPart_pt[i],GenPart_eta[i],GenPart_phi[i],b_mass);
+           //anti_bReco.SetPtEtaPhiM(Jet_pt[1],Jet_eta[1],Jet_phi[1],Jet_mass[1]);   //not good...
+           isAntiB=1;
          }
        }else if(abs(GenPart_pdgId[i])==13){
          std::cout<<"Hey! We have muon"<<std::endl;
@@ -219,7 +236,12 @@ void analysisClass::Loop()
            std::cout<<"From a W boson!"<<std::endl;
          }
        }
-
+       if(isB && isAntiB){ 
+           CreateAndFillUserTH1D("Higgs_pt_GenLevel",1000,0,500,(b+anti_b).Pt());
+           std::cout<<"HIGGS Mass: "<<(b+anti_b).M()<<std::endl;
+           //std::cout<<"HIGGS Mass Reco: "<<(bReco+anti_bReco).M()<<std::endl; //not good...
+           isB=isAntiB=0;
+       }
      }
      std::cout<<"++++++++++++++++++++++++++"<<std::endl;
 
