@@ -1373,6 +1373,24 @@ void baseClass::CreateAndFillUserTH1D(const char* nameAndTitle, Int_t nbinsx, Do
       nh_h->second->Fill(value, weight);
     }
 }
+
+void baseClass::CreateAndFillUserTH1F(const char* nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Double_t value, Double_t weight)
+{
+  map<std::string , TH1F*>::iterator nh_h = userTH1Fs_.find(std::string(nameAndTitle));
+  TH1F * h;
+  if( nh_h == userTH1Fs_.end() )
+  {
+    h = new TH1F(nameAndTitle, nameAndTitle, nbinsx, xlow, xup);
+    h->Sumw2();
+    userTH1Fs_[std::string(nameAndTitle)] = h;
+    h->Fill(value);
+  }
+  else
+  {
+    nh_h->second->Fill(value, weight);
+  }
+}
+
 void baseClass::CreateUserTH1D(const char* nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup)
 {
   map<std::string , TH1D*>::iterator nh_h = userTH1Ds_.find(nameAndTitle);
@@ -1517,6 +1535,11 @@ bool baseClass::writeUserHistos()
       output_root_->cd();
       uh_h->second->Write();
     }
+  for (map<std::string, TH1F*>::iterator uh_h = userTH1Fs_.begin(); uh_h != userTH1Fs_.end(); uh_h++)
+  {
+    output_root_->cd();
+    uh_h->second->Write();
+  }
   for (map<std::string, TH2D*>::iterator uh_h = userTH2Ds_.begin(); uh_h != userTH2Ds_.end(); uh_h++)
     {
       //      STDOUT("uh_h = "<< uh_h->first<<" "<< uh_h->second );

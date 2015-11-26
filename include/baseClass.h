@@ -188,6 +188,7 @@ class baseClass : public rootNtupleClass {
   void runOptimizer();
 
   void CreateAndFillUserTH1D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Double_t value, Double_t weight=1);
+  void CreateAndFillUserTH1F(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Double_t value, Double_t weight=1);
   void CreateUserTH1D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup);
   void FillUserTH1D(const char*  nameAndTitle, Double_t value, Double_t weight=1);
   void CreateAndFillUserTH2D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup,  Double_t value_x,  Double_t value_y, Double_t weight=1);
@@ -219,6 +220,7 @@ class baseClass : public rootNtupleClass {
   map<string, cut> cutName_cut_;
   vector<string> orderedCutNames_;
   map<std::string , TH1D*> userTH1Ds_;
+  map<std::string , TH1F*> userTH1Fs_;
   map<std::string , TH2D*> userTH2Ds_;
   void init();
   int readInputList();
