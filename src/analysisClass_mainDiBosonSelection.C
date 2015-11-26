@@ -163,7 +163,7 @@ void analysisClass::Loop()
    Long64_t nentries = fChain->GetEntriesFast();
    std::cout << "analysisClass::Loop(): nentries = " << nentries << std::endl;   
 
-   TLorentzVector b, anti_b, bReco, anti_bReco;
+   TLorentzVector b, anti_b, bReco, anti_bReco, jet1, jet2;
    bool isB, isAntiB;
 
    ////// The following ~7 lines have been taken from rootNtupleClass->Loop() /////
@@ -187,25 +187,25 @@ void analysisClass::Loop()
      double Jet=Jet_pt[0];
      fillVariableWithValue("Jet",Jet_pt[0]);// HLT_QuadPFJet_VBF_v*
 
-     CreateAndFillUserTH1D("First_Jet",100,-10.,10.,Jet_pt[0]);
+     CreateAndFillUserTH1D("First_Jet",2000,0.,2000.,Jet_pt[0]);
      std::cout<<"++++++++++++++++++++++++++"<<std::endl;
      std::cout<<"LA NONNA"<<std::endl;
      for(int i=0; i<sizeof(GenPart_grandmotherId); ++i){
 
          CreateAndFillUserTH1D("GrandMotherPDGId",100,-50,50,GenPart_grandmotherId[i]);
-         std::cout<<GenPart_grandmotherId[i]<<std::endl;
+         //std::cout<<GenPart_grandmotherId[i]<<std::endl;
         
      }
      std::cout<<"++++++++++++++++++++++++++"<<std::endl;
      std::cout<<"LA MAMMA"<<std::endl;
      for(int i=0; i<sizeof(GenPart_motherId); ++i){
-         std::cout<<GenPart_motherId[i]<<std::endl;
+         //std::cout<<GenPart_motherId[i]<<std::endl;
          CreateAndFillUserTH1D("MotherPDGId",100,-50,50,GenPart_motherId[i]);
      }
      std::cout<<"++++++++++++++++++++++++++"<<std::endl;
      std::cout<<"LA FIGLIA"<<std::endl;
      for(int i=0; i<sizeof(GenPart_pdgId); ++i){
-       std::cout<<GenPart_pdgId[i]<<std::endl;
+       //std::cout<<GenPart_pdgId[i]<<std::endl;
        CreateAndFillUserTH1D("ParticlePDGId",100,-50,50,GenPart_pdgId[i]);
 
        if(GenPart_pdgId[i]==5){
@@ -215,6 +215,7 @@ void analysisClass::Loop()
            std::cout<<"Pt: "<<GenPart_pt[i]<<std::endl;
            std::cout<<"Eta: "<<GenPart_eta[i]<<std::endl;
            std::cout<<"Phi: "<<GenPart_phi[i]<<std::endl;
+           CreateAndFillUserTH1D("bGen_pt", 2000,0,4000,GenPart_pt[i]);
            b.SetPtEtaPhiM(GenPart_pt[i],GenPart_eta[i],GenPart_phi[i],b_mass);
            //bReco.SetPtEtaPhiM(Jet_pt[0],Jet_eta[0],Jet_phi[0],Jet_mass[0]);   //not good... 
            isB=1;
@@ -226,6 +227,7 @@ void analysisClass::Loop()
            std::cout<<"Pt: "<<GenPart_pt[i]<<std::endl;
            std::cout<<"Eta: "<<GenPart_eta[i]<<std::endl;
            std::cout<<"Phi: "<<GenPart_phi[i]<<std::endl;
+           CreateAndFillUserTH1D("Anti_bGen_pt", 2000,0,4000,GenPart_pt[i]);
            anti_b.SetPtEtaPhiM(GenPart_pt[i],GenPart_eta[i],GenPart_phi[i],b_mass);
            //anti_bReco.SetPtEtaPhiM(Jet_pt[1],Jet_eta[1],Jet_phi[1],Jet_mass[1]);   //not good...
            isAntiB=1;
@@ -237,8 +239,13 @@ void analysisClass::Loop()
          }
        }
        if(isB && isAntiB){ 
-           CreateAndFillUserTH1D("Higgs_pt_GenLevel",1000,0,500,(b+anti_b).Pt());
+           CreateAndFillUserTH1D("Higgs_pt_GenLevel",1000,0,2000,(b+anti_b).Pt());
+           CreateAndFillUserTH1D("Higgs_M_GenLevel",400,100,200,(b+anti_b).M());
            std::cout<<"HIGGS Mass: "<<(b+anti_b).M()<<std::endl;
+           jet1.SetPtEtaPhiM(Jet_pt[0], Jet_eta[0], Jet_phi[0], Jet_mass[0]);
+           jet2.SetPtEtaPhiM(Jet_pt[1], Jet_eta[1], Jet_phi[1], Jet_mass[1]);
+           //Just testing
+           CreateAndFillUserTH1D("Higgs_M_RecoLevel",400,100,200,(jet1+jet2).M());
            //std::cout<<"HIGGS Mass Reco: "<<(bReco+anti_bReco).M()<<std::endl; //not good...
            isB=isAntiB=0;
        }
