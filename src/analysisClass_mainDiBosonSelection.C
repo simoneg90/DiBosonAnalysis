@@ -191,22 +191,16 @@ void analysisClass::Loop()
      CreateAndFillUserTH1F("Second_Jet",2000,0.,2000.,Jet_pt[1]);
      CreateAndFillUserTH1F("Whole_Jet",2000,0.,2000.,Jet_pt[1]);
 
-     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
-     std::cout<<"LA NONNA"<<std::endl;
      for(int i=0; i<sizeof(GenPart_grandmotherId); ++i){
 
          CreateAndFillUserTH1F("GrandMotherPDGId",100,-50,50,GenPart_grandmotherId[i]);
          //std::cout<<GenPart_grandmotherId[i]<<std::endl;
         
      }
-     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
-     std::cout<<"LA MAMMA"<<std::endl;
      for(int i=0; i<sizeof(GenPart_motherId); ++i){
          //std::cout<<GenPart_motherId[i]<<std::endl;
          CreateAndFillUserTH1F("MotherPDGId",100,-50,50,GenPart_motherId[i]);
      }
-     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
-     std::cout<<"LA FIGLIA"<<std::endl;
      for(int i=0; i<sizeof(GenPart_pdgId); ++i){
        //std::cout<<GenPart_pdgId[i]<<std::endl;
        CreateAndFillUserTH1F("ParticlePDGId",100,-50,50,GenPart_pdgId[i]);
@@ -264,7 +258,6 @@ void analysisClass::Loop()
            isB=isAntiB=0;
        }
      }
-     std::cout<<"++++++++++++++++++++++++++"<<std::endl;
 
      
 
