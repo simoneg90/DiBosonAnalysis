@@ -1,5 +1,6 @@
 #include "rootNtupleClass.h"
 #include "analysisClass.h"
+#include "utility.h"
 #include <iostream>
 #include <fstream>
 #include <string>

@@ -1,5 +1,8 @@
 #define analysisClass_cxx
 #include "analysisClass.h"
+#include "setTDRStyle.h"
+#include "utility.h"
+
 #include <TH2.h>
 #include <TH1F.h>
 #include <TStyle.h>
@@ -160,6 +163,7 @@ void analysisClass::Loop()
 
    /////////initialize variables
 
+   setTDRStyle();
    Long64_t nentries = fChain->GetEntriesFast();
    std::cout << "analysisClass::Loop(): nentries = " << nentries << std::endl;   
 
@@ -214,7 +218,7 @@ void analysisClass::Loop()
            std::cout<<"Phi: "<<GenPart_phi[i]<<std::endl;
            CreateAndFillUserTH1F("bGen_pt", 2000,0,4000, GenPart_pt[i]);
            CreateAndFillUserTH1F("bGen_eta", 100,-5,5, GenPart_eta[i]);
-           CreateAndFillUserTH1F("bGen_phi", 20, -3.14, 3.14, GenPart_phi[i]);
+           CreateAndFillUserTH1F("bGen_phi", 100, -3.14, 3.14, GenPart_phi[i]);
            b.SetPtEtaPhiM(GenPart_pt[i],GenPart_eta[i],GenPart_phi[i],b_mass);
            //bReco.SetPtEtaPhiM(Jet_pt[0],Jet_eta[0],Jet_phi[0],Jet_mass[0]);   //not good... 
            isB=1;
@@ -228,7 +232,7 @@ void analysisClass::Loop()
            std::cout<<"Phi: "<<GenPart_phi[i]<<std::endl;
            CreateAndFillUserTH1F("Anti_bGen_pt", 2000,0,4000,GenPart_pt[i]);
            CreateAndFillUserTH1F("Anti_bGen_eta", 100,-5,5, GenPart_eta[i]);
-           CreateAndFillUserTH1F("Anti_bGen_phi", 20, -3.14, 3.14, GenPart_phi[i]);
+           CreateAndFillUserTH1F("Anti_bGen_phi", 100, -3.14, 3.14, GenPart_phi[i]);
            anti_b.SetPtEtaPhiM(GenPart_pt[i],GenPart_eta[i],GenPart_phi[i],b_mass);
            //anti_bReco.SetPtEtaPhiM(Jet_pt[1],Jet_eta[1],Jet_phi[1],Jet_mass[1]);   //not good...
            isAntiB=1;
@@ -248,7 +252,7 @@ void analysisClass::Loop()
        }
        if(isB && isAntiB){ 
            CreateAndFillUserTH1F("Higgs_pt_GenLevel",1000,0,2000,(b+anti_b).Pt());
-           CreateAndFillUserTH1F("Higgs_M_GenLevel",400,100,200,(b+anti_b).M());
+           CreateAndFillUserTH1F("Higgs_M_GenLevel",800,100,200,(b+anti_b).M());
            std::cout<<"HIGGS Mass: "<<(b+anti_b).M()<<std::endl;
            jet1.SetPtEtaPhiM(Jet_pt[0], Jet_eta[0], Jet_phi[0], Jet_mass[0]);
            jet2.SetPtEtaPhiM(Jet_pt[1], Jet_eta[1], Jet_phi[1], Jet_mass[1]);

@@ -9,7 +9,7 @@ INC= -I.. -I. -I./include  -I${CLHEP}/include -I${CMSSW_RELEASE_BASE}/src -I$(ca
 ROOTINC= -I${ROOTSYS}/include
 LIBS= -L.  ${ROOTLIBS} -L${CLHEP}/lib
 SRC= ./src
-SELECTIONLIB=$(SRC)/rootNtupleClass.o $(SRC)/baseClass.o $(SRC)/analysisClass.o ${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH}/libCondFormatsJetMETObjects.so $(SRC)/jsonParser.o $(SRC)/pileupReweighter.o $(SRC)/qcdFitter.o $(SRC)/qcdFitter_V1.o  $(SRC)/likelihoodGetter.o $(SRC)/eventListHelper.o #$(SRC)/setTDRStyle.o
+SELECTIONLIB=$(SRC)/rootNtupleClass.o $(SRC)/baseClass.o $(SRC)/analysisClass.o ${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH}/libCondFormatsJetMETObjects.so $(SRC)/jsonParser.o $(SRC)/pileupReweighter.o $(SRC)/qcdFitter.o $(SRC)/qcdFitter_V1.o  $(SRC)/likelihoodGetter.o $(SRC)/eventListHelper.o $(SRC)/utility.o $(SRC)/setTDRStyle.o
 EXE = main
 
 # ********** TEMPLATE *************
@@ -32,7 +32,7 @@ clean:
 	$(COMP) -c $(INC) $(ROOTINC) $(FLAGS) -o $@ $<
 
 .cc.o:
-	$(COMP) -m32 -c $(INC) $(ROOTINC) $(FLAGS) -o $@ $<
+	$(COMP) -c $(INC) $(ROOTINC) $(FLAGS) -o $@ $< #-m32 -c $(INC) $(ROOTINC) $(FLAGS) -o $@ $< #changed to compile new programs...
 
 .cxx.o:
 	$(COMP) -c $(INC) $(ROOTINC) $(FLAGS) -o $@ $<
