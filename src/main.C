@@ -25,6 +25,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
   const int Nparam=5;   // NUMBER OF PARAMETERS
+  frame("DiBoson Analysis FrameWork");
 
   if(argc!=Nparam+1)
     {

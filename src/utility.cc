@@ -91,6 +91,7 @@ void TH2F_config(TH2F *histo, const char* title, const char* title_x, const char
 }
 
 //This function analyses whole the histograms contained in a .root file and writes the output in a .txt/.dat file
+//Still need to import the script...
 void LS_config(std::string rootFile, std::string outfile){
 
   std::cout<<"Removing old config file: "<<outfile.c_str()<<std::endl;
