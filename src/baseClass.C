@@ -45,6 +45,7 @@ baseClass::~baseClass()
     {
       STDOUT("ERROR: writeReducedSkimTree did not complete successfully.");
     }
+  STDOUT("Closing output file");
   output_root_->Close();
   if(produceSkim_) skim_file_->Close();
   if(produceReducedSkim_) reduced_skim_file_->Close();
@@ -68,6 +69,12 @@ void baseClass::init()
 
   //directly from string
   output_root_ = new TFile((*outputFileName_ + ".root").c_str(),"RECREATE");
+
+  std::cout<<"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
+  std::cout<<"Initializing OutTree"<<std::endl;//added *Simone
+  crabCount_ = 0;
+  //output_root_->cd(); //added *Simone
+  outTree_ = new TTree("outTree",""); //added *Simone
 
   // Skim stuff
   produceSkim_ = false;
@@ -111,6 +118,35 @@ void baseClass::init()
   //STDOUT("ends");
 }
 
+int baseClass::getCrabProcessedEvents(){  //added *Simone
+
+  TFile* input_file;
+  TH1F* counter; 
+  int tmp_counter=0; //otherwise calling this function many times, crabCount_ is not correct
+  char pName[500];
+  STDOUT("Getting crab number of events");
+  ifstream is(inputList_->c_str());
+  
+  if(is.good()){
+    while( is.getline(pName, 500, '\n') ){
+      if (pName[0] == '#') continue;
+      if (pName[0] == '\n') continue;
+      TFile *f = TFile::Open(pName);
+      if(((TH1F*)f->Get("Count"))==NULL){
+        STDOUT("Counter tree doesn't exist!");
+      }else{
+        counter = ((TH1F*)f->Get("Count"));
+        tmp_counter+=counter->GetEntries();
+        std::cout<<"CRAB Events: "<<crabCount_<<std::endl;
+      }
+    }
+  }
+  is.close();
+  crabCount_ = tmp_counter;
+  return tmp_counter;
+
+}
+
 int baseClass::readInputList()
 {
 
@@ -147,13 +183,24 @@ int baseClass::readInputList()
 	  NBeforeSkim_ = NBeforeSkim_ + NBeforeSkim;
 	  STDOUT("Initial number of events: NBeforeSkim, NBeforeSkim_ = "<<NBeforeSkim<<", "<<NBeforeSkim_);
 
-	  //giulia test to count processed events
+	  //giulia & simone test to count processed events
 	  TFile *f = TFile::Open(pName);
-/*	  string s0 = "dijets/TriggerPass";
+          /*if(((TH1F*)f->Get("Count"))==NULL){
+            STDOUT("Counter tree doesn't exist!");
+          }
+          else{
+            counter = ((TH1F*)f->Get("Count"));
+            std::cout<<"+++++++++++++++"<<counter->GetEntries()<<"++++++++++++++++++"<<std::endl;
+            crabCount_+=counter->GetEntries();
+            std::cout<<crabCount_<<std::endl;
+
+          }*/
+
+	  string s0 = "Count";
 	  TriggerPass = (TH1F*)f->Get(s0.c_str());  //removed by Simone...
-	 */ if(f) STDOUT("file exists!");
+	  if(f) STDOUT("file exists!");
          
-	 /* if(TriggerPass){
+	  if(TriggerPass){
 	    STDOUT("object exists");
 	  }
 	  else{
@@ -163,24 +210,24 @@ int baseClass::readInputList()
 	  TriggerPass->Print();
 	  TriggerPass->SetName("TriggerPass");
 	  if(count_line == 1) {
-	    STDOUT("sono nell'if" << endl);
+	    //STDOUT("sono nell'if" << endl);
 	    TriggerPass_sum = (TH1F*)TriggerPass->Clone("TriggerPass_sum");
 	  }
 	  else 
 	    TriggerPass_sum->Add(TriggerPass);
 
-	  STDOUT( "processed events file " << count_line <<": " << TriggerPass->GetBinContent(1) << endl);
+            STDOUT( "processed events file " << count_line <<": " << TriggerPass->GetBinContent(1) << endl);
 	}
       STDOUT("###############################################");
       STDOUT("total processed events: " << TriggerPass_sum->GetBinContent(1) << endl);
       //end giulia test
-*/
+
       tree_ = chain;
       int entries = chain->GetEntries();
       STDOUT("chain entries = " << entries);
       STDOUT("baseClass::readInputList: Finished reading list: " << *inputList_ );
-       } 
-   //   return TriggerPass_sum->GetBinContent(1);  //removed by Simone...
+        
+      return TriggerPass_sum->GetBinContent(1);  //removed by Simone...
     } 
       else
         {
@@ -476,6 +523,25 @@ void baseClass::resetCuts(const string& s)
   combCutName_passed_.clear();
   return;
 }
+
+//test
+void baseClass::addLeafToTree(float value, string leafTitle){
+  if(outTree_->GetBranch(Form("%s", leafTitle.c_str()))==NULL) outTree_->Branch(Form("%s", leafTitle.c_str()), &value, Form("%s/F", leafTitle.c_str()));
+  else outTree_->SetBranchAddress(Form("%s", leafTitle.c_str()),&value);
+
+  outTree_->Fill();
+  //outTree_->Print();
+
+}
+void baseClass::writeTree(){
+  std::cout<<"Writing my tree"<<std::endl;
+  output_root_->cd();
+  output_root_->mkdir("rootTupleTree");
+  output_root_->cd("rootTupleTree");
+  outTree_->Write();
+}
+
+//end test *Simone
 
 void baseClass::fillVariableWithValue(const string& s, const double& d, const double& w)
 {
@@ -1374,6 +1440,24 @@ void baseClass::CreateAndFillUserTH1D(const char* nameAndTitle, Int_t nbinsx, Do
     }
 }
 
+void baseClass::CreateAndFillUserVariableTH1D(const char* nameAndTitle, Int_t nbinsx, Double_t binSize[], Double_t value, Double_t weight)
+{
+    map<std::string , TH1D*>::iterator nh_h = userVarTH1Fs_.find(std::string(nameAndTitle));
+    TH1D * h;
+    if( nh_h == userVarTH1Fs_.end() )
+    {
+      h = new TH1D(nameAndTitle, nameAndTitle, nbinsx, binSize);
+      h->Sumw2();
+      userVarTH1Fs_[std::string(nameAndTitle)] = h;
+      h->Fill(value);
+    }
+    else
+    {
+      nh_h->second->Fill(value, weight);
+    }
+
+}
+
 void baseClass::CreateAndFillUserTH1F(const char* nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Double_t value, Double_t weight)
 {
   map<std::string , TH1F*>::iterator nh_h = userTH1Fs_.find(std::string(nameAndTitle));
@@ -1435,6 +1519,23 @@ void baseClass::CreateAndFillUserTH2D(const char* nameAndTitle, Int_t nbinsx, Do
     {
       nh_h->second->Fill(value_x, value_y, weight);
     }
+}
+
+void baseClass::CreateAndFillUserTH2F(const char* nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup,  Double_t value_x,  Double_t value_y, Double_t weight)
+{
+  map<std::string , TH2F*>::iterator nh_h = userTH2Fs_.find(std::string(nameAndTitle));
+  TH2F * h;
+  if( nh_h == userTH2Fs_.end() )
+  {
+    h = new TH2F(nameAndTitle, nameAndTitle, nbinsx, xlow, xup, nbinsy, ylow, yup);
+    h->Sumw2();
+    userTH2Fs_[std::string(nameAndTitle)] = h;
+    h->Fill(value_x, value_y, weight);
+    }
+  else
+  {
+    nh_h->second->Fill(value_x, value_y, weight);
+  }
 }
 
 void baseClass::CreateUserTH2D(const char* nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup)
@@ -1535,6 +1636,11 @@ bool baseClass::writeUserHistos()
       output_root_->cd();
       uh_h->second->Write();
     }
+  for (map<std::string, TH1D*>::iterator uh_h = userVarTH1Fs_.begin(); uh_h != userVarTH1Fs_.end(); uh_h++)
+  {
+    output_root_->cd();
+    uh_h->second->Write();
+  }
   for (map<std::string, TH1F*>::iterator uh_h = userTH1Fs_.begin(); uh_h != userTH1Fs_.end(); uh_h++)
   {
     output_root_->cd();
@@ -1546,6 +1652,11 @@ bool baseClass::writeUserHistos()
       output_root_->cd();
       uh_h->second->Write();
     }
+  for (map<std::string, TH2F*>::iterator uh_h = userTH2Fs_.begin(); uh_h != userTH2Fs_.end(); uh_h++)
+  {
+    output_root_->cd();
+    uh_h->second->Write();
+  }
   // Any failure mode to implement?
   return ret;
 }

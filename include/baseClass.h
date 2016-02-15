@@ -129,6 +129,7 @@ class baseClass : public rootNtupleClass {
   public :
   map<string, bool> combCutName_passed_;
 
+  int getCrabProcessedEvents(); //added *Simone
   int passJSON(int run, int ls, bool isData);
   double getPileupWeight ( int npileup, bool this_is_data );
   void setPileupWeight ( double weight ) { PileupWeight_ = weight; } 
@@ -142,6 +143,8 @@ class baseClass : public rootNtupleClass {
 		   std::vector<int >        * prescales);
     
   void resetCuts(const std::string& s = "newEvent");
+  void writeTree(); //added *Simone
+  void addLeafToTree(float value, string leafTitle); //added *Simone
   void fillVariableWithValue(const std::string&, const double&, const double& w = 1.);
   void evaluateCuts();
   
@@ -188,10 +191,12 @@ class baseClass : public rootNtupleClass {
   void runOptimizer();
 
   void CreateAndFillUserTH1D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Double_t value, Double_t weight=1);
+  void CreateAndFillUserVariableTH1D(const char* nameAndTitle, Int_t nbinsx, Double_t binSize[], Double_t value, Double_t weight=1);
   void CreateAndFillUserTH1F(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Double_t value, Double_t weight=1);
   void CreateUserTH1D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup);
   void FillUserTH1D(const char*  nameAndTitle, Double_t value, Double_t weight=1);
   void CreateAndFillUserTH2D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup,  Double_t value_x,  Double_t value_y, Double_t weight=1);
+  void CreateAndFillUserTH2F(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup,  Double_t value_x,  Double_t value_y, Double_t weight=1);
   void CreateUserTH2D(const char*  nameAndTitle, Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup);
   void CreateUserTH2D(const char* nameAndTitle, Int_t nbinsx, Double_t * x, Int_t nbinsy, Double_t * y );
   void FillUserTH2D(const char*   nameAndTitle, Double_t value_x,  Double_t value_y, Double_t weight=1);
@@ -203,12 +208,16 @@ class baseClass : public rootNtupleClass {
   PileupReweighter pileupReweighter_;
 
   TFile * output_root_;
+  
+  string * inputList_; 
 
   private :
+  int crabCount_; //to keep track of the initial number of events - added *Simone
+  TTree * outTree_; //added *Simone
   int nOptimizerCuts_;
   string * configFile_;
   string * outputFileName_;
-  string * inputList_;
+  //string * inputList_; 
   string * cutFile_;
   string * treeName_; // Name of input tree objects in (.root) files
   //TChain * chain_; // Original TChain
@@ -220,8 +229,10 @@ class baseClass : public rootNtupleClass {
   map<string, cut> cutName_cut_;
   vector<string> orderedCutNames_;
   map<std::string , TH1D*> userTH1Ds_;
+  map<std::string , TH1D*> userVarTH1Fs_;
   map<std::string , TH1F*> userTH1Fs_;
   map<std::string , TH2D*> userTH2Ds_;
+  map<std::string , TH2F*> userTH2Fs_;
   void init();
   int readInputList();
   void readCutFile();

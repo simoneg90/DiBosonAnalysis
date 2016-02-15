@@ -77,17 +77,22 @@ LUMI      = lumi
 lines = [line.strip() for line in open(inputList)]
 
 #---- split sample name and xsec
+fileList = []
 fileNames = []
 xsecs = []
 ii = 0
 for line in lines:
   parts = line.split()
-  fileNames.append(parts[0])
-  xsecs.append(parts[1])
-  print ("dataset : %s    xsec : %s" % (fileNames[ii], xsecs[ii]))
-
-
+  fileList.append(parts[0])
+ # xsecs.append(parts[1])
+  print ("dataset : %s" % (fileList[ii]))
   ii+=1
+
+for List in fileList:
+  #opening the file containing the MC paths for each background
+  pathFiles = [pathFile.strip() for pathFile in open(List)]
+  print "Path files", pathFile
+
 
 #---- open the files --------------------
 i_f = 0

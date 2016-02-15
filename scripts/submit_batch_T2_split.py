@@ -31,7 +31,7 @@ parser.add_option("--tag", dest="tag",
 
 parser.add_option("--split", dest="filesperjob", type=int,
     help="files to analyze per job ",
-    default=10)
+    default=2)
 
 parser.add_option('-I', '--interactive',      
     action='store_true',
@@ -41,6 +41,7 @@ parser.add_option('-I', '--interactive',
 
 parser.add_option("-c", "--cut", dest="cutfile",
     help="cutfile",                  
+    default="config/cutFile_mainDiBosonSelection.txt ",
     )
 
 (opt, args) = parser.parse_args()
@@ -137,7 +138,7 @@ for line in  ins:
     print sample+"  job "+str(jj)
     #command = "./main "+splittedlist[jj]+" config/cutFile_mainDijetSelection.txt dijets/events "+opt.output+simpletimeMarker+"/rootfile_"+sample+"_"+newTag+"_"+str(jj)+" "+opt.output+simpletimeMarker+"/cutEfficiencyFile_"+sample+"_"+newTag+"_"+str(jj)
     #command = "./main "+splittedlist[jj]+" config/cutFile_mainDijetSelection.txt dijets/events /tmp/rootfile_"+sample+"_"+newTag+"_"+str(jj)+" /tmp/cutEfficiencyFile_"+sample+"_"+newTag+"_"+str(jj)
-    command = "./main "+splittedlist[jj]+" batch/"+cutfileName+" dijets/events /tmp/rootfile_"+sample+"_"+newTag+"_"+str(jj)+" /tmp/cutEfficiencyFile_"+sample+"_"+newTag+"_"+str(jj)
+    command = "./main "+splittedlist[jj]+" batch/"+cutfileName+" tree /tmp/rootfile_"+sample+"_"+newTag+"_"+str(jj)+" /tmp/cutEfficiencyFile_"+sample+"_"+newTag+"_"+str(jj)
     print "submit "+command
     print ""
     

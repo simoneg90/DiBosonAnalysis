@@ -53,7 +53,7 @@ for line in  ins:
     line = line.rstrip('\n')
     sample = sample.rstrip('\n')
 
-    command = "./main "+opt.input+"/"+line+" config/cutFile_mainDijetSelection.txt dijets/events "+opt.output+"/rootfile_"+sample+" "+opt.output+"/cutEfficiencyFile_"+sample
+    command = "./main "+opt.input+"/"+line+" config/cutFile_mainDiBosonSelection.txt tree "+opt.output+"/rootfile_"+sample+" "+opt.output+"/cutEfficiencyFile_"+sample
     print "submit "+command
     print ""
     

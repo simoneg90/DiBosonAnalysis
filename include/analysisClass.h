@@ -30,6 +30,7 @@ public :
   analysisClass(string * inputList, string * cutFile, string * treeName,  string *outputFileName=0, string * cutEfficFile=0);
   virtual ~analysisClass();
   void Loop();
+  string fileList; //added
 private :
   ClusterSequencePtr  fjClusterSeq, fjClusterSeq_shift;
   JetDefPtr           fjJetDefinition;

@@ -47,8 +47,15 @@ void TH1D_config(TH1D *histo, const char* title, const char* title_x, const char
   histo->SetTitle(title);
   histo->GetXaxis()->SetTitle(x.c_str());
   histo->GetYaxis()->SetTitle(title_y);
-  histo->SetLineColor(color);
-  histo->SetMarkerColor(color);
+  if(color==1){
+    histo->SetLineColor(kRed + 1);
+    histo->SetMarkerColor(kRed + 1);
+    histo->SetFillColor(kRed + 1);
+  }else if(color==2){
+    histo->SetLineColor(kGreen + 1);
+    histo->SetMarkerColor(kGreen + 1);
+    histo->SetFillColor(kGreen + 1);
+  }
 
 }
 
@@ -63,6 +70,7 @@ void TH1F_config(TH1F *histo, const char* title, const char* title_x, const char
   histo->SetTitle(title);
   histo->GetXaxis()->SetTitle(x.c_str());
   histo->GetYaxis()->SetTitle(title_y);
+  histo->SetFillColor(color);
   histo->SetLineColor(color);
   histo->SetMarkerColor(color);
   
@@ -97,6 +105,6 @@ void LS_config(std::string rootFile, std::string outfile){
   std::cout<<"Removing old config file: "<<outfile.c_str()<<std::endl;
   system(Form("rm -rf %s",outfile.c_str()));
   std::cout<<"Root File analyzed: "<<rootFile.c_str()<<std::endl;
-  system(Form("./ls_script.sh %s | tee %s",rootFile.c_str(),outfile.c_str()));
+  system(Form("./scripts/ls_script.sh %s | tee %s",rootFile.c_str(),outfile.c_str()));
 
 }

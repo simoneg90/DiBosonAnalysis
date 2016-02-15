@@ -103,14 +103,21 @@ lines = [line.strip() for line in open(inputList_mc)]
 
 #---- split sample name and xsec (mc list)
 fileNames = []
+fileList = []
 xsecs = []
 ii = 0
 for line in lines:
   parts = line.split()
-  fileNames.append(parts[0])
-  xsecs.append(parts[1])
-  print ("dataset : %s    xsec : %s" % (fileNames[ii], xsecs[ii]))
+  fileList.append(parts[0])
+  #xsecs.append(parts[1])
+  print ("dataset : %s" % (fileList[ii]))
   ii+=1
+
+
+for List in fileList:
+  #opening the file containing the MC paths for each background
+  pathFiles = [pathFile.strip() for pathFile in open(List)]
+  print "Path files", pathFile
 
 fileNames_data = []
 lines_data = [line.strip() for line in open(inputList_data)]
@@ -148,7 +155,7 @@ for f in fileNames:
   #tree.Project(h_allCuts.GetName(), var,'deltaETAjj<2.6 && mjj > '+str(minX_mass))
 
   #standard
-  tree.Project(h_allCuts.GetName(), var,'deltaETAjj<1.3 && mjj > '+str(minX_mass))
+  tree.Project(h_allCuts.GetName(), var)# removed - it's a cut!!!,'deltaETAjj<1.3 && mjj > '+str(minX_mass))
   # blinded 4 TeV
   #tree.Project(h_allCuts.GetName(), var,'deltaETAjj<1.3 && mjj > '+str(minX_mass)+' && mjj<4000')
   # "peak mjj 4 TeV"
@@ -202,11 +209,11 @@ h_dat.Sumw2()
 #chain.Project("h_dat",var,'deltaETAjj<2.6 && mjj > '+str(minX_mass))
 
 if golden:
-  chain.Project("h_dat", var,'deltaETAjj<1.3 && mjj > '+str(minX_mass)+' && run >= '+ str(runMin) + '&& run <= ' + str(runMax) +' && PassJSON==1')
+  chain.Project("h_dat", var)#removed it's a CUT,'deltaETAjj<1.3 && mjj > '+str(minX_mass)+' && run >= '+ str(runMin) + '&& run <= ' + str(runMax) +' && PassJSON==1')
 else:
-  chain.Project("h_dat", var,'deltaETAjj<1.3 && mjj > '+str(minX_mass)+' && run >= '+ str(runMin) + ' && run <= ' + str(runMax) )
+  chain.Project("h_dat", var)#removed it's a CUT,'deltaETAjj<1.3 && mjj > '+str(minX_mass)+' && run >= '+ str(runMin) + ' && run <= ' + str(runMax) )
   
-
+print "passed the chain.Project part"
 #h_dat = hist_allCuts[9].Clone()
 #h_dat.SetName("h_dat")
 #h_dat.SetLineStyle(2)
@@ -218,25 +225,26 @@ h_dat.SetLineColor(kBlack)
 #--------------------------		   
 NQCD_allCuts = hist_allCuts[0].Integral()
 
-#for i in range(0,len(fileNames)) :
-for i in range(1,9) :
-  NQCD_allCuts += hist_allCuts[i].Integral()
+for i in range(0,len(fileNames)-1) :
+#for i in range(1,9) :
+  print "this is the problem", i, len(fileNames)
+  NQCD_allCuts += hist_allCuts[i].Integral() #rechange back to i! not to 0
     
 hist_allCutsQCD = hist_allCuts[0].Clone('hist_allCutsQCD')
 
-#for i in range(1,len(fileNames)):
-for i in range(1,9):
+for i in range(0,len(fileNames)-1):
+#for i in range(1,9):
   hist_allCutsQCD.Add(hist_allCuts[i]) 
   print "hist_allCutsQCD entries: %f" % hist_allCutsQCD.Integral()
 
 hsQCD_allCuts = THStack('QCD_allCuts','QCD_allCuts')
 
-#for i in range(0,len(fileNames)) :
-for i in range(0,9) :
+for i in range(0,len(fileNames)-1) :
+#for i in range(0,9) :
   hsQCD_allCuts.Add(hist_allCuts[i])
 
 #--- signal ---
-h_sig = hist_allCuts[9]
+h_sig = hist_allCuts[len(fileNames)-1] #changed from '[9]' Simone
 h_sig.SetLineColor(2)
 h_sig.SetLineWidth(2)
 h_sig.SetFillStyle(0)
