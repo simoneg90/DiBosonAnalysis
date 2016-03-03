@@ -56,7 +56,7 @@ void analysisClass::Loop()
   ele=ele_new=mu=0;
   std::vector<int> goodLepton, goodJet; //vectors containing the indexes of 'good' particles
   //double varBin[]= {-.5, 49.5, 399.5, 599.5, 799.5, 999.5, 1299.5, 1449.5, 1749.5, 1949.5, 2149.5, 2399.5, 2599.5, 2799.5, 3049.5};
-  double varBin[]={-.5,29.5,49.5, 99.5, 149.5, 199.5, 249.5, 299.5, 349.5, 399.5, 449.5, 499.5, 599.5, 699.5, 799.5, 899.5, 999.5, 1199.5, 1399.5, 1599.5, 1799.5, 1999.5};
+  double varBin[]={-.5,249.5, 449.5, 649.5, 849.5, 1049.5, 1249.5, 1449.5, 1649.5, 1849.5, 2049.5, 2249.5, 2449.5,2649.5, 2849.5,3049.5, 3249.5 };
   //double varBin[15]={-.5,29.5,49.5, 149.5, 349.5, 549.5, 749.5, 949.5,1149.5, 1349.5, 1459.5, 1649.5,1849.5, 1949.5, 2149.5};
   //double varBin1[25]={-.5,29.5,49.5, 149.5, 249.5, 349.5, 449.5, 549.5, 649.5, 749.5, 849.5, 949.5, 1049.5, 1149.5, 1249.5, 1349.5, 1449.5, 1459.5, 1549.5, 1649.5, 1749.5, 1849.5, 1859.5, 1949.5, 2049.5};
 
@@ -111,18 +111,17 @@ void analysisClass::Loop()
 
     for(int k=0; k<=((sizeof(varBin)/sizeof(double))-1); ++k){
       tmp=varBin[k]+1;
-      for(int i=0; i<nGenLep; ++i){
+      for(int i=0; i<nGenLepFromWPrime; ++i){
         //electrons
-        if(abs(GenLep_pdgId[i])==11 && abs(GenLep_eta[i])<2.5){
-          std::cout<<"Good ele gen"<<std::endl;
-          if((GenLep_pt[i]>varBin[k] && GenLep_pt[i]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLep_pt[i]>varBin[k])){
+        if(abs(GenLepFromWPrime_pdgId[i])==11 && abs(GenLepFromWPrime_eta[i])<2.5){
+          if((GenLepFromWPrime_pt[i]>varBin[k] && GenLepFromWPrime_pt[i]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLepFromWPrime_pt[i]>varBin[k])){
             //good gen electrons
-            CreateAndFillUserVariableTH1D("ele_N_", sizeof(varBin)/sizeof(double)-1, varBin, GenLep_pt[i]);
-            CreateAndFillUserTH1D("eleGen_pt", 1000,0,2000,GenLep_pt[i]);
-            CreateAndFillUserTH1D("eleGen_eta", 100,-5,5,GenLep_eta[i]);
-            CreateAndFillUserTH1D("eleGen_phi", 100,-3.16,3.16,GenLep_phi[i]);
+            CreateAndFillUserVariableTH1D("ele_N_", sizeof(varBin)/sizeof(double)-1, varBin, GenLepFromWPrime_pt[i]);
+            CreateAndFillUserTH1D("eleGen_pt", 1000,0,2000,GenLepFromWPrime_pt[i]);
+            CreateAndFillUserTH1D("eleGen_eta", 100,-5,5,GenLepFromWPrime_eta[i]);
+            CreateAndFillUserTH1D("eleGen_phi", 100,-3.16,3.16,GenLepFromWPrime_phi[i]);
           }
-          genEle.SetPtEtaPhiM(GenLep_pt[i],GenLep_eta[i],GenLep_phi[i], e_mass);
+          genEle.SetPtEtaPhiM(GenLepFromWPrime_pt[i],GenLepFromWPrime_eta[i],GenLepFromWPrime_phi[i], e_mass);
           for(int j=0; j<nselLeptons; ++j){
             if(abs(selLeptons_pdgId[j])==11){
               recoEle.SetPtEtaPhiM(selLeptons_pt[j],selLeptons_eta[j],selLeptons_phi[j], e_mass);
@@ -135,23 +134,22 @@ void analysisClass::Loop()
             }
           }//end loop over SelLeptons
           CreateAndFillUserTH1D("eleDRMin", 1100,-.5,10,dr_tmp);
-          if(dr_tmp<0.25){
+          if(dr_tmp<0.15){
             goodElectrons.push_back(index_tmp);
             goodGenElectrons.push_back(i);
           }
           dr_tmp=100;
         }//end if good gen electrons
         //muons
-        if(abs(GenLep_pdgId[i])==13 && abs(GenLep_eta[i])<2.5){
-          std::cout<<"good muon gen"<<std::endl;
-          if((GenLep_pt[i]>varBin[k] && GenLep_pt[i]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLep_pt[i]>varBin[k])){
+        if(abs(GenLepFromWPrime_pdgId[i])==13 && abs(GenLepFromWPrime_eta[i])<2.5){
+          if((GenLepFromWPrime_pt[i]>varBin[k] && GenLepFromWPrime_pt[i]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLepFromWPrime_pt[i]>varBin[k])){
             //good gen muon
-            CreateAndFillUserVariableTH1D("muon_N_", sizeof(varBin)/sizeof(double)-1, varBin, GenLep_pt[i]);
-            CreateAndFillUserTH1D("muonGen_pt", 1000,0,2000,GenLep_pt[i]);
-            CreateAndFillUserTH1D("muonGen_eta", 100,-5,5,GenLep_eta[i]);
-            CreateAndFillUserTH1D("muonGen_phi", 100,-3.16,3.16,GenLep_phi[i]);
+            CreateAndFillUserVariableTH1D("muon_N_", sizeof(varBin)/sizeof(double)-1, varBin, GenLepFromWPrime_pt[i]);
+            CreateAndFillUserTH1D("muonGen_pt", 1000,0,2000,GenLepFromWPrime_pt[i]);
+            CreateAndFillUserTH1D("muonGen_eta", 100,-5,5,GenLepFromWPrime_eta[i]);
+            CreateAndFillUserTH1D("muonGen_phi", 100,-3.16,3.16,GenLepFromWPrime_phi[i]);
           }
-          genMuon.SetPtEtaPhiM(GenLep_pt[i],GenLep_eta[i],GenLep_phi[i], mu_mass);
+          genMuon.SetPtEtaPhiM(GenLepFromWPrime_pt[i],GenLepFromWPrime_eta[i],GenLepFromWPrime_phi[i], mu_mass);
           for(int j=0; j<nselLeptons; ++j){
             if(abs(selLeptons_pdgId[j])==13){
               recoMuon.SetPtEtaPhiM(selLeptons_pt[j],selLeptons_eta[j],selLeptons_phi[j], mu_mass);
@@ -163,7 +161,7 @@ void analysisClass::Loop()
               if(genMuon.DeltaR(recoMuon)>2.) fakeMuons.push_back(j); //fake muons->jet
             }
           }//end loop over SelLeptons
-          if(dr_tmp<0.25){
+          if(dr_tmp<0.15){
             goodMuons.push_back(index_tmp);
             goodGenMuons.push_back(i);
           }
@@ -174,10 +172,13 @@ void analysisClass::Loop()
       }//end GenLep loop
       for(int j=0; j<goodElectrons.size(); ++j){
         CreateAndFillUserTH1D("eleGoodNumber", 10,-.5,9.5, goodElectrons.size());
-        if((GenLep_pt[goodGenElectrons[j]]>varBin[k] && GenLep_pt[goodGenElectrons[j]]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLep_pt[goodGenElectrons[j]]>varBin[k])){ 
-          CreateAndFillUserVariableTH1D("ele_RecoPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, GenLep_pt[goodGenElectrons[j]]);
+        //if((GenLep_pt[goodGenElectrons[j]]>varBin[k] && GenLep_pt[goodGenElectrons[j]]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLep_pt[goodGenElectrons[j]]>varBin[k])){ 
+        if((selLeptons_pt[goodElectrons[j]]>varBin[k] && selLeptons_pt[goodElectrons[j]]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1)&&selLeptons_pt[goodElectrons[j]]>varBin[k])){
+          CreateAndFillUserVariableTH1D("ele_RecoPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, selLeptons_pt[goodElectrons[j]]);//GenLep_pt[goodGenElectrons[j]]);
+          CreateAndFillUserTH1D("ele_RECO",14,0,3150, selLeptons_pt[goodElectrons[j]]);
           if(selLeptons_isMyGoodElectron[goodElectrons[j]]==1){// && selLeptons_isolEmHadDepth1[goodElectrons[j]]<(2+0.03*selLeptons_eleClusterEnergy[goodElectrons[j]]+0.28*rho)){
-            CreateAndFillUserVariableTH1D("ele_recoGoodPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, GenLep_pt[goodGenElectrons[j]]);
+            CreateAndFillUserVariableTH1D("ele_recoGoodPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, selLeptons_pt[goodElectrons[j]]);//GenLep_pt[goodGenElectrons[j]]);
+            CreateAndFillUserTH1D("ele_GOOD",14,0,3150, selLeptons_pt[goodElectrons[j]]);
             CreateAndFillUserTH1D("ele_ResoPt", 1000,-10,10,GenLep_pt[goodGenElectrons[j]]-selLeptons_pt[goodElectrons[j]]);
             CreateAndFillUserTH1D("ele_Resolution", 1000,-10,10,(selLeptons_pt[goodElectrons[j]]-GenLep_pt[goodGenElectrons[j]])/GenLep_pt[goodGenElectrons[j]]);
           }
@@ -238,13 +239,31 @@ void analysisClass::Loop()
         CreateAndFillUserTH1D("eleFake_isEcalDriven",2,-.5,1.5,selLeptons_isEcalDriven[fakeElectrons[j]]);
         CreateAndFillUserTH1D("eleFake_relIso03", 1000,0,10,selLeptons_relIso03[fakeElectrons[j]]);
       }//end for Fake Electrons
-
+      for(int w=0; w<nselLeptons;++w){
+        std::cout<<"in sel"<<std::endl;
+        if(abs(selLeptons_pdgId[w])==13 ){
+          if((selLeptons_pt[w]>varBin[k] && selLeptons_pt[w]<varBin[k+1])){//|| ((k==(sizeof(varBin)/sizeof(double))-1) && selLeptons_pt[w]>varBin[k])){ 
+            std::cout<<"in reco"<<std::endl;
+            CreateAndFillUserTH1D("muon_RECO_1",14,0,3150, selLeptons_pt[w]);
+            if(selLeptons_isMyGoodMuon[w]==1){
+              std::cout<<"in good"<<std::endl;
+              CreateAndFillUserTH1D("muon_GOOD_1",14,0,3150, selLeptons_pt[w]);
+          
+            }
+          }
+        }
+      }
+        std::cout<<"after"<<std::endl;
       for(int j=0; j<goodMuons.size(); ++j){
         CreateAndFillUserTH1D("muonGoodNumber", 10,-.5,9.5, goodMuons.size());
-        if((GenLep_pt[goodGenMuons[j]]>varBin[k] && GenLep_pt[goodGenMuons[j]]<varBin[k+1]) || ((k==(sizeof(varBin)/sizeof(double))-1) && GenLep_pt[goodGenMuons[j]]>varBin[k])){    
-          CreateAndFillUserVariableTH1D("muon_RecoPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, GenLep_pt[goodGenMuons[j]]);
+        if((selLeptons_pt[goodMuons[j]]>varBin[k] && selLeptons_pt[goodMuons[j]]<varBin[k+1])|| ((k==(sizeof(varBin)/sizeof(double))-1) && selLeptons_pt[goodMuons[j]]>varBin[k])){    
+          CreateAndFillUserVariableTH1D("muon_RecoPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, selLeptons_pt[goodMuons[j]]);
+          std::cout<<"IN"<<std::endl;
+          CreateAndFillUserTH1D("muon_RECO",14,0,3150, selLeptons_pt[goodMuons[j]]);
+          
           if(selLeptons_isMyGoodMuon[goodMuons[j]]==1){
-            CreateAndFillUserVariableTH1D("muon_recoGoodPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, GenLep_pt[goodGenMuons[j]]);
+            CreateAndFillUserVariableTH1D("muon_recoGoodPrimo_", sizeof(varBin)/sizeof(double)-1, varBin, selLeptons_pt[goodMuons[j]]);
+            CreateAndFillUserTH1D("muon_GOOD",14,0,3150, selLeptons_pt[goodMuons[j]]);
             CreateAndFillUserTH1D("muon_ResoPt", 1000,-10,10,GenLep_pt[goodGenMuons[j]]-selLeptons_pt[goodMuons[j]]);
             CreateAndFillUserTH1D("muon_Resolution", 1000,-10,10,(selLeptons_pt[goodMuons[j]]-GenLep_pt[goodGenMuons[j]])/GenLep_pt[goodGenMuons[j]]);
           }

@@ -9,8 +9,8 @@ INC= -I.. -I. -I./include  -I${CLHEP}/include -I${CMSSW_RELEASE_BASE}/src -I$(ca
 ROOTINC= -I${ROOTSYS}/include
 LIBS= -L.  ${ROOTLIBS} -L${CLHEP}/lib
 SRC= ./src
-SELECTIONLIB=$(SRC)/rootNtupleClass.o $(SRC)/baseClass.o $(SRC)/analysisClass.o ${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH}/libCondFormatsJetMETObjects.so $(SRC)/jsonParser.o $(SRC)/pileupReweighter.o $(SRC)/qcdFitter.o $(SRC)/qcdFitter_V1.o  $(SRC)/likelihoodGetter.o $(SRC)/eventListHelper.o $(SRC)/utility.o $(SRC)/setTDRStyle.o
-HISTOLIB=$(SRC)/utility.o $(SRC)/setTDRStyle.o
+SELECTIONLIB=$(SRC)/rootNtupleClass.o $(SRC)/baseClass.o $(SRC)/analysisClass.o ${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH}/libCondFormatsJetMETObjects.so $(SRC)/jsonParser.o $(SRC)/pileupReweighter.o $(SRC)/qcdFitter.o $(SRC)/qcdFitter_V1.o  $(SRC)/likelihoodGetter.o $(SRC)/eventListHelper.o $(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/CMS_lumi.o
+HISTOLIB=$(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/CMS_lumi.o
 EXE = main
 
 # ********** TEMPLATE *************
@@ -18,8 +18,8 @@ EXE = main
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOTLIBS) -o $@  $(SELECTIONLIB) $@.o
 # *********************************
 
-all: ${EXE} histoPlotter singleHistoPlotter mio #superimposeDataset 
-#all: histoPlotter singleHistoPlotter mio
+all: ${EXE} histoPlotter singleHistoPlotter doPlots #CMS_lumi #superimposeDataset 
+#all: histoPlotter singleHistoPlotter doPlots
 
 main: $(SRC)/main.o $(SELECTIONLIB) 
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(SELECTIONLIB) $(SRC)/$@.o
@@ -30,8 +30,11 @@ histoPlotter: $(SRC)/histoPlotter.o $(HISTOLIB)
 singleHistoPlotter: $(SRC)/singleHistoPlotter.o $(HISTOLIB)
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
 
-mio: $(SRC)/mio.o $(HISTOLIB)
+doPlots: $(SRC)/doPlots.o $(HISTOLIB)
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
+
+#CMS_lumi: $(SRC)/CMS_lumi.o $(HISTOLIB)
+#	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
 
 
 #superimposeDataset: $(SRC)/superimposeDataset.o $(HISTOLIB)
