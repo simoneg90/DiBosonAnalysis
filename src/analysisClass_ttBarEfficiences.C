@@ -117,8 +117,10 @@ void analysisClass::Loop()
     
 
     if(nselLeptons>0){
-      if((abs(selLeptons_pdgId[0])==11 && selLeptons_isMyGoodElectron[0]==1 && selLeptons_pt[0]>30 && (abs(selLeptons_eta[0])<1.442 || (abs(selLeptons_eta[0])>1.56 && abs(selLeptons_eta[0])<2.5))) || (abs(selLeptons_pdgId[0])==13 && selLeptons_isMyGoodMuon[0]==1 && selLeptons_pt[0]>20 && abs(selLeptons_eta[0])<2.1 && selLeptons_relIso03[0]<0.1)){
+      if((abs(selLeptons_pdgId[0])==11 && selLeptons_isMyGoodElectron[0]==1 && selLeptons_pt[0]>30 && (abs(selLeptons_eta[0])<1.442 || (abs(selLeptons_eta[0])>1.56 && abs(selLeptons_eta[0])<2.5))) || (abs(selLeptons_pdgId[0])==13 && selLeptons_isMyGoodMuon[0]==1 && selLeptons_pt[0]>20 && abs(selLeptons_eta[0])<2.1)){// && selLeptons_relIso03[0]<0.1)){
         goodLepton.push_back(0);
+        fillVariableWithValue("muonRelIso03", selLeptons_relIso03[0]);
+        fillVariableWithValue("muontrkIso", selLeptons_muTrackIso[0]);
         std::cout<<"Passing tight selection"<<std::endl;
         CreateAndFillUserTH1D("goodEleTightSelection", 2,-.5,1.5, 1);
       }//end if 'good' lepton cuts
@@ -172,19 +174,22 @@ void analysisClass::Loop()
         fillVariableWithValue("W_pt", W.Pt());
         fillVariableWithValue("W_eta",W.Eta());
         fillVariableWithValue("W_phi",W.Phi());
-        fillVariableWithValue("W_mT",W.Mt());
+        fillVariableWithValue("W_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
+        //fillVariableWithValue("W_mT",W.Mt());
         MET.SetPtEtaPhiM(metType1p2_pt, met_eta, met_phi, 0);
         W=lepton+MET;
         fillVariableWithValue("WType1_pt", W.Pt());
         fillVariableWithValue("WType1_eta",W.Eta());
         fillVariableWithValue("WType1_phi",W.Phi());
-        fillVariableWithValue("WType1_mT",W.Mt());
+        fillVariableWithValue("W_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
+        //fillVariableWithValue("WType1_mT",W.Mt());
         MET.SetPtEtaPhiM(metPuppi_pt, met_eta, met_phi, 0); 
         W=lepton+MET;
         fillVariableWithValue("WPuppi_pt", W.Pt());
         fillVariableWithValue("WPuppi_eta",W.Eta());
         fillVariableWithValue("WPuppi_phi",W.Phi());
-        fillVariableWithValue("WPuppi_mT",W.Mt());
+        fillVariableWithValue("W_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
+        //fillVariableWithValue("WPuppi_mT",W.Mt());
 
         if(goodAK08.size()==1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08));
           for(int j=0; j<goodAK04.size(); ++j){
@@ -198,7 +203,7 @@ void analysisClass::Loop()
             }//end if ak04 without leptons and ak08 nearby
           }//end loop over goodAK04.size()
 
-        }//end loop over goodAK08.size()
+        }//end loop over goodLepton.size()
         fillVariableWithValue("btag",btag_ak04);
         if(goodAK08Pruned.size()>=1){
           fillVariableWithValue("ak08Pruned_1_pt", FatjetAK08pruned_pt[goodAK08Pruned[0]]);
@@ -223,8 +228,13 @@ void analysisClass::Loop()
         fillVariableWithValue("metPuppi",metPuppi_pt);
         fillVariableWithValue("metType1", metType1p2_pt);
         fillVariableWithValue("met",met_pt);
-        fillVariableWithValue("nPrimaryVertexes", nprimaryVertices);
-
+        fillVariableWithValue("nPrimaryVertexes", nPVs);
+        fillVariableWithValue("Mu45_TRG", HLT_HLT_Mu45_eta2p1);
+        fillVariableWithValue("Mu50_TRG", HLT_HLT_Mu50);
+        fillVariableWithValue("HBHE", Flag_HBHENoiseFilter);
+        fillVariableWithValue("HBHE_IsoFilter", Flag_hbheIsoFilter);
+        fillVariableWithValue("CSC_filter",Flag_CSCTightHaloFilter);
+        fillVariableWithValue("eeBADFilter", Flag_eeBadScFilter);
         
 
 
@@ -238,7 +248,7 @@ void analysisClass::Loop()
      
      // optional call to fill a skim with a subset of the variables defined in the cutFile (use flag SAVE)
      //if( passedAllPreviousCuts("mjj") && passedCut("mjj") ) 
-     if( passedAllPreviousCuts("btag") && passedCut("btag"))
+     if( passedCut("eeBADFilter"))//passedAllPreviousCuts("eeBADFilter") && passedCut("eeBADFilter"))
        {
          frame("Beware! This part can be set outside the if -Passed cuts-");
 	 fillReducedSkimTree();

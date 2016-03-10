@@ -56,7 +56,7 @@ void analysisClass::Loop()
   ele=ele_new=mu=0;
   std::vector<int> goodLepton, goodJet; //vectors containing the indexes of 'good' particles
   //double varBin[]= {-.5, 49.5, 399.5, 599.5, 799.5, 999.5, 1299.5, 1449.5, 1749.5, 1949.5, 2149.5, 2399.5, 2599.5, 2799.5, 3049.5};
-  double varBin[]={-.5,249.5, 449.5, 649.5, 849.5, 1049.5, 1249.5, 1449.5, 1649.5, 1849.5, 2049.5, 2249.5, 2449.5,2649.5, 2849.5,3049.5, 3249.5 };
+  double varBin[]={-.5,249.5, 489.5, 649.5, 849.5, 1149.5, 1349.5, 1489.5, 1599.5, 1849.5, 2049.5, 2249.5, 2449.5,2699.5, 2949.5,3149.5, 3249.5 };
   //double varBin[15]={-.5,29.5,49.5, 149.5, 349.5, 549.5, 749.5, 949.5,1149.5, 1349.5, 1459.5, 1649.5,1849.5, 1949.5, 2149.5};
   //double varBin1[25]={-.5,29.5,49.5, 149.5, 249.5, 349.5, 449.5, 549.5, 649.5, 749.5, 849.5, 949.5, 1049.5, 1149.5, 1249.5, 1349.5, 1449.5, 1459.5, 1549.5, 1649.5, 1749.5, 1849.5, 1859.5, 1949.5, 2049.5};
 
@@ -239,21 +239,39 @@ void analysisClass::Loop()
         CreateAndFillUserTH1D("eleFake_isEcalDriven",2,-.5,1.5,selLeptons_isEcalDriven[fakeElectrons[j]]);
         CreateAndFillUserTH1D("eleFake_relIso03", 1000,0,10,selLeptons_relIso03[fakeElectrons[j]]);
       }//end for Fake Electrons
+
       for(int w=0; w<nselLeptons;++w){
         std::cout<<"in sel"<<std::endl;
-        if(abs(selLeptons_pdgId[w])==13 ){
+        if(abs(selLeptons_pdgId[w])==11 ){
           if((selLeptons_pt[w]>varBin[k] && selLeptons_pt[w]<varBin[k+1])){//|| ((k==(sizeof(varBin)/sizeof(double))-1) && selLeptons_pt[w]>varBin[k])){ 
-            std::cout<<"in reco"<<std::endl;
-            CreateAndFillUserTH1D("muon_RECO_1",14,0,3150, selLeptons_pt[w]);
-            if(selLeptons_isMyGoodMuon[w]==1){
+            //CreateAndFillUserTH1D("muon_RECO_1",18,0,4500, selLeptons_pt[w]);
+            CreateAndFillUserVariableTH1D("ele_RECO_1",sizeof(varBin)/sizeof(double)-1, varBin, selLeptons_pt[w]);
+            if(selLeptons_isMyGoodElectron[w]==1){
               std::cout<<"in good"<<std::endl;
-              CreateAndFillUserTH1D("muon_GOOD_1",14,0,3150, selLeptons_pt[w]);
+              //CreateAndFillUserTH1D("muon_GOOD_1",18,0,4500, selLeptons_pt[w]);
+              CreateAndFillUserVariableTH1D("ele_GOOD_1",sizeof(varBin)/sizeof(double)-1, varBin,selLeptons_pt[w]); 
           
             }
           }
         }
       }
-        std::cout<<"after"<<std::endl;
+      for(int w=0; w<nselLeptons;++w){
+        //std::cout<<"in sel"<<std::endl;
+        if(abs(selLeptons_pdgId[w])==13 ){
+          if((selLeptons_pt[w]>varBin[k] && selLeptons_pt[w]<varBin[k+1])){//|| ((k==(sizeof(varBin)/sizeof(double))-1) && selLeptons_pt[w]>varBin[k])){ 
+            //std::cout<<"in reco"<<std::endl;
+            //CreateAndFillUserTH1D("muon_RECO_1",18,0,4500, selLeptons_pt[w]);
+            CreateAndFillUserVariableTH1D("muon_RECO_1",sizeof(varBin)/sizeof(double)-1, varBin, selLeptons_pt[w]);
+            if(selLeptons_isMyGoodMuon[w]==1){
+              //std::cout<<"in good"<<std::endl;
+              //CreateAndFillUserTH1D("muon_GOOD_1",18,0,4500, selLeptons_pt[w]);
+              CreateAndFillUserVariableTH1D("muon_GOOD_1",sizeof(varBin)/sizeof(double)-1, varBin,selLeptons_pt[w]); 
+          
+            }
+          }
+        }
+      }
+       // std::cout<<"after"<<std::endl;
       for(int j=0; j<goodMuons.size(); ++j){
         CreateAndFillUserTH1D("muonGoodNumber", 10,-.5,9.5, goodMuons.size());
         if((selLeptons_pt[goodMuons[j]]>varBin[k] && selLeptons_pt[goodMuons[j]]<varBin[k+1])|| ((k==(sizeof(varBin)/sizeof(double))-1) && selLeptons_pt[goodMuons[j]]>varBin[k])){    

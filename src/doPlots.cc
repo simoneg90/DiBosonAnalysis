@@ -2,6 +2,7 @@
 #include "setTDRStyle.h"
 #include "utility.h"
 #include "TTree.h"
+#include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "TPad.h"
 #include "time.h"
@@ -262,7 +263,7 @@ int main(int argc, char* argv[]){
      exit(-1);
   }
 
-  if(argc>3){
+  if(argc>4){
      breakLine();
      std::cout<<"ATTENTION! TOO MANY ARGUMENTS ADDED!"<<std::endl;
      std::cout<<"Exiting program"<<std::endl;
@@ -277,6 +278,10 @@ int main(int argc, char* argv[]){
     exit(-1);
   }
   std::cout<<"Opened: " <<argv[1]<<std::endl;
+  std::cout<<"OutPutFile: "<< argv[3]<<std::endl;
+  std::string outString = argv[3];
+  TFile *outFile = new TFile(Form("%s.root",outString.c_str()), "RECREATE");
+  std::cout<<"Will be writing .pdf, .png, .root: "<<outString.c_str()<<std::endl;
   std::string filePath;
   std::string legendName[MAX_NUMBER];
   //Input file variables
@@ -291,6 +296,7 @@ int main(int argc, char* argv[]){
   double bins, min, max;
   int bkg_counter=-1;
   double counts=0;
+  double integralBKG_all=0;
   int sgn_counter=0;
   bool isData=0;
   THStack *bkgStack = new THStack("bkgStack","");
@@ -314,7 +320,7 @@ int main(int argc, char* argv[]){
     histoD[file_counter] = new TH1D(Form("histo_%d", file_counter), Form("histo_%d", file_counter),bins,min,max);
     std::cout<<"Projecting"<<std::endl;
     tree[file_counter]->Project(Form("histo_%d", file_counter),Form("%s", variable.c_str()),cut.c_str());
-    std::cout<<"Scaling"<<std::endl;
+    //std::cout<<"Scaling"<<std::endl;
     //histoD[file_counter]->Scale(scaleFactor);//rescale for the crossSection and the number of events
 
     if(strcmp(bkg_nameTMP.c_str(), "data")==0){
@@ -322,6 +328,7 @@ int main(int argc, char* argv[]){
       if(isData==0) {
         allBkgHisto= new TH1D("allBkgHisto","allBkgHisto", bins,min,max);
         dataHisto= new TH1D("dataHisto","dataHisto", bins,min,max);
+        std::cout<<"Data counts: "<<counts<<std::endl;
         //dataHisto->GetXaxis()->SetTitle(xTitle.c_str());
         dataHisto->GetYaxis()->SetTitle(yTitle.c_str());
         dataHisto->SetMarkerStyle(8);
@@ -340,7 +347,7 @@ int main(int argc, char* argv[]){
     }else{
       histoD[file_counter]->Scale(scaleFactor*lumi/counts);
       std::cout<<" " <<scaleFactor<<" "<<lumi<<" "<<counts<<std::endl;
-      std::cout<<"Scale factor: "<<scaleFactor*lumi/counts<<std::endl;
+      std::cout<<"Total scale factor: "<<scaleFactor*lumi/counts<<std::endl;
       if(strcmp(bkg_name.c_str(),bkg_nameTMP.c_str())==0){//if the bkg is always the same
         std::cout<<"Background: "<<bkg_name.c_str()<<std::endl;
         histoBkg[bkg_counter]->Add(histoD[file_counter]);
@@ -373,7 +380,11 @@ int main(int argc, char* argv[]){
     histoBkg[i]->Draw("hist");
     c[i]->SaveAs(Form("c%d.png",i));
     std::cout<<"Integral: "<<histoBkg[i]->Integral()<<std::endl;
+    integralBKG_all+=histoBkg[i]->Integral();
+    std::cout<<"Entries: "<<histoBkg[i]->GetEntries()<<std::endl;
     if(isData==1) allBkgHisto->Add(histoBkg[i]);
+    std::cout<<"adding back"<<std::endl;
+    histoBkg[i]->Write();
     bkgStack->Add(histoBkg[i]);
   }
   
@@ -390,28 +401,55 @@ int main(int argc, char* argv[]){
     pad1->Draw();
     pad1->cd();
     dataHisto->SetStats(0);
+    std::cout<<"DataHisto Entries: "<<dataHisto->GetEntries()<<std::endl;   
+    std::cout<<"DataHisto integral: "<<dataHisto->Integral()<<std::endl;
+    std::cout<<"BKGHisto integral: "<<integralBKG_all<<std::endl;
     dataHisto->GetXaxis()->SetLabelSize(0);
     dataHisto->GetXaxis()->SetLabelOffset(999);
     dataHisto->GetYaxis()->SetLabelFont(43);
     dataHisto->GetYaxis()->SetLabelSize(14);
-    dataHisto->Draw("EP");
+    //dataHisto->Draw("EP");
     dataHisto->SetTitle("");
     std::cout<<"Drawing data"<<std::endl;
-    bkgStack->Draw("SAME");
+    //allBkgHisto->Draw("hist");
+    bkgStack->Draw("");
     std::cout<<"Drawing bkg"<<std::endl;
     dataHisto->Draw("EPSAME");
     std::cout<<"Redrawing data"<<std::endl;
-    TGraphAsymmErrors *gr= new TGraphAsymmErrors();
-    gr->Divide(allBkgHisto,dataHisto);
+    TGraphErrors *gr = new TGraphErrors(0);
+    double integralData, integralBKG;
+    integralData=dataHisto->Integral();
+    integralBKG=allBkgHisto->Integral();
+    double error, ratio;
+    frame("Graph values");
+    for(int w=1; w<bins; ++w){
+      if((dataHisto->GetBinContent(w)==0&&allBkgHisto->GetBinContent(w)==0) || (allBkgHisto->GetBinContent(w)==0)) continue;
+      gr->SetPoint(w, dataHisto->GetBinCenter(w),(dataHisto->GetBinContent(w))/(allBkgHisto->GetBinContent(w)));
+      ratio= (dataHisto->GetBinContent(w))/(allBkgHisto->GetBinContent(w));
+      error= (dataHisto->GetBinContent(w)*sqrt(allBkgHisto->GetBinContent(w)) + allBkgHisto->GetBinContent(w)*sqrt(dataHisto->GetBinContent(w)))/(allBkgHisto->GetBinContent(w)*allBkgHisto->GetBinContent(w));
+      std::cout<<"VALUE: "<<ratio<<" ERROR: "<<error<<std::endl;
+      gr->SetPointError(w, dataHisto->GetBinWidth(w)/2,error);
+
+    }
+    gr->GetHistogram()->SetMaximum(1.5);
+    gr->GetHistogram()->SetMinimum(0.1);
+    gr->GetXaxis()->SetLimits(min, max);
+    //TGraphAsymmErrors *gr= new TGraphAsymmErrors();
+    //gr->Divide(dataHisto,allBkgHisto, "pois");
     pad2->cd();
     gStyle->SetTextSize(14);
     gROOT->ForceStyle();
-    //gr->Draw("ZAP");
+    pad2->SetGrid();
+    gr->Draw("ZAP");
+    gr->GetXaxis()->SetLabelFont(43);
+    gr->GetXaxis()->SetLabelSize(14);
+    gr->GetYaxis()->SetLabelFont(43);
+    gr->GetYaxis()->SetLabelSize(14);
     allBkgHisto->GetXaxis()->SetLabelFont(43);
     allBkgHisto->GetXaxis()->SetLabelSize(14);
     allBkgHisto->GetYaxis()->SetLabelFont(43);
     allBkgHisto->GetYaxis()->SetLabelSize(14);
-    allBkgHisto->Draw("hist");
+    //allBkgHisto->Draw("hist");
     pad1->cd();
   }else{
     std::cout<<"entered if only BKG"<<std::endl;
@@ -442,8 +480,10 @@ int main(int argc, char* argv[]){
 
   std::cout<<"Drawing legend"<<std::endl;
 
-  c_histo->SaveAs("histograms.png");
-  c_histo->SaveAs("histograms.pdf");
+  c_histo->SaveAs(Form("%s.png", outString.c_str()));
+  c_histo->SaveAs(Form("%s.pdf", outString.c_str()));
+  //c_histo->SaveAs("histograms.png");
+  //c_histo->SaveAs("histograms.pdf");
 
   //gROOT->ProcessLine(".L src/CMS_lumi.C");//
   //gROOT->LoadMacro("src/CMS_lumi.C");
@@ -455,9 +495,9 @@ int main(int argc, char* argv[]){
   //c2->GetFrame()->Draw();
   //c2->SaveAs("histograms_CMS.png");
 
-  std::string outName = "outfile.root";
+  //std::string outName = "outfile.root";
 
-  TFile *outFile = new TFile(outName.c_str(), "RECREATE");
+  
   c_histo->Write();
   outFile->Close();
 
