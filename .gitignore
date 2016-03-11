@@ -53,7 +53,7 @@ Thumbs.db
 # Pictures and plots #
 ######################
 #*.png
-#*.pdf
+*.pdf
 *.eps
 *.svg
 

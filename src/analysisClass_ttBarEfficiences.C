@@ -183,12 +183,12 @@ void analysisClass::Loop()
         fillVariableWithValue("WType1_phi",W.Phi());
         fillVariableWithValue("W_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
         //fillVariableWithValue("WType1_mT",W.Mt());
-        MET.SetPtEtaPhiM(metPuppi_pt, met_eta, met_phi, 0); 
-        W=lepton+MET;
-        fillVariableWithValue("WPuppi_pt", W.Pt());
-        fillVariableWithValue("WPuppi_eta",W.Eta());
-        fillVariableWithValue("WPuppi_phi",W.Phi());
-        fillVariableWithValue("W_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
+        //MET.SetPtEtaPhiM(metPuppi_pt, met_eta, met_phi, 0); 
+        //W=lepton+MET;
+        //fillVariableWithValue("WPuppi_pt", W.Pt());
+        //fillVariableWithValue("WPuppi_eta",W.Eta());
+        //fillVariableWithValue("WPuppi_phi",W.Phi());
+        //fillVariableWithValue("W_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
         //fillVariableWithValue("WPuppi_mT",W.Mt());
 
         if(goodAK08.size()==1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08));
@@ -197,7 +197,7 @@ void analysisClass::Loop()
             if(ak04.DeltaR(ak08)>.8 && ak04.DeltaR(lepton)>.3){
               CreateAndFillUserTH1D("Ak04_lepton&AK08_DRCut", 2,-.5,1.5, 1);
               goodAK04_lep.push_back(goodAK04[j]);
-              if(Jet_btagCSV[goodAK04[j]]>0.9){
+              if(Jet_btagCSV[goodAK04[j]]>0.890){
                 ++btag_ak04;
               }//end if for CSV medium working point
             }//end if ak04 without leptons and ak08 nearby
@@ -225,7 +225,7 @@ void analysisClass::Loop()
           fillVariableWithValue("ak04_2_phi", Jet_phi[goodAK04_lep[1]]);
           fillVariableWithValue("ak04_2_mass", Jet_mass[goodAK04_lep[1]]);
         }
-        fillVariableWithValue("metPuppi",metPuppi_pt);
+        //fillVariableWithValue("metPuppi",metPuppi_pt);
         fillVariableWithValue("metType1", metType1p2_pt);
         fillVariableWithValue("met",met_pt);
         fillVariableWithValue("nPrimaryVertexes", nPVs);
@@ -235,6 +235,7 @@ void analysisClass::Loop()
         fillVariableWithValue("HBHE_IsoFilter", Flag_hbheIsoFilter);
         fillVariableWithValue("CSC_filter",Flag_CSCTightHaloFilter);
         fillVariableWithValue("eeBADFilter", Flag_eeBadScFilter);
+        fillVariableWithValue("run", run);
         
 
 
@@ -248,7 +249,7 @@ void analysisClass::Loop()
      
      // optional call to fill a skim with a subset of the variables defined in the cutFile (use flag SAVE)
      //if( passedAllPreviousCuts("mjj") && passedCut("mjj") ) 
-     if( passedCut("eeBADFilter"))//passedAllPreviousCuts("eeBADFilter") && passedCut("eeBADFilter"))
+     if( passedCut("met"))//passedAllPreviousCuts("eeBADFilter") && passedCut("eeBADFilter"))
        {
          frame("Beware! This part can be set outside the if -Passed cuts-");
 	 fillReducedSkimTree();

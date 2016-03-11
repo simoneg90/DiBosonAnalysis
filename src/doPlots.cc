@@ -431,7 +431,7 @@ int main(int argc, char* argv[]){
       gr->SetPointError(w, dataHisto->GetBinWidth(w)/2,error);
 
     }
-    gr->GetHistogram()->SetMaximum(1.5);
+    gr->GetHistogram()->SetMaximum(2);//1.5);
     gr->GetHistogram()->SetMinimum(0.1);
     gr->GetXaxis()->SetLimits(min, max);
     //TGraphAsymmErrors *gr= new TGraphAsymmErrors();

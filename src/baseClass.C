@@ -1711,7 +1711,6 @@ bool baseClass::writeSkimTree()
   hCount_->SetBinContent(2,nEntTot);
   hCount_->SetBinContent(3,NAfterSkim_);
   hCount_->Write();
-
   if ( fChain -> GetEntries() == 0 ){
     skim_file_->cd();
     skim_file_->mkdir("rootTupleTree");
@@ -1753,6 +1752,15 @@ bool baseClass::writeReducedSkimTree()
   hReducedCount_->SetBinContent(2,nEntTot);
   hReducedCount_->SetBinContent(3,NAfterReducedSkim_);
   hReducedCount_->Write();
+  std::cout<<"Before cd()"<<std::endl;
+  reduced_skim_file_->cd();
+  std::cout<<"Before first TDir"<<std::endl;
+  TDirectory *dir_cut = reduced_skim_file_->mkdir("cutFolder");//added *Simone
+  std::cout<<"Before second TDir"<<std::endl;
+  //TDirectory *dir_cut1= reduced_skim_file_->mkdir("cutFolder/cutFolder1");
+  reduced_skim_file_->cd("cutFolder");                  //added *Simone
+  std::cout<<"************************************"<<std::endl;
+  eventcuts_->Write();                                  //added *Simone
 
   // Any failure mode to implement?
   return ret;
