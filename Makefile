@@ -11,6 +11,7 @@ LIBS= -L.  ${ROOTLIBS} -L${CLHEP}/lib
 SRC= ./src
 SELECTIONLIB=$(SRC)/rootNtupleClass.o $(SRC)/baseClass.o $(SRC)/analysisClass.o ${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH}/libCondFormatsJetMETObjects.so $(SRC)/jsonParser.o $(SRC)/pileupReweighter.o $(SRC)/qcdFitter.o $(SRC)/qcdFitter_V1.o  $(SRC)/likelihoodGetter.o $(SRC)/eventListHelper.o $(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/CMS_lumi.o
 HISTOLIB=$(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/CMS_lumi.o
+ROOFITLIB= -lRooFit -lRooFitCore -lHtml -lMinuit
 EXE = main
 
 # ********** TEMPLATE *************
@@ -18,7 +19,7 @@ EXE = main
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOTLIBS) -o $@  $(SELECTIONLIB) $@.o
 # *********************************
 
-all: ${EXE} histoPlotter singleHistoPlotter doPlots #CMS_lumi #superimposeDataset 
+all: ${EXE} histoPlotter singleHistoPlotter doPlots fit_simultaneous #CMS_lumi #superimposeDataset 
 #all: histoPlotter singleHistoPlotter doPlots
 
 main: $(SRC)/main.o $(SELECTIONLIB) 
@@ -32,6 +33,9 @@ singleHistoPlotter: $(SRC)/singleHistoPlotter.o $(HISTOLIB)
 
 doPlots: $(SRC)/doPlots.o $(HISTOLIB)
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
+
+fit_simultaneous: $(SRC)/fit_simultaneous.o $(HISTOLIB)
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
 
 #CMS_lumi: $(SRC)/CMS_lumi.o $(HISTOLIB)
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o

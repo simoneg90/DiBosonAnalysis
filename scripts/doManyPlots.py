@@ -17,6 +17,7 @@ parser.add_option("-o", "--outFile", action='store', dest="outFile", help="write
 parser.add_option("-L", "--Lumi", action='store', dest="Lumi", help="write report to FILE", metavar="FILE", default="list.txt")
 parser.add_option("-s", "--suffix", action='store', dest="suffix", help="write report to FILE", metavar="FILE", default="")
 parser.add_option("-P", "--prefix", action='store', dest="prefix",help="write report to FILE", metavar="FILE", default="outFolder")
+parser.add_option("-e", "--efficiency", action='store', dest="efficiency",help="write report to FILE", metavar="FILE", default="effFile")
 (opt, args) = parser.parse_args()
 
 rootList=opt.rootList
@@ -25,6 +26,7 @@ outFile=opt.outFile
 Lumi=opt.Lumi
 suffix=opt.suffix
 prefix=opt.prefix
+efficiency=opt.efficiency
 print "Suffix ", suffix
 print "OutFile ", outFile
 os.system("mkdir -p "+prefix)
@@ -55,5 +57,5 @@ for line in open(cutList):#source:
       os.system("echo "+myList[0]+" "+myList[1]+" "+myList[2]+" "+cols[0]+" "+cols[1]+" "+cols[2]+" "+cols[3]+" "+cols[4]+" "+cols[5]+" "+cols[6]+">>"+ outFile)
 
     print "File recorded"
-    os.system("./doPlots "+outFile+" "+Lumi+" "+prefix+"/"+cols[0]+suffix)
+    os.system("./doPlots "+outFile+" "+Lumi+" "+prefix+"/"+cols[0]+suffix+" "+efficiency)
 

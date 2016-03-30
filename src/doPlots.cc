@@ -248,7 +248,7 @@ int main(int argc, char* argv[]){
   if(argc<=2){
     breakLine();
     std::cout<<"Attention! Not enough inputs!"<<std::endl;
-    std::cout<<"Digit './histoPlotter --help' for informations!"<<std::endl;
+    std::cout<<"Digit './doPlots --help' for informations!"<<std::endl;
     breakLine();
     exit(-1);
   }
@@ -257,13 +257,13 @@ int main(int argc, char* argv[]){
      breakLine();
      std::cout<<"This program superimposes or Stacks the same histogram from different files"<<std::endl;
      std::cout<<"Program usage:"<<std::endl;
-     std::cout<<"./mio inputList lumi[fb-1]"<<std::endl;
+     std::cout<<"./doPlots inputList lumi[fb-1] output eff_file"<<std::endl;
      //argv[1]=inputList 
      breakLine();
      exit(-1);
   }
 
-  if(argc>4){
+  if(argc>5){
      breakLine();
      std::cout<<"ATTENTION! TOO MANY ARGUMENTS ADDED!"<<std::endl;
      std::cout<<"Exiting program"<<std::endl;
@@ -280,7 +280,7 @@ int main(int argc, char* argv[]){
   std::cout<<"Opened: " <<argv[1]<<std::endl;
   std::cout<<"OutPutFile: "<< argv[3]<<std::endl;
   std::string outString = argv[3];
-  TFile *outFile = new TFile(Form("%s.root",outString.c_str()), "RECREATE");
+  
   std::cout<<"Will be writing .pdf, .png, .root: "<<outString.c_str()<<std::endl;
   std::string filePath;
   std::string legendName[MAX_NUMBER];
@@ -295,6 +295,8 @@ int main(int argc, char* argv[]){
   file_counter=0;
   double bins, min, max;
   int bkg_counter=-1;
+  double integralData, integralBKG;
+  integralData=integralBKG=0;
   double counts=0;
   double integralBKG_all=0;
   int sgn_counter=0;
@@ -368,21 +370,23 @@ int main(int argc, char* argv[]){
       }
 
     }
-
-  
-
+    //file[file_counter]=TFile::Close("R");
     ++file_counter;
+   
   }//end while over inputFile
   std::cout<<"counter del bkg "<<bkg_counter<<std::endl; 
   //TCanvas *c[10];
+  TFile *outFile = new TFile(Form("%s.root",outString.c_str()), "RECREATE");
   for(int i=0; i<=bkg_counter; ++i){
     c[i]=new TCanvas(Form("c%d",i), "Grafico1", 200, 10, 600, 400);
     histoBkg[i]->Draw("hist");
     c[i]->SaveAs(Form("c%d.png",i));
     std::cout<<"Integral: "<<histoBkg[i]->Integral()<<std::endl;
     integralBKG_all+=histoBkg[i]->Integral();
+    std::cout<<"All: "<<integralBKG_all<<" "<<histoBkg[i]->Integral()<<std::endl;
     std::cout<<"Entries: "<<histoBkg[i]->GetEntries()<<std::endl;
     if(isData==1) allBkgHisto->Add(histoBkg[i]);
+    //integralBKG=allBkgHisto->Integral();
     std::cout<<"adding back"<<std::endl;
     histoBkg[i]->Write();
     bkgStack->Add(histoBkg[i]);
@@ -391,6 +395,12 @@ int main(int argc, char* argv[]){
   setTDRStyle();
   TCanvas *c_histo = new TCanvas("c_histo", "Grafico1", 200, 10, 600, 400);
   std::cout<<"Defined canvas"<<std::endl; 
+
+  std::ofstream effList;
+  std::string effFile = argv[4];
+  std::cout<<"Writing: "<<effFile.c_str()<<std::endl;
+  effList.open(Form("%s.txt",effFile.c_str()), std::fstream::app);
+  
   if(isData==1){
     TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.3);
     pad2->SetBottomMargin(0.2);
@@ -401,6 +411,7 @@ int main(int argc, char* argv[]){
     pad1->Draw();
     pad1->cd();
     dataHisto->SetStats(0);
+    dataHisto->Write();
     std::cout<<"DataHisto Entries: "<<dataHisto->GetEntries()<<std::endl;   
     std::cout<<"DataHisto integral: "<<dataHisto->Integral()<<std::endl;
     std::cout<<"BKGHisto integral: "<<integralBKG_all<<std::endl;
@@ -411,13 +422,15 @@ int main(int argc, char* argv[]){
     //dataHisto->Draw("EP");
     dataHisto->SetTitle("");
     std::cout<<"Drawing data"<<std::endl;
-    //allBkgHisto->Draw("hist");
-    bkgStack->Draw("");
+    allBkgHisto->Write();
+    bkgStack->Write();
+    //bkgStack->Draw("");
     std::cout<<"Drawing bkg"<<std::endl;
+    dataHisto->Draw("EP");
+    bkgStack->Draw("SAME");
     dataHisto->Draw("EPSAME");
     std::cout<<"Redrawing data"<<std::endl;
     TGraphErrors *gr = new TGraphErrors(0);
-    double integralData, integralBKG;
     integralData=dataHisto->Integral();
     integralBKG=allBkgHisto->Integral();
     double error, ratio;
@@ -451,6 +464,11 @@ int main(int argc, char* argv[]){
     allBkgHisto->GetYaxis()->SetLabelSize(14);
     //allBkgHisto->Draw("hist");
     pad1->cd();
+    effList<<integralData<<" ";
+    for(int ii=0; ii<=bkg_counter; ++ii){
+      effList<<histoBkg[ii]->Integral()<<" ";
+    }
+    effList<<integralBKG_all<<std::endl;
   }else{
     std::cout<<"entered if only BKG"<<std::endl;
   /*  bkgStack->GetXaxis()->SetTitle(xTitle.c_str());
@@ -476,10 +494,10 @@ int main(int argc, char* argv[]){
   label_cms->Draw("SAME");
   label_sqrt->Draw("SAME");
   label_algo->Draw("SAME");*/
-
-
-  std::cout<<"Drawing legend"<<std::endl;
-
+  //std::cout<<"Writing outTree"<<std::endl;
+  //TTree *T2 = tree[file_counter]->CopyTree(0);
+  //std::cout<<"Drawing legend"<<std::endl;
+  //T2->Write();
   c_histo->SaveAs(Form("%s.png", outString.c_str()));
   c_histo->SaveAs(Form("%s.pdf", outString.c_str()));
   //c_histo->SaveAs("histograms.png");
@@ -496,9 +514,12 @@ int main(int argc, char* argv[]){
   //c2->SaveAs("histograms_CMS.png");
 
   //std::string outName = "outfile.root";
-
   
+
+  std::cout<<integralData<<" "<<integralBKG_all<<std::endl;
+  std::cout<<"Wrote: "<<outString.c_str()<<std::endl; 
   c_histo->Write();
+  std::cout<<"Closing output file"<<std::endl;
   outFile->Close();
 
   std::cout<<""<<std::endl;
