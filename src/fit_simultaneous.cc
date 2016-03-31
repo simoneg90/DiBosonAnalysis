@@ -11,6 +11,7 @@
 #include "RooHist.h"
 #include "RooFormulaVar.h"
 #include "RooDataSet.h"
+#include "RooDataHist.h"
 #include "RooGaussian.h"
 #include "RooGlobalFunc.h"
 #include "RooConstVar.h"
@@ -21,6 +22,7 @@
 #include "RooSimultaneous.h"
 #include "RooCategory.h"
 #include "RooMCStudy.h"
+#include "RooExponential.h"
 #include "RooFitResult.h"
 #include "TCanvas.h"
 #include "TAxis.h"
@@ -100,7 +102,109 @@ int main(int argc, char* argv[]){
   RooRealVar Nbkg_MC("Nbkg_MC", "Nbkg_MC", 100,10,100000);
   RooAddPdf modelPass_MC("modelPass_MC", "modelPass_MC", RooArgList(gx_pass_MC,p2_pass_MC), RooArgList(Nsig_MC, Nbkg_MC));
 
+  //total function for passed events [data]
+  RooRealVar ak08Pruned_1_mass_pass_data("ak08Pruned_1_mass_pass_data","ak08Pruned_1_mass_pass_data",mass_min,mass_max) ;
+  
+  RooRealVar mean_pass_data("mean_pass_data","mean_pass_data", 80, 60,95);
+  RooRealVar sigma_pass_data("sigma_pass_data","sigma_pass_data", 10, 0,20);
+  RooGaussian gx_pass_data("gx_pass_data","gx_pass_data",ak08Pruned_1_mass_pass_data,mean_pass_data,sigma_pass_data) ;
+  
+  RooRealVar a_pass_data("a_pass_data","a_pass_data", 0.1,-1,1);
+  RooRealVar a1_pass_data("a1_pass_data","a1_pass_data", 0.1,-1,1);
+  RooRealVar a2_pass_data("a2_pass_data","a2_pass_data", 0.1,-1,1);
+  RooPolynomial p2_pass_data("p2_pass_data","p2_pass_data",ak08Pruned_1_mass_pass_data,RooArgList(a_pass_data,a1_pass_data,a2_pass_data),0) ;
+  
+  RooRealVar Nsig_data("Nsig_data", "Nsig_data", 1200,10,10000);
+  RooRealVar Nbkg_data("Nbkg_data", "Nbkg_data", 100,10,100000);
+  RooAddPdf modelPass_data("modelPass_data", "modelPass_data", RooArgList(gx_pass_data,p2_pass_data), RooArgList(Nsig_data, Nbkg_data));
 
+
+  //total function for failed events [MC]
+  RooRealVar ak08Pruned_1_mass_fail_MC("ak08Pruned_1_mass_fail_MC","ak08Pruned_1_mass_fail_MC",mass_min,mass_max) ;
+  
+  RooRealVar mean_fail_MC("mean_fail_MC","mean_fail_MC", 80, 78,105);
+  RooRealVar sigma_fail_MC("sigma_fail_MC","sigma_fail_MC", 10, 0,20);
+  RooGaussian gx_fail_MC("gx_fail_MC","gx_fail_MC",ak08Pruned_1_mass_fail_MC,mean_fail_MC,sigma_fail_MC) ;
+  
+  RooRealVar a_fail_MC("a_fail_MC","a_fail_MC", 0.1,-1,1);
+  RooRealVar a1_fail_MC("a1_fail_MC","a1_fail_MC", 0.1,-1,1);
+  RooRealVar a2_fail_MC("a2_fail_MC","a2_fail_MC", 0.1,-1,1);
+  RooRealVar a3_fail_MC("a3_fail_MC","a3_fail_MC", 0.1,-1,1);
+  RooPolynomial p2_fail_MC("p2_fail_MC","p2_fail_MC",ak08Pruned_1_mass_fail_MC,RooArgList(a_fail_MC,a1_fail_MC,a2_fail_MC),0) ;
+  RooRealVar k_fail_MC("k_fail_MC","k_fail_MC", 0.7,0,1);
+  RooExponential exp_fail_MC("exp_fail_MC", "exp_fail_MC", ak08Pruned_1_mass_fail_MC, a3_fail_MC);
+  RooAddPdf testModel_fail_MC("testModel_fail_MC", "", RooArgList(exp_fail_MC,p2_fail_MC), RooArgList(k_fail_MC));
+  
+  RooChebychev cheby_fail_MC("cheby_fail_MC","cheby_fail_MC",ak08Pruned_1_mass_fail_MC,RooArgSet(a_fail_MC,a1_fail_MC, a2_fail_MC)) ;
+  
+  RooRealVar Nsig_fail_MC("Nsig_fail_MC", "Nsig_fail_MC", 1200,10,10000);
+  RooRealVar Nbkg_fail_MC("Nbkg_fail_MC", "Nbkg_fail_MC", 100,10,100000);
+  RooExtendPdf gx_pass_norm_fail_MC("gx_pass_norm_fail_MC", "gx_pass_norm_fail_MC", gx_fail_MC, Nsig_fail_MC);
+  RooAddPdf model_fail_MC("model_fail_MC", "model_fail_MC", RooArgList(gx_fail_MC,cheby_fail_MC), RooArgList(Nsig_fail_MC, Nbkg_fail_MC));
+
+  //total function for failed events [data]
+  RooRealVar ak08Pruned_1_mass_fail_data("ak08Pruned_1_mass_fail_data","ak08Pruned_1_mass_fail_data",mass_min,mass_max) ;
+  
+  RooRealVar mean_fail_data("mean_fail_data","mean_fail_data", 80, 78,105);
+  RooRealVar sigma_fail_data("sigma_fail_data","sigma_fail_data", 10, 0,20);
+  RooGaussian gx_fail_data("gx_fail_data","gx_fail_data",ak08Pruned_1_mass_fail_data,mean_fail_data,sigma_fail_data) ;
+  
+  RooRealVar a_fail_data("a_fail_data","a_fail_data", 0.1,-1,1);
+  RooRealVar a1_fail_data("a1_fail_data","a1_fail_data", 0.1,-1,1);
+  RooRealVar a2_fail_data("a2_fail_data","a2_fail_data", 0.1,-1,1);
+  RooRealVar a3_fail_data("a3_fail_data","a3_fail_data", 0.1,-1,1);
+  RooPolynomial p2_fail_data("p2_fail_data","p2_fail_data",ak08Pruned_1_mass_fail_data,RooArgList(a_fail_data,a1_fail_data,a2_fail_data),0) ;
+  RooRealVar k_fail_data("k_fail_data","k_fail_data", 0.7,0,1);
+  RooExponential exp_fail_data("exp_fail_data", "exp_fail_data", ak08Pruned_1_mass_fail_data, a3_fail_data);
+  RooAddPdf testModel_fail_data("testModel_fail_data", "", RooArgList(exp_fail_data,p2_fail_data), RooArgList(k_fail_data));
+  
+  RooChebychev cheby_fail_data("cheby_fail_data","cheby_fail_data",ak08Pruned_1_mass_fail_data,RooArgSet(a_fail_data,a1_fail_data, a2_fail_data)) ;
+  
+  RooRealVar Nsig_fail_data("Nsig_fail_data", "Nsig_fail_data", 1200,10,10000);
+  RooRealVar Nbkg_fail_data("Nbkg_fail_data", "Nbkg_fail_data", 100,10,100000);
+  RooExtendPdf gx_pass_norm_fail_data("gx_pass_norm_fail_data", "gx_pass_norm_fail_data", gx_fail_data, Nsig_fail_data);
+  RooAddPdf model_fail_data("model_fail_data", "model_fail_data", RooArgList(gx_fail_data,cheby_fail_data), RooArgList(Nsig_fail_data, Nbkg_fail_data));
+
+  //simultaneous pdf declaration [MC]
+  RooRealVar efficiency ("efficiency", "efficiency", 0,1.);
+  
+  //+++ Pass part +++
+  RooRealVar ak08Pruned_1_mass_sim_MC("ak08Pruned_1_mass_sim_MC","ak08Pruned_1_mass_sim_MC",mass_min,mass_max) ;
+  
+  RooRealVar mean_pass_sim_MC("mean_pass_sim_MC","mean_pass_sim_MC", 80, 60,95);
+  RooRealVar sigma_pass_sim_MC("sigma_pass_sim_MC","sigma_pass_sim_MC", 10, 0,20);
+  RooGaussian gx_pass_sim_MC("gx_pass_sim_MC","gx_pass_sim_MC",ak08Pruned_1_mass_sim_MC,mean_pass_sim_MC,sigma_pass_sim_MC) ;
+  
+  RooRealVar a_pass_sim_MC("a_pass_sim_MC","a_pass_sim_MC", 0.1,-1,1);
+  RooRealVar a1_pass_sim_MC("a1_pass_sim_MC","a1_pass_sim_MC", 0.1,-1,1);
+  RooRealVar a2_pass_sim_MC("a2_pass_sim_MC","a2_pass_sim_MC", 0.1,-1,1);
+  RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass_sim_MC,RooArgList(a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC),0) ;
+  
+  RooRealVar Nsig_sim_MC("Nsig_sim_MC", "Nsig_sim_MC", 1200,10,10000);
+  RooFormulaVar k_pass_sim("k_pass_sim", "pass norm", "(Nsig_sim_MC*efficiency)", RooArgList(Nsig_sim_MC, efficiency));
+  RooRealVar Nbkg_pass_sim_MC("Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 100,10,100000);
+  RooAddPdf modelPass_sim_MC("modelPass_sim_MC", "modelPass_sim_MC", RooArgList(gx_pass_sim_MC,p2_pass_sim_MC), RooArgList(k_pass_sim, Nbkg_pass_sim_MC));
+
+
+  //+++ Fail part +++
+  RooRealVar mean_fail_sim_MC("mean_fail_sim_MC","mean_fail_sim_MC", 80, 78,105);
+  RooRealVar sigma_fail_sim_MC("sigma_fail_sim_MC","sigma_fail_sim_MC", 10, 0,20);
+  RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass_sim_MC,mean_fail_sim_MC,sigma_fail_sim_MC) ;
+  
+  RooRealVar a_fail_sim_MC("a_fail_sim_MC","a_fail_sim_MC", 0.1,-1,1);
+  RooRealVar a1_fail_sim_MC("a1_fail_sim_MC","a1_fail_sim_MC", 0.1,-1,1);
+  RooRealVar a2_fail_sim_MC("a2_fail_sim_MC","a2_fail_sim_MC", 0.1,-1,1);
+  RooChebychev cheby_fail_sim_MC("cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass_sim_MC,RooArgSet(a_fail_sim_MC,a1_fail_sim_MC, a2_fail_sim_MC)) ;
+  
+  RooRealVar Nbkg_fail_sim_MC("Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 100,10,100000);
+  RooFormulaVar k_fail_sim("k_fail_sim", "fail norm", "(Nsig_sim_MC*(1-efficiency))", RooArgList(Nsig_sim_MC, efficiency));
+  RooAddPdf model_fail_sim_MC("model_fail_sim_MC", "model_fail_sim_MC", RooArgList(gx_fail_sim_MC,cheby_fail_sim_MC), RooArgList(k_fail_sim, Nbkg_fail_sim_MC));
+
+  RooCategory sample_MC("sample_MC","sample_MC") ;
+  sample_MC.defineType("passed") ;
+  sample_MC.defineType("failed") ;
+  
+  //=== end of function declaration ===
 
   TH1D *histoD_pass[MAX_NUMBER];//histos for project High Purity
   TH1D *histoD_fail[MAX_NUMBER];//histos for project Low Purity
@@ -109,7 +213,8 @@ int main(int argc, char* argv[]){
   TH1D *histoBkg_fail[MAX_bkg];    //1 histo for each background LP
   TH1D *dataHisto_pass; //data histo HP
   TH1D *dataHisto_fail; //data histo LP
-  TH1D *allBkgHisto;
+  TH1D *allBkgHisto_pass;
+  TH1D *allBkgHisto_fail;
   TH1D *signalHisto[MAX_sgn]; //signal histos (if we want to superimpose them)
   //TH2D *histo2D[MAX_NUMBER];
   //TH2F *histo2F[MAX_NUMBER];
@@ -241,7 +346,8 @@ int main(int argc, char* argv[]){
    if(strcmp(bkg_nameTMP.c_str(), "data")==0){
      std::cout<<"DATA!"<<std::endl;
      if(isData==0) {
-       allBkgHisto= new TH1D("allBkgHisto","allBkgHisto", bins,min,max);
+       allBkgHisto_pass= new TH1D("allBkgHisto_pass","allBkgHisto_pass", bins,min,max);
+       allBkgHisto_fail= new TH1D("allBkgHisto_fail","allBkgHisto_fail", bins,min,max);
        dataHisto_pass= new TH1D("dataHisto_pass","dataHisto_pass", bins,min,max);
        dataHisto_fail= new TH1D("dataHisto_fail","dataHisto_fail", bins,min,max);
        std::cout<<"Data counts: "<<counts<<std::endl;
@@ -299,18 +405,92 @@ int main(int argc, char* argv[]){
 
       }//end if bkg already known
 
-
-
-
+      ++file_counter;
 
     }//end if data or NotData
 
 
   }//end loop over rootList file
 
+  std::cout<<"Background counter: "<<bkg_counter+1<<std::endl;
+  double integralBKG_all_pass=0;
+  double integralBKG_all_fail=0;
+
+  for(int i=0; i<=bkg_counter; ++i){
+    //c[i]=new TCanvas(Form("c%d",i), "Grafico1", 200, 10, 600, 400);
+    //histoBkg[i]->Draw("hist");
+    //c[i]->SaveAs(Form("c%d.png",i));
+    std::cout<<"Integral [pass]: "<<histoBkg_pass[i]->Integral()<<std::endl;
+    std::cout<<"Integral [fail]: "<<histoBkg_fail[i]->Integral()<<std::endl;
+    integralBKG_all_pass+=histoBkg_pass[i]->Integral();
+    integralBKG_all_fail+=histoBkg_fail[i]->Integral();
+    std::cout<<"All [pass]: "<<integralBKG_all_pass<<" "<<histoBkg_pass[i]->Integral()<<std::endl;
+    std::cout<<"All [fail]: "<<integralBKG_all_fail<<" "<<histoBkg_fail[i]->Integral()<<std::endl;
+    std::cout<<"Entries [pass]: "<<histoBkg_pass[i]->GetEntries()<<std::endl;
+    std::cout<<"Entries [fail]: "<<histoBkg_fail[i]->GetEntries()<<std::endl;
+    if(isData==1){
+      allBkgHisto_pass->Add(histoBkg_pass[i]);
+      allBkgHisto_fail->Add(histoBkg_fail[i]);
+    }
+    //integralBKG=allBkgHisto->Integral();
+    std::cout<<"adding back"<<std::endl;
+    //histoBkg[i]->Write();
+    //bkgStack->Add(histoBkg[i]);
+  }
+
+  TCanvas *c_passed_MC = new TCanvas("c_passed_MC", "Grafico1", 200, 10, 600, 400);
+  RooDataHist *dh_totalPass = new RooDataHist("dh_totalPass", "dh_totalPass", ak08Pruned_1_mass_pass_MC, Import(*allBkgHisto_pass));
+  RooPlot* frame1_pass = ak08Pruned_1_mass_pass_MC.frame(Bins(22),Title("Pass sample")) ;
+  modelPass_MC.fitTo(*dh_totalPass);
+  dh_totalPass->plotOn(frame1_pass);
+  modelPass_MC.plotOn(frame1_pass);
+  /*histoBkg_pass[0]->Draw("");
+  allBkgHisto_pass->Draw("SAME");
+  */
+  gPad->SetLeftMargin(0.15) ; frame1_pass->GetYaxis()->SetTitleOffset(1.4) ; frame1_pass->Draw() ;
+  
+  c_passed_MC->SaveAs("provaRoofit.png");
+  
+  TCanvas *c_fail_MC = new TCanvas("c_fail_MC", "Grafico1", 200, 10, 600, 400);
+  RooDataHist *dh_totalFail = new RooDataHist("dh_totalFail", "dh_totalFail", ak08Pruned_1_mass_fail_MC, Import(*allBkgHisto_fail));
+  RooPlot* frame1_fail = ak08Pruned_1_mass_fail_MC.frame(Bins(22),Title("Fail sample")) ;
+  model_fail_MC.fitTo(*dh_totalFail);
+  dh_totalFail->plotOn(frame1_fail);
+  model_fail_MC.plotOn(frame1_fail);
+  gPad->SetLeftMargin(0.15) ; frame1_fail->GetYaxis()->SetTitleOffset(1.4) ; frame1_fail->Draw() ;
+  
+  c_fail_MC->SaveAs("provaRoofit_1.png");
+
+
+  //Simultaneous fit
+  RooDataHist *dh_totalPass_sim = new RooDataHist("dh_totalPass_sim", "dh_totalPass_sim", ak08Pruned_1_mass_sim_MC, Import(*allBkgHisto_pass));
+  RooDataHist *dh_totalFail_sim = new RooDataHist("dh_totalFail_sim", "dh_totalFail_sim", ak08Pruned_1_mass_sim_MC, Import(*allBkgHisto_fail));
+  RooDataHist combData_MC("combData_MC","combined data for MC",ak08Pruned_1_mass_sim_MC,Index(sample_MC),Import("passed",*dh_totalPass_sim), Import("failed", *dh_totalFail_sim));
+
+  RooSimultaneous simPdf_MC("simPdf_MC","simultaneous pdf for MC",sample_MC) ;
+  simPdf_MC.addPdf(modelPass_sim_MC,"passed") ;
+  simPdf_MC.addPdf(model_fail_sim_MC, "failed");
+
+  simPdf_MC.fitTo(combData_MC);
+  TCanvas *c_sim_MC = new TCanvas("c_sim_MC", "Grafico1", 200, 10, 600, 400);
+  c_sim_MC->Divide(2) ;
+  RooPlot* frame1_sim = ak08Pruned_1_mass_sim_MC.frame(Bins(22),Title("Pass sample")) ;
+  RooPlot* frame2_sim = ak08Pruned_1_mass_sim_MC.frame(Bins(22),Title("Fail sample")) ;
+  dh_totalPass_sim->plotOn(frame1_sim);
+  simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
+  dh_totalFail_sim->plotOn(frame2_sim);
+  simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ;
+  c_sim_MC->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1_sim->GetYaxis()->SetTitleOffset(1.4) ; frame1_sim->Draw() ;
+  c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  c_sim_MC->SaveAs("provaRoofitSim.png");
+
+
   RooRealVar t("t", "t", 2, 0,10);
   std::cout<<t.getValV()<<std::endl;
 
+  std::cout<<""<<std::endl;
+  std::cout << "------ TIME ELAPSED DURING ANALYSIS  ----- " << timer.RealTime() << " s" <<std::endl;
+  std::cout<<""<<std::endl;
 
 
 
