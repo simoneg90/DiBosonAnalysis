@@ -259,6 +259,7 @@ void analysisClass::Loop()
       //fillVariableWithValue("WPuppi_mT",W.Mt());
 
       if(goodAK08.size()>1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08));
+      fillVariableWithValue("nAK04", goodAK04.size());
         for(int j=0; j<goodAK04.size(); ++j){
           ak04.SetPtEtaPhiM(Jet_pt[goodAK04[j]], Jet_eta[goodAK04[j]], Jet_phi[goodAK04[j]], Jet_mass[goodAK04[j]]);
           if(ak04.DeltaR(ak08)>.8 && ak04.DeltaR(lepton)>.3){
