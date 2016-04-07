@@ -35,7 +35,7 @@ void fit_Signal()
   //Take variable from tree
   
   std::string cut_matched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR<.1";
-  std::string cut_unmatched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR>.1";//&&lepton_WGen_DR>1";
+  std::string cut_unmatched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR>.3";//&&lepton_WGen_DR>1";
   std::string cut_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6";//"((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6";
   std::string cut_fail = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21>0.6";
   std::string cut = "abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&btag>0&&lepton_pt>40&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Pruned_1_mass>40&&ak08Pruned_1_mass<150&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR<0.1";
@@ -114,18 +114,22 @@ void fit_Signal()
  
   RooPlot* frame1_ttbar = ak08Pruned_1_mass_ttbar.frame(Bins(nbins),Title("TopTop Pass/Match sample")) ;
   dh_ttbarMatch->plotOn(frame1_ttbar) ;
-  gx_ttbar.plotOn(frame1_ttbar, LineColor(kRed)) ;
+  //gx_ttbar.plotOn(frame1_ttbar, LineColor(kRed)) ;
   //p2_ttbar.plotOn(frame1_ttbar, LineColor(kGreen));
   //gx_ttbar1.plotOn(frame1_ttbar, LineColor(kGreen));
-  cheby_ttbar.plotOn(frame1_ttbar, LineColor(kGreen));
-  model_ttbar.plotOn(frame1_ttbar);//, LineStyle(8));
-  model_ttbar.paramOn(frame1_ttbar);
+  //cheby_ttbar.plotOn(frame1_ttbar, LineColor(kGreen));
+  //model_ttbar.plotOn(frame1_ttbar);//, LineStyle(8));
+  //model_ttbar.plotOn(frame1_ttbar, Components(gx_ttbar), LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
+  //model_ttbar.plotOn(frame1_ttbar, Components(cheby_ttbar), LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  //model_ttbar.paramOn(frame1_ttbar);
   RooPlot* frame2_ttbar = ak08Pruned_1_mass_ttbar.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
   TCanvas* c_ttbar = new TCanvas("c_ttbar","c_ttbar",800,400) ;
-  c_ttbar->Divide(2) ;
-  c_ttbar->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame1_ttbar->Draw() ;
-  c_ttbar->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
+  //c_ttbar->Divide(2) ;
+  /*c_ttbar->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame1_ttbar->Draw() ;
+  //c_ttbar->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
+  TCanvas* c_ttbar_fail = new TCanvas("c_ttbar_fail","c_ttbar",800,400) ;
+  gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
 
 
 
@@ -268,10 +272,12 @@ void fit_Signal()
   //Plotting
   RooPlot* frame1_Stop = ak08Pruned_1_mass_Stop.frame(Bins(nbins),Title("Single Top Pass/Match sample")) ;
   dh_StopMatch->plotOn(frame1_Stop) ;
-  gx_Stop.plotOn(frame1_Stop, LineColor(kRed)) ;
-  cheby_Stop.plotOn(frame1_Stop, LineColor(kGreen)) ;
+  //gx_Stop.plotOn(frame1_Stop, LineColor(kRed)) ;
+  //cheby_Stop.plotOn(frame1_Stop, LineColor(kGreen)) ;
   //gx_Stop1.plotOn(frame1_Stop, LineColor(kGreen)) ;
   model_Stop.plotOn(frame1_Stop) ;
+  model_Stop.plotOn(frame1_Stop, Components(gx_Stop), LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
+  model_Stop.plotOn(frame1_Stop, Components(cheby_Stop), LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
   model_Stop.paramOn(frame1_Stop);
 
 //  gx_Stop1.plotOn(frame1_Stop, LineColor(kGreen));
@@ -289,9 +295,12 @@ void fit_Signal()
 //////  //gx_ctl.plotOn(frame2,Slice(sample,"control"),ProjWData(sample,combData), LineColor(kRed)) ;
 //////
   TCanvas* c_Stop = new TCanvas("c_Stop","c_Stop",800,400) ;
-  c_Stop->Divide(2) ;
-  c_Stop->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame1_Stop->Draw() ;
-  c_Stop->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame2_Stop->Draw() ;
+  //c_Stop->Divide(2) ;
+  /*c_Stop->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame1_Stop->Draw() ;
+//  c_Stop->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame2_Stop->Draw() ;
+  
+   TCanvas* c_Stop_fail = new TCanvas("c_Stop_fail","c_Stop",800,400) ;
+   gPad->SetLeftMargin(0.15) ; frame2_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame2_Stop->Draw() ;
 
 
   std::cout<<"+++++++++++++++++++"<<std::endl;
@@ -506,7 +515,7 @@ void fit_Signal()
   RooGaussian gx_bkg1("gx_bkg1","gx_bkg1",ak08Pruned_1_mass_bkg,mean_bkg1,sigma_bkg1) ;
   RooRealVar k_bkg("k_bkg","k_bkg", 2, 0,5);
   RooAddPdf model_bkg("model_bkg", "model_bkg", RooArgList(gx_bkg,gx_bkg1), RooArgList(k_bkg));
-  RooPolynomial p2("p2","p2",ak08Pruned_1_mass_bkg,RooArgList(a_bkg,a1_bkg,a2_bkg),0) ;
+  RooChebychev p2("p2","p2",ak08Pruned_1_mass_bkg,RooArgSet(a_bkg,a1_bkg,a2_bkg));//,0) ;
   //RooGenericPdf passBkg("passBkg", "passBkg", "(1+(TMath::Erf((ak08Pruned_1_mass_bkg-a_bkg)/b_bkg)))*0.5*exp(-(mean_bkg-ak08Pruned_1_mass_bkg)*(mean_bkg-ak08Pruned_1_mass_bkg)/(2*sigma_bkg*sigma_bkg))", RooArgSet(ak08Pruned_1_mass_bkg, a_bkg, b_bkg, mean_bkg, sigma_bkg));
   p2.fitTo(*dh_bkgPass) ;
 
@@ -514,6 +523,7 @@ void fit_Signal()
   RooPlot* frame1_bkg = ak08Pruned_1_mass_bkg.frame(Bins(nbins),Title("BackGround Pass sample")) ;
   dh_bkgPass->plotOn(frame1_bkg) ;
   /*model_bkg*/p2.plotOn(frame1_bkg);
+  p2.paramOn(frame1_bkg);
   //RooPlot* frame2_ttbar = ak08Pruned_1_mass_ttbar.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   //dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
   TCanvas* c_bkg = new TCanvas("c_bkg","c_bkg",800,400) ;
@@ -549,9 +559,9 @@ void fit_Signal()
   RooExtendPdf p2_pass_norm("p2_pass_norm","p2_pass_norm", p2_pass, Nbkg);
   //RooAddPdf gauss2_pass("gauss2_pass", "gauss2_pass",RooArgList(gx_pass,gx_pass1) );
 
-  RooRealVar a_pass1("a_pass1","a_Stop", 1,-100,100);
-  RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
-  RooRealVar a2_pass1("a2_pass1","a2_Stop", -0.1,-1,1);
+  RooRealVar a_pass1("a_pass1","a_pass1", 1,-100,100);
+  RooRealVar a1_pass1("a1_pass1","a1_pass1", 0.1,-1,1);
+  RooRealVar a2_pass1("a2_pass1","a2_pass1", -0.1,-1,1);
   /*RooRealVar a_pass1("a_pass1","a_Stop", 1,-1,1);
   RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
   RooRealVar a2_pass1("a2_pass1","a2_Stop", -0.1,-1,1);
@@ -578,7 +588,7 @@ void fit_Signal()
   //RooDataSet protoData("protoData", "protoData", ak08Pruned_1_mass_pass);
   RooHistPdf histpdf1("histpdf1","histpdf1",ak08Pruned_1_mass_pass,*dh_totalPass,0) ;
   RooMCStudy* mcstudy = new RooMCStudy(/*histpdf1,*/ modelPass,ak08Pruned_1_mass_pass,Binned(kTRUE),Silence(),Extended(), FitOptions(Save(kTRUE),PrintEvalErrors(0)));
-  int Ngen=1;
+  int Ngen=10000;
   mcstudy->generateAndFit(Ngen, /*Nsig.getValV()+Nbkg.getValV()*/0, kTRUE);
 
   bool kTrue= 1;
@@ -615,6 +625,7 @@ void fit_Signal()
   //RooGaussian gx_test("gx_test","gx_pass1",ak08Pruned_1_mass_pass,(RooRealVar &)mean_fitresult,(RooRealVar &)sigma_fitresult) ;
   //gx_test.plotOn(frame2_MCStudy);
   TH1D* pull= new TH1D("pull","pull", 400, -30,30);
+  //pull->SetStats(0);
   std::cout<<"Nttbar True: "<<Nttbar_true.getValV()<</*" Nttbar BKG: "<<NttbarBKG_true<<*/" NStop true: "<<NStop_true.getValV()<<std::endl;
 
   int testCounter=0;

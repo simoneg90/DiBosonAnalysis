@@ -78,8 +78,9 @@ void analysisClass::Loop()
 
    double lepton_mass;
    std::vector <int> goodLepton, looseLepton, goodAK08, goodAK04, goodAK08_lep, goodAK04_lep, goodAK08Pruned, goodEle, goodMuon, looseEle, looseMuon;
-   TLorentzVector genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSum;
-   int btag_ak04;
+   TLorentzVector genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum;
+   int btag_ak04_loose, btag_ak04_medium, btag_ak04_tight;
+   int subjet_index1, subjet_index2;
    ////// The following ~7 lines have been taken from rootNtupleClass->Loop() /////
    ////// If the root version is updated and rootNtupleClass regenerated,     /////
    ////// these lines may need to be updated.                                 /////    
@@ -95,7 +96,9 @@ void analysisClass::Loop()
      ////////////////////// User's code starts here ///////////////////////
 
      ///Stuff to be done for every event
-     btag_ak04=0;
+     btag_ak04_loose=0;
+     btag_ak04_medium=0;
+     btag_ak04_tight=0;
      goodLepton.clear();
      looseLepton.clear();
      goodAK04.clear();
@@ -176,12 +179,48 @@ void analysisClass::Loop()
       fillVariableWithValue("ak08Ungroomed_1_mass", FatjetAK08ungroomed_mass[goodAK08[0]]);
       fillVariableWithValue("ak08Ungroomed_1_tau21", FatjetAK08ungroomed_tau2[goodAK08[0]]/FatjetAK08ungroomed_tau1[goodAK08[0]]);
       ak08.SetPtEtaPhiM(FatjetAK08ungroomed_pt[goodAK08[0]], FatjetAK08ungroomed_eta[goodAK08[0]], FatjetAK08ungroomed_phi[goodAK08[0]], FatjetAK08ungroomed_mass[goodAK08[0]]);
+      double minDR_subjetJet=999.;
+      subjet_index1=subjet_index2=0;
+      for(int s=0; s<nSubjetAK08pruned; ++s){
+        subjet1.SetPtEtaPhiM(SubjetAK08pruned_pt[s], SubjetAK08pruned_eta[s], SubjetAK08pruned_phi[s], SubjetAK08pruned_mass[s]);
+        for(int ss=0; ss<nSubjetAK08pruned; ++ss){
+          if(ss!=s){
+            subjet2.SetPtEtaPhiM(SubjetAK08pruned_pt[ss], SubjetAK08pruned_eta[ss], SubjetAK08pruned_phi[ss], SubjetAK08pruned_mass[ss]);
+            subjetSum=subjet1+subjet2;
+            if(subjetSum.DeltaR(ak08)){
+              minDR_subjetJet=subjetSum.DeltaR(ak08);
+              subjet_index1=s;
+              subjet_index2=ss;
+            }
+          }
+        }
+      }//end loop over subjets
+      fillVariableWithValue("ak08_subjetDR", minDR_subjetJet);
+      if(nSubjetAK08pruned>0){
+        subjet1.SetPtEtaPhiM(SubjetAK08pruned_pt[subjet_index1], SubjetAK08pruned_eta[subjet_index1], SubjetAK08pruned_phi[subjet_index1], SubjetAK08pruned_mass[subjet_index1]);
+        subjet2.SetPtEtaPhiM(SubjetAK08pruned_pt[subjet_index2], SubjetAK08pruned_eta[subjet_index2], SubjetAK08pruned_phi[subjet_index2], SubjetAK08pruned_mass[subjet_index2]);
+        if(SubjetAK08pruned_btag[subjet_index1]>0.605) fillVariableWithValue("subjet1_btagLoose", 1);
+        if(SubjetAK08pruned_btag[subjet_index1]>0.89) fillVariableWithValue("subjet1_btagMedium", 1);
+        if(SubjetAK08pruned_btag[subjet_index1]>0.97) fillVariableWithValue("subjet1_btagTight", 1);
+        if(SubjetAK08pruned_btag[subjet_index2]>0.605) fillVariableWithValue("subjet2_btagLoose", 1);
+        if(SubjetAK08pruned_btag[subjet_index2]>0.89) fillVariableWithValue("subjet2_btagMedium", 1);
+        if(SubjetAK08pruned_btag[subjet_index2]>0.97) fillVariableWithValue("subjet2_btagTight", 1);
+
+      }
       double minDR_W=999;
       int w_counter=0;
       if(isData==0){
         if(nGenWZQuark==2){
           wGenQ1.SetPtEtaPhiM(GenWZQuark_pt[0], GenWZQuark_eta[0], GenWZQuark_phi[0], GenWZQuark_mass[0]);
           wGenQ2.SetPtEtaPhiM(GenWZQuark_pt[1], GenWZQuark_eta[1], GenWZQuark_phi[1], GenWZQuark_mass[1]);
+          if(nSubjetAK08pruned>0){
+            fillVariableWithValue("subjet1_qGen1_DR", wGenQ1.DeltaR(subjet1));
+            fillVariableWithValue("subjet2_qGen2_DR", wGenQ2.DeltaR(subjet2));
+            std::cout<<"1. "<<wGenQ1.DeltaR(subjet1)<<std::endl;
+          }else{
+            fillVariableWithValue("subjet1_qGen1_DR", -1);
+            fillVariableWithValue("subjet2_qGen2_DR", -1);
+          }
           wGenSum=wGenQ1+wGenQ2;
           for (int w=0; w<nGenVbosons; ++w){
             if(abs(GenVbosons_pdgId[w])==24){
@@ -204,7 +243,10 @@ void analysisClass::Loop()
           fillVariableWithValue("W_Gen_eta", GenVbosons_eta[w_counter]);
           fillVariableWithValue("W_Gen_phi", GenVbosons_phi[w_counter]);
           fillVariableWithValue("lepton_WGen_DR", lepton.DeltaR(genW));
-        }//end if 2 quarks from VBosons
+        }else{//end if 2 quarks from VBosons
+          fillVariableWithValue("subjet1_qGen1_DR", -1);
+          fillVariableWithValue("subjet2_qGen2_DR", -1);
+        }
       }//end if isData
       else{
         fillVariableWithValue("ak08Ungroomed_WGen_DR",minDR_W);
@@ -265,8 +307,14 @@ void analysisClass::Loop()
           if(ak04.DeltaR(ak08)>.8 && ak04.DeltaR(lepton)>.3){
             CreateAndFillUserTH1D("Ak04_lepton&AK08_DRCut", 2,-.5,1.5, 1);
             goodAK04_lep.push_back(goodAK04[j]);
+            if(Jet_btagCSV[goodAK04[j]]>0.605){
+              ++btag_ak04_loose;
+            }
             if(Jet_btagCSV[goodAK04[j]]>0.890){
-              ++btag_ak04;
+              ++btag_ak04_medium;
+            }
+            if(Jet_btagCSV[goodAK04[j]]>0.97){
+              ++btag_ak04_tight;
             }//end if for CSV medium working point
           }//end if ak04 without leptons and ak08 nearby
         }//end loop over goodAK04.size()
@@ -278,7 +326,9 @@ void analysisClass::Loop()
         fillVariableWithValue("lepton2_phi", selLeptons_phi[goodLepton[1]]);
         fillVariableWithValue("lepton2_pdgID", selLeptons_pdgId[goodLepton[1]]);
       }
-      fillVariableWithValue("btag",btag_ak04);
+      fillVariableWithValue("btag_loose",btag_ak04_loose);
+      fillVariableWithValue("btag_medium",btag_ak04_medium);
+      fillVariableWithValue("btag_tight",btag_ak04_tight);
       if(goodAK08Pruned.size()>=1){
         fillVariableWithValue("ak08Pruned_1_pt", FatjetAK08pruned_pt[goodAK08Pruned[0]]);
         fillVariableWithValue("ak08Pruned_1_eta", FatjetAK08pruned_eta[goodAK08Pruned[0]]);

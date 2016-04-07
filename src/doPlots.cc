@@ -226,7 +226,7 @@ int main(int argc, char* argv[]){
   
   setTDRStyle(); 
   //Color_t COLOR[] = {kRed+1, kGreen+3, kAzure-1, kViolet-3, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
-  Color_t COLOR[] = {kAzure-1, kRed, kCyan, kGreen+2, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
+  Color_t COLOR[] = {kGreen+2,kAzure-1, kCyan, kSpring-9,kOrange+9,kGreen+2,kBlue+0, kOrange+8, kCyan+0};
 
   TH1D *histoD[MAX_NUMBER];//histos for project
   TH1D *bkgCounts[MAX_NUMBER];//histos to count events to rescale
@@ -378,7 +378,7 @@ int main(int argc, char* argv[]){
   //TCanvas *c[10];
   TFile *outFile = new TFile(Form("%s.root",outString.c_str()), "RECREATE");
   for(int i=0; i<=bkg_counter; ++i){
-    c[i]=new TCanvas(Form("c%d",i), "Grafico1", 200, 10, 600, 400);
+    c[i]=new TCanvas(Form("c%d",i), "Grafico1",1);// 200, 10, 600, 400);
     histoBkg[i]->Draw("hist");
     c[i]->SaveAs(Form("c%d.png",i));
     std::cout<<"Integral: "<<histoBkg[i]->Integral()<<std::endl;
@@ -392,8 +392,8 @@ int main(int argc, char* argv[]){
     bkgStack->Add(histoBkg[i]);
   }
   
-  setTDRStyle();
-  TCanvas *c_histo = new TCanvas("c_histo", "Grafico1", 200, 10, 600, 400);
+  //setTDRStyle();
+  TCanvas *c_histo = new TCanvas("c_histo", "Grafico1", 1);//200, 10, 600, 400);
   std::cout<<"Defined canvas"<<std::endl; 
 
   std::ofstream effList;
