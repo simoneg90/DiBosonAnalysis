@@ -226,7 +226,9 @@ int main(int argc, char* argv[]){
   
   setTDRStyle(); 
   //Color_t COLOR[] = {kRed+1, kGreen+3, kAzure-1, kViolet-3, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
-  Color_t COLOR[] = {kGreen+2,kAzure-1, kCyan, kSpring-9,kOrange+9,kGreen+2,kBlue+0, kOrange+8, kCyan+0};
+  //Color_t COLOR[] = {kGreen+2,kAzure-1, kCyan, kSpring-9,kOrange+9,kGreen+2,kBlue+0, kOrange+8, kCyan+0};
+  Color_t COLOR[] = {kAzure-1, kRed, kCyan, kSpring+7,kGreen+2, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
+  //Color_t COLOR[] = {kAzure+8,kAzure-2, kTeal+9, kSpring+7, kPink+7, kPink+6,kOrange-3,kOrange-2,kOrange-1, kMagenta, kCyan};
 
   TH1D *histoD[MAX_NUMBER];//histos for project
   TH1D *bkgCounts[MAX_NUMBER];//histos to count events to rescale
@@ -320,6 +322,7 @@ int main(int argc, char* argv[]){
     dir->GetObject("tree", tree[file_counter]);
     std::cout<<"Creating Histo"<<std::endl;
     histoD[file_counter] = new TH1D(Form("histo_%d", file_counter), Form("histo_%d", file_counter),bins,min,max);
+    //histoD[file_counter]->Sumw2();
     std::cout<<"Projecting"<<std::endl;
     tree[file_counter]->Project(Form("histo_%d", file_counter),Form("%s", variable.c_str()),cut.c_str());
     //std::cout<<"Scaling"<<std::endl;
@@ -329,7 +332,9 @@ int main(int argc, char* argv[]){
       std::cout<<"DATA!"<<std::endl;
       if(isData==0) {
         allBkgHisto= new TH1D("allBkgHisto","allBkgHisto", bins,min,max);
+        allBkgHisto->Sumw2();
         dataHisto= new TH1D("dataHisto","dataHisto", bins,min,max);
+        //dataHisto->Sumw2();
         std::cout<<"Data counts: "<<counts<<std::endl;
         //dataHisto->GetXaxis()->SetTitle(xTitle.c_str());
         dataHisto->GetYaxis()->SetTitle(yTitle.c_str());
@@ -342,6 +347,7 @@ int main(int argc, char* argv[]){
       dataHisto->Add(histoD[file_counter]);
     }else if(strcmp(bkg_nameTMP.c_str(), "signal")==0){
       signalHisto[sgn_counter]= new TH1D(Form("signalHisto_%d",sgn_counter),Form("signalHisto_%d",sgn_counter), bins,min,max);
+      //signalHisto[sgn_counter]->Sumw2();
       leg->AddEntry(signalHisto[sgn_counter],"Signal", "l");
       signalHisto[sgn_counter]->Add(histoD[file_counter]);
       ++sgn_counter;
@@ -359,6 +365,7 @@ int main(int argc, char* argv[]){
         //if(bkg_counter!=-1) bkgStack->Add(histoBkg[bkg_counter]);
         ++bkg_counter;
         histoBkg[bkg_counter]= new TH1D(Form("histo_%s", bkg_name.c_str()), Form("histo_%s", bkg_name.c_str()),bins,min,max);
+        //histoBkg[bkg_counter]->Sumw2();
         histoBkg[bkg_counter]->SetStats(0);
         //histoBkg[bkg_counter]->SetLineColor(COLOR[bkg_counter]);
         histoBkg[bkg_counter]->SetFillColor(COLOR[bkg_counter]);

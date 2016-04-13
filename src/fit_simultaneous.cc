@@ -16,9 +16,11 @@
 #include "RooGlobalFunc.h"
 #include "RooConstVar.h"
 #include "RooChebychev.h"
+#include "RooSimPdfBuilder.h"
 #include "RooAddPdf.h"
 #include "RooProdPdf.h"
 #include "RooPolynomial.h"
+#include "RooWorkspace.h"
 #include "RooSimultaneous.h"
 #include "RooCategory.h"
 #include "RooMCStudy.h"
@@ -172,7 +174,9 @@ int main(int argc, char* argv[]){
 
   //simultaneous pdf declaration [MC]
   RooRealVar efficiency ("efficiency", "efficiency", 0,1.);
-  
+  //RooRealVar efficiency_ctl ("efficiency_ctl", "efficiency", 0,1.);
+  //RooRealVar Nsig_sim_MC_ctl("Nsig_sim_MC_ctl", "Nsig_sim_MC", 1200,10,10000);
+
   //+++ Pass part +++
   RooRealVar ak08Pruned_1_mass_sim_MC("ak08Pruned_1_mass_sim_MC","ak08Pruned_1_mass_sim_MC",mass_min,mass_max) ;
   
@@ -196,7 +200,7 @@ int main(int argc, char* argv[]){
   RooRealVar sigma_fail_sim_MC("sigma_fail_sim_MC","sigma_fail_sim_MC", 10, 0,20);
   RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass_sim_MC,mean_fail_sim_MC,sigma_fail_sim_MC) ;
   
-  RooRealVar a_fail_sim_MC("a_fail_sim_MC","a_fail_sim_MC", 0.1,-1,1);
+  RooRealVar a_fail_sim_MC("a_fail_sim_MC","a_fail_sim_MC", 0.1,-10,10);
   RooRealVar a1_fail_sim_MC("a1_fail_sim_MC","a1_fail_sim_MC", 0.1,-1,1);
   RooRealVar a2_fail_sim_MC("a2_fail_sim_MC","a2_fail_sim_MC", 0.1,-1,1);
   RooChebychev cheby_fail_sim_MC("cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass_sim_MC,RooArgSet(a_fail_sim_MC,a1_fail_sim_MC, a2_fail_sim_MC)) ;
@@ -467,7 +471,7 @@ int main(int argc, char* argv[]){
   model_fail_MC.plotOn(frame1_fail, Components(gx_fail_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
   model_fail_MC.plotOn(frame1_fail, Components(cheby_fail_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
   model_fail_MC.plotOn(frame1_fail);
-  model_fail_MC.paramOn(frame1_fail);
+  //model_fail_MC.paramOn(frame1_fail);
   gPad->SetLeftMargin(0.15) ; frame1_fail->GetYaxis()->SetTitleOffset(1.4) ; frame1_fail->Draw() ;
   
   c_fail_MC->SaveAs("provaRoofit_1.png");
@@ -477,30 +481,39 @@ int main(int argc, char* argv[]){
   RooDataHist *dh_totalPass_sim = new RooDataHist("dh_totalPass_sim", "dh_totalPass_sim", ak08Pruned_1_mass_sim_MC, Import(*allBkgHisto_pass));
   RooDataHist *dh_totalFail_sim = new RooDataHist("dh_totalFail_sim", "dh_totalFail_sim", ak08Pruned_1_mass_sim_MC, Import(*allBkgHisto_fail));
   RooDataHist combData_MC("combData_MC","combined data for MC",ak08Pruned_1_mass_sim_MC,Index(sample_MC),Import("passed",*dh_totalPass_sim), Import("failed", *dh_totalFail_sim));
-
+  //adding
+  
+  //end adding
   RooSimultaneous simPdf_MC("simPdf_MC","simultaneous pdf for MC",sample_MC) ;
   simPdf_MC.addPdf(modelPass_sim_MC,"passed") ;
   simPdf_MC.addPdf(model_fail_sim_MC, "failed");
-
+  //simPdf_MC.addParameters(efficiency, mean_pass_sim_MC, sigma_pass_sim_MC,a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC,Nsig_sim_MC,Nbkg_pass_sim_MC,mean_fail_sim_MC,sigma_fail_sim_MC,a_fail_sim_MC,a1_fail_sim_MC,a2_fail_sim_MC,Nbkg_fail_sim_MC);
   simPdf_MC.fitTo(combData_MC);
-  TCanvas *c_sim_MC = new TCanvas("c_sim_MC", "Grafico1", 200, 10, 600, 400);
+  TCanvas *c_sim_MC = new TCanvas("c_sim_MC", "Simultaneous PDF",1);// 200, 10, 600, 400);
   c_sim_MC->Divide(2) ;
   RooPlot* frame1_sim = ak08Pruned_1_mass_sim_MC.frame(Bins(22),Title("Pass sample")) ;
   RooPlot* frame2_sim = ak08Pruned_1_mass_sim_MC.frame(Bins(22),Title("Fail sample")) ;
-  dh_totalPass_sim->plotOn(frame1_sim);
+  dh_totalPass_sim->plotOn(frame1_sim);//,Cut("sample_MC==sample_MC::passed"));
+  //combData_MC.plotOn(frame1_sim,Cut("sample_MC==sample_MC::passed"));
   /*gx_pass_sim_MC.plotOn(frame1_sim, LineColor(kRed));
   p2_pass_sim_MC.plotOn(frame1_sim, LineColor(kGreen));*/
-  simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"), Components(gx_pass_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
-  simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"), Components(p2_pass_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
-  simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
-  simPdf_MC.paramOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
+  //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"), Components(gx_pass_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kRed));//,Normalization(1.0,RooAbsReal::RelativeExpected));
+  //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"), Components(p2_pass_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kGreen));//,Normalization(1.0,RooAbsReal::RelativeExpected));
+  modelPass_sim_MC.plotOn(frame1_sim);
+  modelPass_sim_MC.plotOn(frame1_sim,Components(gx_pass_sim_MC),LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
+  modelPass_sim_MC.plotOn(frame1_sim,Components(p2_pass_sim_MC),LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
+  //simPdf_MC.paramOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
   dh_totalFail_sim->plotOn(frame2_sim);
   /*gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
   cheby_fail_sim_MC.plotOn(frame2_sim, LineColor(kGreen));*/
-  simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"), Components(gx_fail_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
-  simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"), Components(cheby_fail_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
-  simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ;
-  simPdf_MC.paramOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ; 
+  model_fail_sim_MC.plotOn(frame2_sim);
+  model_fail_sim_MC.plotOn(frame2_sim,Components(gx_fail_sim_MC),LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected) );
+  model_fail_sim_MC.plotOn(frame2_sim,Components(cheby_fail_sim_MC),LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  //simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"), Components(gx_fail_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
+  //simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"), Components(cheby_fail_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
+  //simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ;
+  //simPdf_MC.paramOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ; 
   c_sim_MC->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1_sim->GetYaxis()->SetTitleOffset(1.4) ; frame1_sim->Draw() ;
   c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
   c_sim_MC->SaveAs("provaRoofitSim.png");

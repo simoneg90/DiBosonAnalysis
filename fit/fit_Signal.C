@@ -24,7 +24,7 @@
 using namespace RooFit ;
 
 #define nbins 22
-#define xmin 45
+#define xmin 0
 #define xMax 130
 #define Lumi 2.2*1000 //[pb-1]
 
@@ -34,12 +34,13 @@ void fit_Signal()
 
   //Take variable from tree
   
-  std::string cut_matched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR<.1";
-  std::string cut_unmatched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR>.3";//&&lepton_WGen_DR>1";
-  std::string cut_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6";//"((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6";
-  std::string cut_fail = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21>0.6";
-  std::string cut = "abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&btag>0&&lepton_pt>40&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Pruned_1_mass>40&&ak08Pruned_1_mass<150&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR<0.1";
-  std::string cutCtl = "abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&btag>0&&lepton_pt>40&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Pruned_1_mass>40&&ak08Pruned_1_mass<150&&ak08Ungroomed_1_tau21>0.6";
+  std::string cut_matched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40&&lepton_goodNumber==1))&&(btag_loose>1&&btag_medium>0)&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR<.1&&subjet1_qGen1_DR<0.1&&subjet2_qGen2_DR<0.1&&ak08_subjetDR<0.1";//&&ak08Ungroomed_WGen_DR<.1";
+  std::string cut_unmatched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&(btag_loose>1&&btag_medium>0)&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&nLepton==1&&ak08Ungroomed_WGen_DR>.1&&subjet1_qGen1_DR>0.1&&subjet2_qGen2_DR>0.1&&ak08_subjetDR>0.1";//&&ak08Ungroomed_WGen_DR<.1";
+  //USED BEFRE SIGNAL STUDY!!!   std::string cut_unmatched_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag_medium>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR>.1";//&&lepton_WGen_DR>1";
+  std::string cut_pass = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag_medium>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6";//"((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21<0.6";
+  std::string cut_fail = "((abs(lepton_pdgID)==11&&((abs(lepton_eta)>0&&abs(lepton_eta)<1.442)||(abs(lepton_eta)>1.56&&abs(lepton_eta)<2.5))&&metType1>80&&lepton_pt>120&&ak08Ungroomed_lepton_DR>1&&lepton_goodNumber==1)||(abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&lepton_pt>40))&&btag_medium>0&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Ungroomed_1_tau21>0.6";
+  std::string cut = "abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&btag_medium>0&&lepton_pt>40&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Pruned_1_mass>40&&ak08Pruned_1_mass<150&&ak08Ungroomed_1_tau21<0.6&&ak08Ungroomed_WGen_DR<0.1";
+  std::string cutCtl = "abs(lepton_pdgID)==13&&muonRelIso03<0.1&&metType1>40&&btag_medium>0&&lepton_pt>40&&ak08Ungroomed_1_pt>200&&WType1_pt>200&&ak08Pruned_1_mass>40&&ak08Pruned_1_mass<150&&ak08Ungroomed_1_tau21>0.6";
   std::string variable="ak08Pruned_1_mass";
 
   std::cout<<"String 1: "<<cut_matched_pass.c_str()<<std::endl;
@@ -118,20 +119,21 @@ void fit_Signal()
   //p2_ttbar.plotOn(frame1_ttbar, LineColor(kGreen));
   //gx_ttbar1.plotOn(frame1_ttbar, LineColor(kGreen));
   //cheby_ttbar.plotOn(frame1_ttbar, LineColor(kGreen));
-  //model_ttbar.plotOn(frame1_ttbar);//, LineStyle(8));
-  //model_ttbar.plotOn(frame1_ttbar, Components(gx_ttbar), LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
-  //model_ttbar.plotOn(frame1_ttbar, Components(cheby_ttbar), LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  model_ttbar.plotOn(frame1_ttbar);//, LineStyle(8));
+  model_ttbar.plotOn(frame1_ttbar, Components(gx_ttbar), LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
+  model_ttbar.plotOn(frame1_ttbar, Components(cheby_ttbar), LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
   //model_ttbar.paramOn(frame1_ttbar);
   RooPlot* frame2_ttbar = ak08Pruned_1_mass_ttbar.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
-  TCanvas* c_ttbar = new TCanvas("c_ttbar","c_ttbar",800,400) ;
+  TCanvas* c_ttbar = new TCanvas("c_ttbar","c_ttbar",1);//800,400) ;
   //c_ttbar->Divide(2) ;
   /*c_ttbar->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame1_ttbar->Draw() ;
   //c_ttbar->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
-  TCanvas* c_ttbar_fail = new TCanvas("c_ttbar_fail","c_ttbar",800,400) ;
+  TCanvas* c_ttbar_fail = new TCanvas("c_ttbar_fail","c_ttbar",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
 
 
+  std::cout<<"Entries: "<<hh_ttbar1->GetEntries()<<" Integral: "<<hh_ttbar1->Integral()<<std::endl;
 
   //return;
 
@@ -294,14 +296,15 @@ void fit_Signal()
 //////  //px_ctl.plotOn(frame2,Slice(sample,"control"),ProjWData(sample,combData), LineColor(kGreen)) ;
 //////  //gx_ctl.plotOn(frame2,Slice(sample,"control"),ProjWData(sample,combData), LineColor(kRed)) ;
 //////
-  TCanvas* c_Stop = new TCanvas("c_Stop","c_Stop",800,400) ;
+  TCanvas* c_Stop = new TCanvas("c_Stop","c_Stop",1);//800,400) ;
   //c_Stop->Divide(2) ;
   /*c_Stop->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame1_Stop->Draw() ;
 //  c_Stop->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame2_Stop->Draw() ;
   
-   TCanvas* c_Stop_fail = new TCanvas("c_Stop_fail","c_Stop",800,400) ;
+   TCanvas* c_Stop_fail = new TCanvas("c_Stop_fail","c_Stop",1);//800,400) ;
    gPad->SetLeftMargin(0.15) ; frame2_Stop->GetYaxis()->SetTitleOffset(1.4) ; frame2_Stop->Draw() ;
 
+  //return;
 
   std::cout<<"+++++++++++++++++++"<<std::endl;
   std::cout<<"      DiBoson      "<<std::endl;
@@ -358,7 +361,7 @@ void fit_Signal()
   hh_DiBoson_pass->Add(hh_ZZ);
   hh_DiBoson_fail->Add(hh_ZZCtl);
   std::cout<<"Scale Factor: "<<xSec_ZZ*Lumi/nEvt_ZZ<<std::endl;
-  TCanvas* c_Diboson = new TCanvas("c_Diboson","c_Diboson",800,400) ;
+  TCanvas* c_Diboson = new TCanvas("c_Diboson","c_Diboson",1);//800,400) ;
   hh_DiBoson_pass->Draw();
 
 
@@ -489,7 +492,7 @@ void fit_Signal()
   hh_Wjet_fail->Add(hh_W_2500_InfCtl);
   std::cout<<"Scale Factor: "<<xSec_W_2500_Inf*Lumi/nEvt_W_2500_Inf<<std::endl;
 
-  TCanvas* c_Wjet = new TCanvas("c_Wjet","c_Wjet",800,400) ;
+  TCanvas* c_Wjet = new TCanvas("c_Wjet","c_Wjet",1);//800,400) ;
   hh_Wjet_pass->Draw();
 
 
@@ -498,7 +501,7 @@ void fit_Signal()
   hh_bkgPass->Add(hh_DiBoson_pass);
   hh_bkgPass->Add(hh_ttbarUnMatch);
   hh_bkgPass->Add(hh_Stop_unmatch);
-  //TCanvas* c_bkg = new TCanvas("c_bkg", "c_bkg",800,400);
+  //TCanvas* c_bkg = new TCanvas("c_bkg", "c_bkg",1);//800,400);
   //hh_bkgPass->Draw();
 
   RooRealVar ak08Pruned_1_mass_bkg("ak08Pruned_1_mass_bkg","ak08Pruned_1_mass_bkg",xmin,xMax) ;
@@ -526,7 +529,7 @@ void fit_Signal()
   p2.paramOn(frame1_bkg);
   //RooPlot* frame2_ttbar = ak08Pruned_1_mass_ttbar.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   //dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
-  TCanvas* c_bkg = new TCanvas("c_bkg","c_bkg",800,400) ;
+  TCanvas* c_bkg = new TCanvas("c_bkg","c_bkg",1);//800,400) ;
   //c_ttbar->Divide(2) ;
   /*c_ttbar->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_bkg->GetYaxis()->SetTitleOffset(1.4) ; frame1_bkg->Draw() ;
   //c_ttbar->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
@@ -579,7 +582,7 @@ void fit_Signal()
   modelPass.plotOn(frame1_pass, Normalization(1.0,RooAbsReal::RelativeExpected));
   modelPass.paramOn(frame1_pass);
 
-  TCanvas* c_pass = new TCanvas("c_pass","c_pass",800,400) ;
+  TCanvas* c_pass = new TCanvas("c_pass","c_pass",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame1_pass->GetYaxis()->SetTitleOffset(1.4) ; frame1_pass->Draw() ;
 
   std::cout<<"+++++++++++++++++++++++++++"<<std::endl;
@@ -588,7 +591,7 @@ void fit_Signal()
   //RooDataSet protoData("protoData", "protoData", ak08Pruned_1_mass_pass);
   RooHistPdf histpdf1("histpdf1","histpdf1",ak08Pruned_1_mass_pass,*dh_totalPass,0) ;
   RooMCStudy* mcstudy = new RooMCStudy(/*histpdf1,*/ modelPass,ak08Pruned_1_mass_pass,Binned(kTRUE),Silence(),Extended(), FitOptions(Save(kTRUE),PrintEvalErrors(0)));
-  int Ngen=10000;
+  int Ngen=10;
   mcstudy->generateAndFit(Ngen, /*Nsig.getValV()+Nbkg.getValV()*/0, kTRUE);
 
   bool kTrue= 1;
@@ -600,24 +603,24 @@ void fit_Signal()
   RooPlot* frame6_MCStudy = mcstudy->plotPull(a_pass1, Bins(40), FitGauss(kTrue));
   RooPlot* frame7_MCStudy = mcstudy->plotPull(a1_pass1, Bins(40), FitGauss(kTrue));
   RooPlot* frame8_MCStudy = mcstudy->plotPull(a2_pass1, Bins(40), FitGauss(kTrue));
-  TCanvas* c_MCStudy1 = new TCanvas("c_MCStudy1","c_toy",800,400) ;
+  TCanvas* c_MCStudy1 = new TCanvas("c_MCStudy1","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame1_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame1_MCStudy->Draw() ;
-  TCanvas* c_MCStudy3 = new TCanvas("c_MCStudy3","c_toy",800,400) ;
+  TCanvas* c_MCStudy3 = new TCanvas("c_MCStudy3","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame3_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame3_MCStudy->Draw() ;
-  TCanvas* c_MCStudy4 = new TCanvas("c_MCStudy4","c_toy",800,400) ;
+  TCanvas* c_MCStudy4 = new TCanvas("c_MCStudy4","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame4_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame4_MCStudy->Draw() ;
-  TCanvas* c_MCStudy5 = new TCanvas("c_MCStudy5","c_toy",800,400) ;
+  TCanvas* c_MCStudy5 = new TCanvas("c_MCStudy5","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame5_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame5_MCStudy->Draw() ;
-  TCanvas* c_MCStudy6 = new TCanvas("c_MCStudy6","c_toy",800,400) ;
+  TCanvas* c_MCStudy6 = new TCanvas("c_MCStudy6","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame6_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame6_MCStudy->Draw() ;
-  TCanvas* c_MCStudy7 = new TCanvas("c_MCStudy7","c_toy",800,400) ;
+  TCanvas* c_MCStudy7 = new TCanvas("c_MCStudy7","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame7_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame7_MCStudy->Draw() ;
-  TCanvas* c_MCStudy8 = new TCanvas("c_MCStudy8","c_toy",800,400) ;
+  TCanvas* c_MCStudy8 = new TCanvas("c_MCStudy8","c_toy",1);//800,400) ;
   gPad->SetLeftMargin(0.15) ; frame8_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame8_MCStudy->Draw() ;
 
   std::cout<<"plotting second pull"<<std::endl;
   RooPlot* frame2_MCStudy = ak08Pruned_1_mass_pass.frame(Bins(nbins),Title("Pass sample")) ;//mcstudy->plotPull(Nbkg, Bins(40), FitGauss(kTrue));
-  TCanvas* c_toy = new TCanvas("c_toy","c_toy",800,400) ;
+  TCanvas* c_toy = new TCanvas("c_toy","c_toy",1);//800,400) ;
   //mcstudy->fitParDataSet().get(1)->writeToFile("../counter.txt");//Print("v");
   //c_toy->Divide(2) ;
   //c_toy->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame1_MCStudy->Draw() ;
@@ -672,7 +675,7 @@ void fit_Signal()
   //rfa1->plotOn(frame2_MCStudy);
   /*c_toy->cd(2) ;*/ gPad->SetLeftMargin(0.15) ; frame2_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame2_MCStudy->Draw() ;
   
-  TCanvas* c_pull = new TCanvas("c_pull", "c_pull", 800,400) ;
+  TCanvas* c_pull = new TCanvas("c_pull", "c_pull", 1);//800,400) ;
   //RooPlot* frame1_toy = ak08Pruned_1_mass_pass.frame(Bins(nbins),Title("Pass sample")) ;
   TH1* hh_cor_a0_s1f = mcstudy->fitParDataSet().createHistogram("hh",mean_pass,YVar(sigma_pass)) ;
   //myTestF->Draw();

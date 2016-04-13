@@ -10,6 +10,7 @@
 #include <TLorentzVector.h>
 #include <TVector2.h>
 #include <TVector3.h>
+#include <TMath.h>
 #include "TStopwatch.h"
 
 #define e_mass 0.0005 //GeV
@@ -78,7 +79,7 @@ void analysisClass::Loop()
 
    double lepton_mass;
    std::vector <int> goodLepton, looseLepton, goodAK08, goodAK04, goodAK08_lep, goodAK04_lep, goodAK08Pruned, goodEle, goodMuon, looseEle, looseMuon;
-   TLorentzVector genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum;
+   TLorentzVector genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum, bGen1, bGen2;
    int btag_ak04_loose, btag_ak04_medium, btag_ak04_tight;
    int subjet_index1, subjet_index2;
    ////// The following ~7 lines have been taken from rootNtupleClass->Loop() /////
@@ -214,9 +215,10 @@ void analysisClass::Loop()
           wGenQ1.SetPtEtaPhiM(GenWZQuark_pt[0], GenWZQuark_eta[0], GenWZQuark_phi[0], GenWZQuark_mass[0]);
           wGenQ2.SetPtEtaPhiM(GenWZQuark_pt[1], GenWZQuark_eta[1], GenWZQuark_phi[1], GenWZQuark_mass[1]);
           if(nSubjetAK08pruned>0){
-            fillVariableWithValue("subjet1_qGen1_DR", wGenQ1.DeltaR(subjet1));
-            fillVariableWithValue("subjet2_qGen2_DR", wGenQ2.DeltaR(subjet2));
-            std::cout<<"1. "<<wGenQ1.DeltaR(subjet1)<<std::endl;
+            fillVariableWithValue("subjet1_qGen1_DR", TMath::Min(wGenQ1.DeltaR(subjet1), wGenQ2.DeltaR(subjet1)));
+            fillVariableWithValue("subjet2_qGen2_DR", TMath::Min(wGenQ1.DeltaR(subjet2), wGenQ2.DeltaR(subjet2)));
+            //std::cout<<"1. "<<TMath::Min(wGenQ1.DeltaR(subjet1), wGenQ2.DeltaR(subjet1))<<std::endl;
+            //std::cout<<"2. "<<TMath::Min(wGenQ1.DeltaR(subjet2), wGenQ2.DeltaR(subjet2))<<std::endl;
           }else{
             fillVariableWithValue("subjet1_qGen1_DR", -1);
             fillVariableWithValue("subjet2_qGen2_DR", -1);
@@ -243,6 +245,14 @@ void analysisClass::Loop()
           fillVariableWithValue("W_Gen_eta", GenVbosons_eta[w_counter]);
           fillVariableWithValue("W_Gen_phi", GenVbosons_phi[w_counter]);
           fillVariableWithValue("lepton_WGen_DR", lepton.DeltaR(genW));
+          bGen1.SetPtEtaPhiM(GenBQuarkFromTop_pt[0],GenBQuarkFromTop_eta[0],GenBQuarkFromTop_phi[0],GenBQuarkFromTop_mass[0]);
+          bGen2.SetPtEtaPhiM(GenBQuarkFromTop_pt[1],GenBQuarkFromTop_eta[1],GenBQuarkFromTop_phi[1],GenBQuarkFromTop_mass[1]);
+          fillVariableWithValue("genW_genBquark1_DR", genW.DeltaR(bGen1));
+          fillVariableWithValue("genW_genBquarkMin_DR", TMath::Min(genW.DeltaR(bGen1), genW.DeltaR(bGen2)));
+          fillVariableWithValue("genW_genBquarkMax_DR", TMath::Max(genW.DeltaR(bGen1), genW.DeltaR(bGen2)));
+          //std::cout<<"1. "<<genW.DeltaR(bGen1)<<std::endl;
+          fillVariableWithValue("genW_genBquark2_DR", genW.DeltaR(bGen2));
+         // std::cout<<"2. "<<genW.DeltaR(bGen2)<<std::endl;
         }else{//end if 2 quarks from VBosons
           fillVariableWithValue("subjet1_qGen1_DR", -1);
           fillVariableWithValue("subjet2_qGen2_DR", -1);
@@ -366,7 +376,7 @@ void analysisClass::Loop()
       fillVariableWithValue("CSC_filter",Flag_CSCTightHaloFilter);
       fillVariableWithValue("eeBADFilter", Flag_eeBadScFilter);
       fillVariableWithValue("run", run);
-      
+      fillVariableWithValue("nBtag_gen",nGenBQuarkFromTop); 
 
 
 
