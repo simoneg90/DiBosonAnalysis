@@ -10,9 +10,11 @@ ROOTINC= -I${ROOTSYS}/include
 LIBS= -L.  ${ROOTLIBS} -L${CLHEP}/lib
 SRC= ./src
 SELECTIONLIB=$(SRC)/rootNtupleClass.o $(SRC)/baseClass.o $(SRC)/analysisClass.o ${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH}/libCondFormatsJetMETObjects.so $(SRC)/jsonParser.o $(SRC)/pileupReweighter.o $(SRC)/qcdFitter.o $(SRC)/qcdFitter_V1.o  $(SRC)/likelihoodGetter.o $(SRC)/eventListHelper.o $(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/CMS_lumi.o
-HISTOLIB=$(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/CMS_lumi.o
+HISTOLIB=$(SRC)/utility.o $(SRC)/setTDRStyle.o #$(SRC)/RooDCBShape.o #$(SRC)/CMS_lumi.o
 ROOFITLIB= -lRooFit -lRooFitCore -lHtml -lMinuit
 EXE = main
+HHLIST=$(filter-out include/LinkDef.h,$(wildcard include/*.h))
+
 
 # ********** TEMPLATE *************
 # mainProg: mainProg.o $(SELECTIONLIB)
@@ -34,8 +36,11 @@ singleHistoPlotter: $(SRC)/singleHistoPlotter.o $(HISTOLIB)
 doPlots: $(SRC)/doPlots.o $(HISTOLIB)
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
 
+#RooDCBShape: $(SRC)/RooDCBShape.o $(HISTOLIB)
+#	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
+
 fit_simultaneous: $(SRC)/fit_simultaneous.o $(HISTOLIB)
-	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
 
 #CMS_lumi: $(SRC)/CMS_lumi.o $(HISTOLIB)
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o

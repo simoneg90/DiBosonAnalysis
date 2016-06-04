@@ -15,5 +15,5 @@ echo "[Enter to confirm, Ctrl+C to exit]"
 read
 
 scp -r ${2} ${1}@lxplus.cern.ch:/afs/cern.ch/user/${userLetter}/${1}/www/${3}
-scp ${1}@lxplus.cern.ch:/afs/cern.ch/user/${userLetter}/${1}/www/index.php ${1}@lxplus.cern.ch:/afs/cern.ch/user/${userLetter}/${1}/www/${3}
+scp ${1}@lxplus.cern.ch:/afs/cern.ch/user/${userLetter}/${1}/www/.htaccess ${1}@lxplus.cern.ch:/afs/cern.ch/user/${userLetter}/${1}/www/${3}
 

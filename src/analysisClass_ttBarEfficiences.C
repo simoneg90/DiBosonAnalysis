@@ -206,6 +206,13 @@ void analysisClass::Loop()
         if(SubjetAK08pruned_btag[subjet_index2]>0.605) fillVariableWithValue("subjet2_btagLoose", 1);
         if(SubjetAK08pruned_btag[subjet_index2]>0.89) fillVariableWithValue("subjet2_btagMedium", 1);
         if(SubjetAK08pruned_btag[subjet_index2]>0.97) fillVariableWithValue("subjet2_btagTight", 1);
+        fillVariableWithValue("subjetDR", subjet1.DeltaR(subjet2));
+        fillVariableWithValue("subjet1_pt", SubjetAK08pruned_pt[subjet_index1]);
+        fillVariableWithValue("subjet1_eta", SubjetAK08pruned_eta[subjet_index1]);
+        fillVariableWithValue("subjet1_phi", SubjetAK08pruned_phi[subjet_index1]);
+        fillVariableWithValue("subjet2_pt", SubjetAK08pruned_pt[subjet_index2]);
+        fillVariableWithValue("subjet2_eta", SubjetAK08pruned_eta[subjet_index2]);
+        fillVariableWithValue("subjet2_phi", SubjetAK08pruned_phi[subjet_index2]);
 
       }
       double minDR_W=999;
@@ -214,6 +221,13 @@ void analysisClass::Loop()
         if(nGenWZQuark==2){
           wGenQ1.SetPtEtaPhiM(GenWZQuark_pt[0], GenWZQuark_eta[0], GenWZQuark_phi[0], GenWZQuark_mass[0]);
           wGenQ2.SetPtEtaPhiM(GenWZQuark_pt[1], GenWZQuark_eta[1], GenWZQuark_phi[1], GenWZQuark_mass[1]);
+          fillVariableWithValue("genQ1_pt", GenWZQuark_pt[0]);
+          fillVariableWithValue("genQ1_eta", GenWZQuark_eta[0]);
+          fillVariableWithValue("genQ1_phi", GenWZQuark_phi[0]);
+          fillVariableWithValue("genQ2_pt", GenWZQuark_pt[1]);
+          fillVariableWithValue("genQ2_eta", GenWZQuark_eta[1]);
+          fillVariableWithValue("genQ2_phi", GenWZQuark_phi[1]);
+          fillVariableWithValue("genQ_DR", wGenQ1.DeltaR(wGenQ2));
           if(nSubjetAK08pruned>0){
             fillVariableWithValue("subjet1_qGen1_DR", TMath::Min(wGenQ1.DeltaR(subjet1), wGenQ2.DeltaR(subjet1)));
             fillVariableWithValue("subjet2_qGen2_DR", TMath::Min(wGenQ1.DeltaR(subjet2), wGenQ2.DeltaR(subjet2)));

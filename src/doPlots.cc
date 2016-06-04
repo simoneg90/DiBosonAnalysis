@@ -224,7 +224,7 @@ int main(int argc, char* argv[]){
 
   frame("Plotter env");
   
-  setTDRStyle(); 
+  //setTDRStyle(); 
   //Color_t COLOR[] = {kRed+1, kGreen+3, kAzure-1, kViolet-3, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
   //Color_t COLOR[] = {kGreen+2,kAzure-1, kCyan, kSpring-9,kOrange+9,kGreen+2,kBlue+0, kOrange+8, kCyan+0};
   Color_t COLOR[] = {kAzure-1, kRed, kCyan, kSpring+7,kGreen+2, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
@@ -349,6 +349,7 @@ int main(int argc, char* argv[]){
       signalHisto[sgn_counter]= new TH1D(Form("signalHisto_%d",sgn_counter),Form("signalHisto_%d",sgn_counter), bins,min,max);
       //signalHisto[sgn_counter]->Sumw2();
       leg->AddEntry(signalHisto[sgn_counter],"Signal", "l");
+      histoD[file_counter]->Scale(scaleFactor*lumi/counts);
       signalHisto[sgn_counter]->Add(histoD[file_counter]);
       ++sgn_counter;
 
@@ -465,6 +466,8 @@ int main(int argc, char* argv[]){
     gr->GetXaxis()->SetLabelSize(14);
     gr->GetYaxis()->SetLabelFont(43);
     gr->GetYaxis()->SetLabelSize(14);
+    gr->SetMarkerStyle(8);
+    gr->SetTitle("");
     allBkgHisto->GetXaxis()->SetLabelFont(43);
     allBkgHisto->GetXaxis()->SetLabelSize(14);
     allBkgHisto->GetYaxis()->SetLabelFont(43);
@@ -486,7 +489,13 @@ int main(int argc, char* argv[]){
   
   for(int i=0; i<sgn_counter;++i){
     std::cout<<"Drawing signal n. "<<sgn_counter<<std::endl;
+    std::cout<<"++++++++++++++++++++++ "<<(signalHisto[i]->Integral())<<" "<<integralData<<std::endl;
+    //signalHisto[i]->Scale((signalHisto[i]->Integral())/integralData);
+    std::cout<<"++++++++++++++++++++++ "<<(signalHisto[i]->Integral())<<std::endl;
     signalHisto[i]->SetStats(0);
+    signalHisto[i]->SetLineColor(1);
+    signalHisto[i]->SetLineWidth(4);
+    signalHisto[i]->SetLineStyle(8);
     signalHisto[i]->Draw("histSAME");
 
   }

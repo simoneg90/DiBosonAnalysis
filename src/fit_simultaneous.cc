@@ -1,3 +1,7 @@
+//USAGE: ./fit_simultaneous fit_rootList.txt fit_cutList.txt 2.2 test 1
+
+
+
 #include "doPlots.h"
 #include "setTDRStyle.h"
 #include "utility.h"
@@ -13,6 +17,8 @@
 #include "RooDataSet.h"
 #include "RooDataHist.h"
 #include "RooGaussian.h"
+//#include "RooDCBShape.h"
+//#include "RooDCBShape.cxx"
 #include "RooGlobalFunc.h"
 #include "RooConstVar.h"
 #include "RooChebychev.h"
@@ -29,19 +35,220 @@
 #include "TCanvas.h"
 #include "TAxis.h"
 #include "RooPlot.h"
-
+#include "RooRealProxy.h"
+#include "TMath.h"
+#include "RooMath.h"
 
 #include <fstream>
 
+#define doTOY 1
 
 using namespace RooFit;
 
 #define MAX_bkg 8 //also the n of colors
 #define MAX_sgn 8
-#define mass_min 45
+#define mass_min 40
 #define mass_max 130
+#define toyGen 1000
+//TEST CLASS definition here
+//+++++++++++++++++++++++++
+//Ugly way to do it! Against all c++ laws...
+//but... including it from a different file seems not to work
+//investigation will be done later
+
+class RooDCBShape : public RooAbsPdf {
+   public:
+      RooDCBShape() {} ;
+      RooDCBShape(const char *name, const char *title,
+                        RooAbsReal& _m,
+                        RooAbsReal& _m0,
+                        RooAbsReal& _sigma,
+                        RooAbsReal& _alphaL,
+                        RooAbsReal& _alphaR,
+                        RooAbsReal& _nL,
+                        RooAbsReal& _nR);
+      RooDCBShape(const RooDCBShape& other, const char* name=0) ;
+      virtual TObject* clone(const char* newname) const { return new RooDCBShape(*this,newname); }
+      virtual ~RooDCBShape(); //{ }
+       
+      virtual Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
+      virtual Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
+      
+   protected:
+               
+      RooRealProxy m ;
+      RooRealProxy m0 ;
+      RooRealProxy sigma ;
+      RooRealProxy alphaL ;
+      RooRealProxy alphaR ;
+      RooRealProxy nL ;
+      RooRealProxy nR ;
+      
+      Double_t ApproxErf(Double_t arg) const;
+      Double_t evaluate() const ;
+      
+/*   private:
+   
+      ClassDef(RooDCBShape,1) // Your description goes here...
+*/};
+RooDCBShape::~RooDCBShape(){
+}
+Double_t RooDCBShape::ApproxErf(Double_t arg) const
+{
+   static const double erflim = 5.0;
+   if( arg > erflim )
+   return 1.0;
+   if( arg < -erflim )
+   return -1.0;
+    
+   return RooMath::erf(arg);
+}
+RooDCBShape::RooDCBShape(const char *name, const char *title,
+                             RooAbsReal& _m,
+                             RooAbsReal& _m0,
+                             RooAbsReal& _sigma,
+                             RooAbsReal& _alphaL,
+                             RooAbsReal& _alphaR,
+                             RooAbsReal& _nL,
+                             RooAbsReal& _nR) :
+ RooAbsPdf(name,title),
+ m("m","m",this,_m),
+ m0("m0","m0",this,_m0),
+ sigma("sigma","sigma",this,_sigma),
+ alphaL("alphaL","alphaL",this,_alphaL),
+ alphaR("alphaR","alphaR",this,_alphaR),
+ nL("nL","nL",this,_nL),
+ nR("nR","nR",this,_nR)
+{
+}
 
 
+RooDCBShape::RooDCBShape(const RooDCBShape& other, const char* name) :
+      RooAbsPdf(other,name),
+      m("m",this,other.m),
+      m0("m0",this,other.m0),
+      sigma("sigma",this,other.sigma),
+      alphaL("alphaL",this,other.alphaL),
+      alphaR("alphaR",this,other.alphaR),
+     nL("nL",this,other.nL),
+      nR("nR",this,other.nR)
+{
+}
+
+Double_t RooDCBShape::evaluate() const
+{
+    Double_t t = (m-m0)/sigma;
+     
+    Double_t absAlphaL = fabs((Double_t)alphaL);
+    Double_t absAlphaR = fabs((Double_t)alphaR);
+    
+    if (t >= -absAlphaL && t <= absAlphaR) {
+          return exp(-0.5*t*t);
+    }
+    else if (t < -absAlphaL) {
+          Double_t a = TMath::Power(nL/absAlphaL,nL)*exp(-0.5*absAlphaL*absAlphaL);
+          Double_t b = nL/absAlphaL - absAlphaL;
+          return a/TMath::Power(b - t, nL);
+    }
+    else {
+          Double_t a = TMath::Power(nR/absAlphaR,nR)*exp(-0.5*absAlphaR*absAlphaR);
+          Double_t b = nR/absAlphaR - absAlphaR;
+          return a/TMath::Power(b + t, nR);
+    }
+}
+
+Int_t RooDCBShape::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const
+{
+    // LIST HERE OVER WHICH VARIABLES ANALYTICAL INTEGRATION IS SUPPORTED, 
+    // ASSIGN A NUMERIC CODE FOR EACH SUPPORTED (SET OF) PARAMETERS 
+    // THE EXAMPLE BELOW ASSIGNS CODE 1 TO INTEGRATION OVER VARIABLE X
+    // YOU CAN ALSO IMPLEMENT MORE THAN ONE ANALYTICAL INTEGRAL BY REPEATING THE matchArgs 
+    // EXPRESSION MULTIPLE TIMES
+    
+    if (matchArgs(allVars,analVars,m)) return 1 ;
+    return 0 ;
+}
+
+Double_t RooDCBShape::analyticalIntegral(Int_t code, const char* rangeName) const
+{
+  // RETURN ANALYTICAL INTEGRAL DEFINED BY RETURN CODE ASSIGNED BY getAnalyticalIntegral
+  // THE MEMBER FUNCTION x.min(rangeName) AND x.max(rangeName) WILL RETURN THE INTEGRATION
+  // BOUNDARIES FOR EACH OBSERVABLE x
+  
+  static const double sqrtPiOver2 = 1.2533141373;
+  static const double sqrt2 = 1.4142135624;
+  
+  assert(code==1) ;
+  double result = 0.0;
+  bool useLogL = false;
+  bool useLogR = false;
+  
+  if (fabs(nL-1.0) < 1.e-05)
+    useLogL = true;
+    if (fabs(nR-1.0) < 1.e-05)
+       useLogR = true;
+   
+  double sig = fabs((Double_t)sigma);
+  double absAlphaL = fabs((Double_t)alphaL);
+  double absAlphaR = fabs((Double_t)alphaR);
+  
+  double tmin = (m.min(rangeName)-m0)/sig;
+  double tmax = (m.max(rangeName)-m0)/sig;
+  
+  if (tmin >= -absAlphaL && tmax <= absAlphaR) {
+      result += sig * sqrtPiOver2 * (ApproxErf(tmax/sqrt2) - ApproxErf(tmin/sqrt2));
+  }
+  else if (tmax <= -absAlphaL) {
+    Double_t a = TMath::Power(nL/absAlphaL,nL)*exp(-0.5*absAlphaL*absAlphaL);
+    Double_t b = nL/absAlphaL - absAlphaL;
+    
+    if (useLogL) result += a*sig * (log(b-tmin) - log(b-tmax));
+    else result += a*sig/(1.-nL) * (1./TMath::Power(b-tmin, nL-1.) - 1./TMath::Power(b-tmax, nL-1.));
+  }
+  else if (tmin >= -absAlphaR) {
+    Double_t a = TMath::Power(nR/absAlphaR,nR)*exp(-0.5*absAlphaR*absAlphaR);
+    Double_t b = nR/absAlphaR - absAlphaR;
+    
+    if (useLogR) result += a*sig * (log(b+tmax) - log(b+tmin));
+    else result += a*sig/(1.-nR) * (1./TMath::Power(b+tmax, nR-1.) - 1./TMath::Power(b+tmin, nR-1.));
+  }
+  else if (tmin < -absAlphaL && tmax <= -absAlphaR) {
+    Double_t a = TMath::Power(nL/absAlphaL,nL)*exp(-0.5*absAlphaL*absAlphaL);
+    Double_t b = nL/absAlphaL - absAlphaL;
+    
+    if (useLogL) result += a*sig * (log(b-tmin) - log(nL/absAlphaL));
+    else result += a*sig/(1.-nL) * (1./TMath::Power(b-tmin, nL-1.) - 1./TMath::Power(nL/absAlphaL, nL-1.));
+    result += sig * sqrtPiOver2 * (ApproxErf(tmax/sqrt2) - ApproxErf(-absAlphaL/sqrt2));
+  }
+  else if (tmin >= -absAlphaL && tmax > -absAlphaR) {
+    Double_t a = TMath::Power(nR/absAlphaR,nR)*exp(-0.5*absAlphaR*absAlphaR);
+    Double_t b = nR/absAlphaR - absAlphaR;
+    
+    if (useLogR) result += a*sig * (log(b+tmax) - log(nR/absAlphaR));
+    else result += a*sig/(1.-nR) * (1./TMath::Power(b+tmax, nR-1.) - 1./TMath::Power(nR/absAlphaR, nR-1.));
+    result += sig * sqrtPiOver2 * (ApproxErf(-tmin/sqrt2) - ApproxErf(-absAlphaR/sqrt2));
+  }
+  else {
+    Double_t aL = TMath::Power(nL/absAlphaL,nL)*exp(-0.5*absAlphaL*absAlphaL);
+    Double_t bL = nL/absAlphaL - absAlphaL;
+    Double_t aR = TMath::Power(nR/absAlphaR,nR)*exp(-0.5*absAlphaR*absAlphaR);
+    Double_t bR = nR/absAlphaR - absAlphaR;
+    
+    if (useLogL) result += aL*sig * (log(bL-tmin) - log(nL/absAlphaL));
+    else result += aL*sig/(1.-nL) * (1./TMath::Power(bL-tmin, nL-1.) - 1./TMath::Power(nL/absAlphaL, nL-1.));
+    if (useLogR) result += aR*sig * (log(bR+tmax) - log(nR/absAlphaR));
+    else result += aR*sig/(1.-nR) * (1./TMath::Power(bR+tmax, nR-1.) - 1./TMath::Power(nR/absAlphaR, nR-1.));
+    result += sig * sqrtPiOver2 * (ApproxErf(absAlphaR/sqrt2) - ApproxErf(-absAlphaL/sqrt2));
+  }
+  
+    return result;
+}
+
+
+
+
+
+//END TEST
 
 int main(int argc, char* argv[]){
 
@@ -99,7 +306,7 @@ int main(int argc, char* argv[]){
   RooRealVar a1_pass_MC("a1_pass_MC","a1_pass_MC", 0.1,-1,1);
   RooRealVar a2_pass_MC("a2_pass_MC","a2_pass_MC", 0.1,-1,1);
   RooPolynomial p2_pass_MC("p2_pass_MC","p2_pass_MC",ak08Pruned_1_mass_pass_MC,RooArgList(a_pass_MC,a1_pass_MC,a2_pass_MC),0) ;
-
+  
 /*  RooRealVar a_pass_MC("a_pass_MC","a_pass_MC", 1,-100,100);
   RooRealVar a1_pass_MC("a1_pass_MC","a1_pass_MC", 0.1,-1,1);
   RooRealVar a2_pass_MC("a2_pass_MC","a2_pass_MC", -0.1,-1,1);
@@ -178,40 +385,162 @@ int main(int argc, char* argv[]){
   //RooRealVar Nsig_sim_MC_ctl("Nsig_sim_MC_ctl", "Nsig_sim_MC", 1200,10,10000);
 
   //+++ Pass part +++
-  RooRealVar ak08Pruned_1_mass_sim_MC("ak08Pruned_1_mass_sim_MC","ak08Pruned_1_mass_sim_MC",mass_min,mass_max) ;
+  RooRealVar ak08Pruned_1_mass("ak08Pruned_1_mass","ak08Pruned_1_mass",mass_min,mass_max) ;
+  RooRealVar ak08Ungroomed_1_tau21("ak08Ungroomed_1_tau21","ak08Ungroomed_1_tau21", 0,1);
   
-  RooRealVar mean_pass_sim_MC("mean_pass_sim_MC","mean_pass_sim_MC", 80, 60,95);
+  /*RooRealVar mean_pass_sim_MC("mean_pass_sim_MC","mean_pass_sim_MC", 80, 60,95);
   RooRealVar sigma_pass_sim_MC("sigma_pass_sim_MC","sigma_pass_sim_MC", 10, 0,20);
-  RooGaussian gx_pass_sim_MC("gx_pass_sim_MC","gx_pass_sim_MC",ak08Pruned_1_mass_sim_MC,mean_pass_sim_MC,sigma_pass_sim_MC) ;
+  RooGaussian gx_pass_sim_MC("gx_pass_sim_MC","gx_pass_sim_MC",ak08Pruned_1_mass,mean_pass_sim_MC,sigma_pass_sim_MC) ;*/
+
+
+  //constant part
+
+  RooRealVar const_efficiency ("const_efficiency", "efficiency",  .91, 0 ,1.);
+  RooRealVar const_mean_pass_sim_MC("const_mean_pass_sim_MC", "Double CB mean", 78., 75.,85.);//78.7);//78., 75.,85.);
+  RooRealVar const_sigma_pass_sim_MC("const_sigma_pass_sim_MC", "Double CB Width", 8.,5.,10.);//8.4);//8.,5.,10.);
+  RooConstVar const_dCBCutL_pass_sim_MC("const_dCBCutL_pass_sim_MC", "Double CB Cut left", 1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
+  RooConstVar const_dCBCutR_pass_sim_MC("const_dCBCutR_pass_sim_MC", "Double CB Cut right", 1.9);//***** tau21_04  2.);//***** tau21_06 1.9);//1.9);
+  RooConstVar const_dCBPowerL_pass_sim_MC("const_dCBPowerL_pass_sim_MC", "Double CB Power left", 1.1);//***** tau21_04 1.14);//***** tau21_06 1.16);
+  RooConstVar const_dCBPowerR_pass_sim_MC("const_dCBPowerR_pass_sim_MC", "Double CB Power right", 5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
+  RooDCBShape const_dcb_pass_sim_MC("const_dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_mean_pass_sim_MC, const_sigma_pass_sim_MC, const_dCBCutL_pass_sim_MC, const_dCBCutR_pass_sim_MC, const_dCBPowerL_pass_sim_MC, const_dCBPowerR_pass_sim_MC);
+  RooRealVar const_a_pass_sim_MC("const_a_pass_sim_MC","a_pass_sim_MC",-.01,-.1,-.001);//, 0.001,.1);//.1,.01,1.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
+  RooRealVar const_a1_pass_sim_MC("const_a1_pass_sim_MC","a1_pass_sim_MC",-.4,-1.,-.1);//,-1.,-.1);//-.5,-1.,-.01);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
+  RooConstVar const_a2_pass_sim_MC("const_a2_pass_sim_MC","a2_pass_sim_MC",.001);//.07,-.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
+  //RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass,RooArgList(a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC),0) ;
+  RooChebychev const_cheby_pass_sim_MC("const_cheby_pass_sim_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_pass_sim_MC,const_a1_pass_sim_MC));//, const_a2_pass_sim_MC)) ;
+  RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass,const_mean_pass_sim_MC, const_sigma_pass_sim_MC);
+  RooRealVar const_Nsig_sim_MC("const_Nsig_sim_MC", "Nsig_sim_MC", 1000.,0.,100000000.);
+  RooFormulaVar const_k_pass_sim("const_k_pass_sim", "pass norm", "(const_Nsig_sim_MC*const_efficiency)", RooArgList(const_Nsig_sim_MC, const_efficiency));
+  RooRealVar const_Nbkg_pass_sim_MC("const_Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC",1000.,0.,100000000.);
+  RooConstVar a_const("a_const","a_const", 10.);
+  RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass,RooArgList(a_const),0) ;
+  RooAddPdf const_modelPass_sim_MC("const_modelPass_sim_MC", "modelPass_sim_MC", RooArgList(const_dcb_pass_sim_MC,/*p2_pass_sim_MC*/const_cheby_pass_sim_MC), RooArgList(const_k_pass_sim, const_Nbkg_pass_sim_MC));
+
+
+  //+++ Fail part +++
+  RooConstVar const_sim_sigmaRatio("const_sim_sigmaRatio", "ratio data sigma", 1.51);
+  RooConstVar const_sim_meanRatio("const_sim_meanRatio", "ratio mean data", .96);
+  RooFormulaVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", "(const_sim_meanRatio*const_mean_pass_sim_MC)", RooArgList(const_sim_meanRatio,const_mean_pass_sim_MC));
+  //RooRealVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", 76,75,85);
+  //RooFormulaVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width","(const_sim_sigmaRatio*const_sigma_pass_sim_MC", RooArgList(const_sim_sigmaRatio,const_sigma_pass_sim_MC));
+
+  //RooConstVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", 75.);//***** tau21_04 76.53);//***** tau21_06 75.5);
+  RooRealVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width", 10.,5,15); //working points 10, 0, 40 for tau21<.4
+  RooConstVar const_dCBCutL_fail_sim_MC("const_dCBCutL_fail_sim_MC", "Double CB Cut left",.48);//***** tau21_04 .7);//***** tau21_06 .8);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
+  RooConstVar const_dCBCutR_fail_sim_MC("const_dCBCutR_fail_sim_MC", "Double CB Cut right",1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
+  RooConstVar const_dCBPowerL_fail_sim_MC("const_dCBPowerL_fail_sim_MC", "Double CB Power left", 1.);//***** tau21_04 1.5);//***** tau21_06 2.5 .72);//.82); //.72);
+  RooConstVar const_dCBPowerR_fail_sim_MC("const_dCBPowerR_fail_sim_MC", "Double CB Power right",9.5);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
+  RooDCBShape const_dcb_fail_sim_MC("const_dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_mean_fail_sim_MC, const_sigma_fail_sim_MC, const_dCBCutL_fail_sim_MC, const_dCBCutR_fail_sim_MC, const_dCBPowerL_fail_sim_MC, const_dCBPowerR_fail_sim_MC);
+  RooRealVar const_a_fail_sim_MC("const_a_fail_sim_MC","a_fail_sim_MC", -1.06,-2.,-.5);//, -3.,-.1);//-1.1,-2.,0.);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
+  RooRealVar const_a1_fail_sim_MC("const_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);//,.1,2.);//.34,-1.,.5);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
+  RooConstVar const_a2_fail_sim_MC("const_a2_fail_sim_MC","a2_fail_sim_MC", .01);//-.05,-1.,.0);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
+  RooChebychev const_cheby_fail_sim_MC("const_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_fail_sim_MC,const_a1_fail_sim_MC));//, const_a2_fail_sim_MC)) ;
   
-  RooRealVar a_pass_sim_MC("a_pass_sim_MC","a_pass_sim_MC", 0.1,-1,1);
-  RooRealVar a1_pass_sim_MC("a1_pass_sim_MC","a1_pass_sim_MC", 0.1,-1,1);
-  RooRealVar a2_pass_sim_MC("a2_pass_sim_MC","a2_pass_sim_MC", 0.1,-1,1);
-  RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass_sim_MC,RooArgList(a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC),0) ;
+  RooRealVar const_Nbkg_fail_sim_MC("const_Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 1000.,0.,100000000.);
+  RooFormulaVar const_k_fail_sim("const_k_fail_sim", "fail norm", "(const_Nsig_sim_MC*(1-const_efficiency))", RooArgList(const_Nsig_sim_MC, const_efficiency));
+  RooAddPdf const_model_fail_sim_MC("const_model_fail_sim_MC", "model_fail_sim_MC", RooArgList(const_dcb_fail_sim_MC,const_cheby_fail_sim_MC), RooArgList(const_k_fail_sim, const_Nbkg_fail_sim_MC));
+
+  //end of constant part
+  //+++++++++++++++++++++++++++++++++++
+
+
+
+  //RooRealVar ak08Pruned_1_mass_data("ak08Pruned_1_mass_data","ak08Pruned_1_mass_data",mass_min,mass_max) ;
+  //constant part data
+  RooRealVar const_data_efficiency ("const_data_efficiency", "efficiency",  .91, 0 ,1.);
+  RooRealVar const_data_mean_pass_sim_MC("const_data_mean_pass_sim_MC", "Double CB mean", 78., 75.,85.);
+  RooRealVar const_data_sigma_pass_sim_MC("const_data_sigma_pass_sim_MC", "Double CB Width", 8.,5.,10.);
+  RooConstVar const_data_dCBCutL_pass_sim_MC("const_data_dCBCutL_pass_sim_MC", "Double CB Cut left", 1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
+  RooConstVar const_data_dCBCutR_pass_sim_MC("const_data_dCBCutR_pass_sim_MC", "Double CB Cut right", 1.9);//***** tau21_04  2.);//***** tau21_06 1.6);//1.9);
+  RooConstVar const_data_dCBPowerL_pass_sim_MC("const_data_dCBPowerL_pass_sim_MC", "Double CB Power left", 1.1);//***** tau21_04 1.14);//***** tau21_06 1.16);
+  RooConstVar const_data_dCBPowerR_pass_sim_MC("const_data_dCBPowerR_pass_sim_MC", "Double CB Power right", 5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
+  RooDCBShape const_data_dcb_pass_sim_MC("const_data_dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_data_mean_pass_sim_MC, const_data_sigma_pass_sim_MC, const_data_dCBCutL_pass_sim_MC, const_data_dCBCutR_pass_sim_MC, const_data_dCBPowerL_pass_sim_MC, const_data_dCBPowerR_pass_sim_MC);
+  RooRealVar const_data_a_pass_sim_MC("const_data_a_pass_sim_MC","a_pass_sim_MC",-.01, -.1,-.001);//.1, 0.01,1.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
+  RooRealVar const_data_a1_pass_sim_MC("const_data_a1_pass_sim_MC","a1_pass_sim_MC",-.4,-1.,-.1);//-.5,-1.,-.01);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
+  RooConstVar const_data_a2_pass_sim_MC("const_data_a2_pass_sim_MC","a2_pass_sim_MC",.03);//.07,-0.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
+  RooChebychev const_data_cheby_pass_sim_MC("const_data_cheby_pass_pass_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_pass_sim_MC,const_data_a1_pass_sim_MC, const_data_a2_pass_sim_MC)) ;
+  RooRealVar const_data_Nsig_sim_MC("const_data_Nsig_sim_MC", "Nsig_sim_MC", 300.,100,10000);
+  RooFormulaVar const_data_k_pass_sim("const_data_k_pass_sim", "pass norm", "(const_data_Nsig_sim_MC*const_data_efficiency)", RooArgList(const_data_Nsig_sim_MC, const_data_efficiency));
+  RooRealVar const_data_Nbkg_pass_sim_MC("const_data_Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 575., 400.,10000.);
+  RooAddPdf const_data_modelPass_sim_MC("const_data_modelPass_sim_MC", "modelPass_sim_MC", RooArgList(const_data_dcb_pass_sim_MC,const_data_cheby_pass_sim_MC), RooArgList(const_data_k_pass_sim, const_data_Nbkg_pass_sim_MC));
+
+
+  //+++ Fail part +++
+  //RooConstVar const_data_sigmaRatio("const_data_sigmaRatio", "ratio data sigma", 1.25);
+  RooConstVar const_data_meanRatio("const_data_meanRatio", "ratio mean data", .96);
+  RooFormulaVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", "(const_data_meanRatio*const_data_mean_pass_sim_MC)", RooArgList(const_data_meanRatio,const_data_mean_pass_sim_MC));
+  //RooFormulaVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width","(const_data_sigmaRatio*const_data_sigma_pass_sim_MC", RooArgList(const_data_sigmaRatio,const_data_sigma_pass_sim_MC));
+  //RooConstVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", 75.5);//***** tau21_04 76.53);//***** tau21_06 75.5);
+  RooRealVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width", 10.,5.,15.);//10.,5,15); //working points 10, 0, 40 for tau21<.4
+  RooConstVar const_data_dCBCutL_fail_sim_MC("const_data_dCBCutL_fail_sim_MC", "Double CB Cut left",.48);//***** tau21_04 .7);//***** tau21_06 .18);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
+  RooConstVar const_data_dCBCutR_fail_sim_MC("const_data_dCBCutR_fail_sim_MC", "Double CB Cut right", 1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
+  RooConstVar const_data_dCBPowerL_fail_sim_MC("const_data_dCBPowerL_fail_sim_MC", "Double CB Power left", 1.);//***** tau21_04 1.5);//***** tau21_06 .72);//.82); //.72);
+  RooConstVar const_data_dCBPowerR_fail_sim_MC("const_data_dCBPowerR_fail_sim_MC", "Double CB Power right",9.5);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
+  RooDCBShape const_data_dcb_fail_sim_MC("const_data_dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_data_mean_fail_sim_MC, const_data_sigma_fail_sim_MC, const_data_dCBCutL_fail_sim_MC, const_data_dCBCutR_fail_sim_MC, const_data_dCBPowerL_fail_sim_MC, const_data_dCBPowerR_fail_sim_MC);
+  RooRealVar const_data_a_fail_sim_MC("const_data_a_fail_sim_MC","a_fail_sim_MC", -1.06,-2.,-.5);//-1.1,-2.,0.);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
+  RooRealVar const_data_a1_fail_sim_MC("const_data_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);//.34,-.1,.5);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
+  RooConstVar const_data_a2_fail_sim_MC("const_data_a2_fail_sim_MC","a2_fail_sim_MC", -.05);//-.05,-1.,0.);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
+  RooChebychev const_data_cheby_fail_sim_MC("const_data_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_fail_sim_MC,const_data_a1_fail_sim_MC, const_data_a2_fail_sim_MC)) ;
+  
+  RooRealVar const_data_Nbkg_fail_sim_MC("const_data_Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 292., 100., 10000.);
+  RooFormulaVar const_data_k_fail_sim("const_data_k_fail_sim", "fail norm", "(const_data_Nsig_sim_MC*(1-const_data_efficiency))", RooArgList(const_data_Nsig_sim_MC, const_data_efficiency));
+  RooAddPdf const_data_model_fail_sim_MC("const_data_model_fail_sim_MC", "model_fail_sim_MC", RooArgList(const_data_dcb_fail_sim_MC,const_data_cheby_fail_sim_MC), RooArgList(const_data_k_fail_sim, const_data_Nbkg_fail_sim_MC));
+
+  //end of constant part
+  RooRealVar mean_pass_sim_MC("mean_pass_sim_MC", "Double CB mean", 80, 60, 95);
+  RooRealVar sigma_pass_sim_MC("sigma_pass_sim_MC", "Double CB Width", 10, 0, 20);
+  //Used before putting constraints!
+  //RooRealVar dCBCutL_pass_sim_MC("dCBCutL_pass_sim_MC", "Double CB Cut left", 1., 0.1, 50.);
+  //RooRealVar dCBCutR_pass_sim_MC("dCBCutR_pass_sim_MC", "Double CB Cut right", 1., 0.1, 50.);
+  //RooRealVar dCBPowerL_pass_sim_MC("dCBPowerL_pass_sim_MC", "Double CB Power left", 2., 0.2, 50.);
+  //RooRealVar dCBPowerR_pass_sim_MC("dCBPowerR_pass_sim_MC", "Double CB Power right", 2., 0.2, 50.);
+  //new! with constraints
+  RooRealVar dCBCutL_pass_sim_MC("dCBCutL_pass_sim_MC", "Double CB Cut left",  1.4, 1.3, 1.5);
+  RooRealVar dCBCutR_pass_sim_MC("dCBCutR_pass_sim_MC", "Double CB Cut right",  2.5, 2.4, 2.6);
+  RooRealVar dCBPowerL_pass_sim_MC("dCBPowerL_pass_sim_MC", "Double CB Power left", .8, 0.7, .9);
+  RooRealVar dCBPowerR_pass_sim_MC("dCBPowerR_pass_sim_MC", "Double CB Power right",  9., 8., 10.);
+  RooDCBShape dcb_pass_sim_MC("dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, mean_pass_sim_MC, sigma_pass_sim_MC, dCBCutL_pass_sim_MC, dCBCutR_pass_sim_MC, dCBPowerL_pass_sim_MC, dCBPowerR_pass_sim_MC);
+  RooRealVar a_pass_sim_MC("a_pass_sim_MC","a_pass_sim_MC", .1,-10,10);//1,-100,100);
+  RooRealVar a1_pass_sim_MC("a1_pass_sim_MC","a1_pass_sim_MC", .1,-1,1);//0.1,-1,1);
+  RooRealVar a2_pass_sim_MC("a2_pass_sim_MC","a2_pass_sim_MC", .1,-1,1);//0.1,-1,1);
+  //RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass,RooArgList(a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC),0) ;
+  RooChebychev cheby_pass_sim_MC("cheby_pass_pass_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(a_pass_sim_MC,a1_pass_sim_MC, a2_pass_sim_MC)) ;
   
   RooRealVar Nsig_sim_MC("Nsig_sim_MC", "Nsig_sim_MC", 1200,10,10000);
   RooFormulaVar k_pass_sim("k_pass_sim", "pass norm", "(Nsig_sim_MC*efficiency)", RooArgList(Nsig_sim_MC, efficiency));
   RooRealVar Nbkg_pass_sim_MC("Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 100,10,100000);
-  RooAddPdf modelPass_sim_MC("modelPass_sim_MC", "modelPass_sim_MC", RooArgList(gx_pass_sim_MC,p2_pass_sim_MC), RooArgList(k_pass_sim, Nbkg_pass_sim_MC));
+  RooAddPdf modelPass_sim_MC("modelPass_sim_MC", "modelPass_sim_MC", RooArgList(dcb_pass_sim_MC/*gx_pass_sim_MC*/,cheby_pass_sim_MC), RooArgList(k_pass_sim, Nbkg_pass_sim_MC));
 
 
   //+++ Fail part +++
-  RooRealVar mean_fail_sim_MC("mean_fail_sim_MC","mean_fail_sim_MC", 80, 78,105);
+  /*RooRealVar mean_fail_sim_MC("mean_fail_sim_MC","mean_fail_sim_MC", 80, 78,105);
   RooRealVar sigma_fail_sim_MC("sigma_fail_sim_MC","sigma_fail_sim_MC", 10, 0,20);
-  RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass_sim_MC,mean_fail_sim_MC,sigma_fail_sim_MC) ;
-  
+  RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass,mean_fail_sim_MC,sigma_fail_sim_MC) ;*/
+
+  RooRealVar mean_fail_sim_MC("mean_fail_sim_MC", "Double CB mean", 80, 70, 95);
+  RooRealVar sigma_fail_sim_MC("sigma_fail_sim_MC", "Double CB Width", 10, 0, 20); //working points 10, 0, 40 for tau21<.4
+  RooRealVar dCBCutL_fail_sim_MC("dCBCutL_fail_sim_MC", "Double CB Cut left",  1.4, 1.1, 1.7); //for tau21<0.4 1., 0.1, 50. works
+  RooRealVar dCBCutR_fail_sim_MC("dCBCutR_fail_sim_MC", "Double CB Cut right",  2.5, 2.2, 2.8);
+  RooRealVar dCBPowerL_fail_sim_MC("dCBPowerL_fail_sim_MC", "Double CB Power left",  .8, 0.5, 1.1);
+  RooRealVar dCBPowerR_fail_sim_MC("dCBPowerR_fail_sim_MC", "Double CB Power right", 9., 6., 12.); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
+  RooDCBShape dcb_fail_sim_MC("dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, mean_pass_sim_MC, sigma_pass_sim_MC, dCBCutL_fail_sim_MC, dCBCutR_fail_sim_MC, dCBPowerL_fail_sim_MC, dCBPowerR_fail_sim_MC);
   RooRealVar a_fail_sim_MC("a_fail_sim_MC","a_fail_sim_MC", 0.1,-10,10);
   RooRealVar a1_fail_sim_MC("a1_fail_sim_MC","a1_fail_sim_MC", 0.1,-1,1);
   RooRealVar a2_fail_sim_MC("a2_fail_sim_MC","a2_fail_sim_MC", 0.1,-1,1);
-  RooChebychev cheby_fail_sim_MC("cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass_sim_MC,RooArgSet(a_fail_sim_MC,a1_fail_sim_MC, a2_fail_sim_MC)) ;
+  RooChebychev cheby_fail_sim_MC("cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(a_fail_sim_MC,a1_fail_sim_MC, a2_fail_sim_MC)) ;
   
   RooRealVar Nbkg_fail_sim_MC("Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 100,10,100000);
   RooFormulaVar k_fail_sim("k_fail_sim", "fail norm", "(Nsig_sim_MC*(1-efficiency))", RooArgList(Nsig_sim_MC, efficiency));
-  RooAddPdf model_fail_sim_MC("model_fail_sim_MC", "model_fail_sim_MC", RooArgList(gx_fail_sim_MC,cheby_fail_sim_MC), RooArgList(k_fail_sim, Nbkg_fail_sim_MC));
+  RooAddPdf model_fail_sim_MC("model_fail_sim_MC", "model_fail_sim_MC", RooArgList(dcb_fail_sim_MC,cheby_fail_sim_MC), RooArgList(k_fail_sim, Nbkg_fail_sim_MC));
 
   RooCategory sample_MC("sample_MC","sample_MC") ;
   sample_MC.defineType("passed") ;
   sample_MC.defineType("failed") ;
+
+  RooCategory sample_data("sample_data","sample_data") ;
+  sample_data.defineType("passed") ;
+  sample_data.defineType("failed") ;
+
   
   //=== end of function declaration ===
 
@@ -224,7 +553,28 @@ int main(int argc, char* argv[]){
   TH1D *dataHisto_fail; //data histo LP
   TH1D *allBkgHisto_pass;
   TH1D *allBkgHisto_fail;
+  TH1D *allBkgHisto_pass_toy;
+  TH1D *allBkgHisto_fail_toy;
   TH1D *signalHisto[MAX_sgn]; //signal histos (if we want to superimpose them)
+
+  ////////////DataSet Variables declaration
+  TFile *file_reduced[MAX_NUMBER];
+  TTree *tree_reduced[MAX_NUMBER];
+  RooDataSet *completeDataset[MAX_NUMBER]; //dataset from ttree
+  RooDataSet *passDataset[MAX_NUMBER]; //only passed events
+  RooDataSet *failDataset[MAX_NUMBER]; //only failed events
+  RooDataSet *passWeightDataset[MAX_NUMBER]; //only passed events with weight
+  RooDataSet *failWeightDataset[MAX_NUMBER]; //only failed events with weight
+  RooFormulaVar *weightFunc[MAX_NUMBER]; //needed to take into account weights
+  RooRealVar ds_weight ("ds_weight", "ds_weight", 1.); //real weight used by weightFunc
+  RooRealVar *final_Wpass[MAX_NUMBER];    //the column added to the dataset
+  RooRealVar *final_Wfail[MAX_NUMBER];
+  RooDataSet *dataPass;
+  RooDataSet *dataFail;
+  RooDataSet *MC_Pass;
+  RooDataSet *MC_Fail;
+  /////////////////////////////////////////
+
   //TH2D *histo2D[MAX_NUMBER];
   //TH2F *histo2F[MAX_NUMBER];
   TTree *tree[MAX_NUMBER];
@@ -278,6 +628,7 @@ int main(int argc, char* argv[]){
   std::cout<<"Opened cut list: "<<argv[2]<<std::endl;
 
   //=== variable definition ===
+  std::string prefix=argv[4];
   double scaleFactor=1.;
   double lumi=(atof(argv[3]))*1000;
   double rescale=(atoi(argv[5]));
@@ -329,9 +680,11 @@ int main(int argc, char* argv[]){
   double counts=0;
   std::string variable="ak08Pruned_1_mass";
   bkg_name="";
-  
+  std::string redu_suff= "_redu.root";
+  std::string pass_unbin="ak08Ungroomed_1_tau21<.6";
+  std::string fail_unbin="ak08Ungroomed_1_tau21>.6";
   while(inputList>>bkg_nameTMP>>bkg_file>>scaleFactor>>bins>>min>>max){
-   std::cout<<"BKG: "<<bkg_nameTMP.c_str()<<" File: "<<bkg_file.c_str()<<" scaleFactor: "<<scaleFactor<<std::endl;
+   std::cout<<"BKG: "<<bkg_nameTMP.c_str()<<" File: "<<bkg_file.c_str()<<" xSection: "<<scaleFactor<<std::endl;
 
    file[file_counter]=TFile::Open(bkg_file.c_str());
    if(file[file_counter]==0){
@@ -343,22 +696,56 @@ int main(int argc, char* argv[]){
    bkgCounts[file_counter]=((TH1D *)(file[file_counter]->Get("DijetFilter/EventCount/EventCounter")));
    std::cout<<"Total Events: "<<bkgCounts[file_counter]->GetBinContent(1)<<std::endl;
    counts=bkgCounts[file_counter]->GetBinContent(1);
-   TDirectory * dir = (TDirectory*)file[file_counter]->Get("rootTupleTree");
-   dir->GetObject("tree", tree[file_counter]);
+  // TDirectory * dir = (TDirectory*)file[file_counter]->Get("rootTupleTree");
+  // dir->GetObject("tree", tree[file_counter]);
    std::cout<<"Creating Histo"<<std::endl;
    histoD_pass[file_counter] = new TH1D(Form("histo_%d_pass", file_counter), Form("histo_%d_pass", file_counter),bins,min,max);
    histoD_fail[file_counter] = new TH1D(Form("histo_%d_fail", file_counter), Form("histo_%d_fail", file_counter),bins,min,max);
-   std::cout<<"Projecting"<<std::endl;
-   tree[file_counter]->Project(Form("histo_%d_pass", file_counter),Form("%s", variable.c_str()),pass.c_str());
-   tree[file_counter]->Project(Form("histo_%d_fail", file_counter),Form("%s", variable.c_str()),fail.c_str());
+  // std::cout<<"Projecting"<<std::endl;
+  // tree[file_counter]->Project(Form("histo_%d_pass", file_counter),Form("%s", variable.c_str()),pass.c_str());
+  // tree[file_counter]->Project(Form("histo_%d_fail", file_counter),Form("%s", variable.c_str()),fail.c_str());
+    
+   frame("Unbinned part");
+   file_reduced[file_counter]=TFile::Open(Form("%s%s",(bkg_file.substr(0,bkg_file.size()-5)).c_str(),redu_suff.c_str()));
+   if(file_reduced[file_counter]==0){
+     breakLine();
+     std::cout<<"ATTENTION! "<<(bkg_file.substr(0,bkg_file.size()-5)).c_str()<<redu_suff.c_str()<<" doesn't exists!"<<std::endl;
+     breakLine();
+     exit(-1);
+   }
+   tree_reduced[file_counter]=(TTree *)file_reduced[file_counter]->Get("mio");
+   completeDataset[file_counter] = new RooDataSet(Form("ds_%d",file_counter),Form("ds_%d",file_counter),RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21),Import(*tree_reduced[file_counter]));
+
+   //reducing datasets to fail and pass components
+   passDataset[file_counter] = (RooDataSet*) completeDataset[file_counter]->reduce(pass_unbin.c_str()) ;
+   failDataset[file_counter] = (RooDataSet*) completeDataset[file_counter]->reduce(fail_unbin.c_str()) ;
+   passDataset[file_counter]->SetName(Form("passed_%d",file_counter));
+   passDataset[file_counter]->Print();
+   failDataset[file_counter]->SetName(Form("failed_%d",file_counter));
+   failDataset[file_counter]->Print();
+
+   ds_weight.setVal(scaleFactor*lumi/counts);
+   if(strcmp(bkg_nameTMP.c_str(), "data")==0) ds_weight.setVal(1.);
+   std::cout<<"UNBINNED WEIGHT: "<<ds_weight.getValV()<<std::endl;
+   weightFunc[file_counter]= new RooFormulaVar(Form("weightFunc_%d",file_counter),"event weight","ds_weight",RooArgList(ds_weight,ak08Pruned_1_mass)) ; 
+    final_Wpass[file_counter]= (RooRealVar*) passDataset[file_counter]->addColumn(((RooAbsArg &)*weightFunc[file_counter]));
+    final_Wfail[file_counter]= (RooRealVar*) failDataset[file_counter]->addColumn(((RooAbsArg &)*weightFunc[file_counter]));
+    passWeightDataset[file_counter]= new RooDataSet(passDataset[file_counter]->GetName(),passDataset[file_counter]->GetTitle(),passDataset[file_counter],*passDataset[file_counter]->get(),0,final_Wpass[file_counter]->GetName()) ;
+    failWeightDataset[file_counter]= new RooDataSet(failDataset[file_counter]->GetName(),failDataset[file_counter]->GetTitle(),failDataset[file_counter],*failDataset[file_counter]->get(),0,final_Wfail[file_counter]->GetName()) ;    
+
+
 
    if(strcmp(bkg_nameTMP.c_str(), "data")==0){
      std::cout<<"DATA!"<<std::endl;
      if(isData==0) {
        allBkgHisto_pass= new TH1D("allBkgHisto_pass","allBkgHisto_pass", bins,min,max);
        allBkgHisto_fail= new TH1D("allBkgHisto_fail","allBkgHisto_fail", bins,min,max);
+       allBkgHisto_pass->Sumw2();
+       allBkgHisto_fail->Sumw2();
        dataHisto_pass= new TH1D("dataHisto_pass","dataHisto_pass", bins,min,max);
        dataHisto_fail= new TH1D("dataHisto_fail","dataHisto_fail", bins,min,max);
+       dataPass = new RooDataSet (passDataset[file_counter]->GetName(),passDataset[file_counter]->GetTitle(),passDataset[file_counter],*passDataset[file_counter]->get(),0,final_Wpass[file_counter]->GetName());
+       dataFail = new RooDataSet (failDataset[file_counter]->GetName(),failDataset[file_counter]->GetTitle(),failDataset[file_counter],*failDataset[file_counter]->get(),0,final_Wfail[file_counter]->GetName()) ;
        std::cout<<"Data counts: "<<counts<<std::endl;
        //dataHisto->GetXaxis()->SetTitle(xTitle.c_str());
        //dataHisto_pass->GetYaxis()->SetTitle(yTitle.c_str());
@@ -370,12 +757,22 @@ int main(int argc, char* argv[]){
        dataHisto_fail->SetMarkerColor(1);
        dataHisto_fail->SetLineColor(1);
        //leg->AddEntry(dataHisto, "Data", "pe");
+      }else{
+        dataPass->append(*passWeightDataset[file_counter]);
+        dataFail->append(*failWeightDataset[file_counter]);
       }
       isData=1;
       dataHisto_pass->Add(histoD_pass[file_counter]);
       dataHisto_fail->Add(histoD_fail[file_counter]);
 
     }else{
+      if(bkg_counter<0){
+        MC_Pass = new RooDataSet(passDataset[file_counter]->GetName(),passDataset[file_counter]->GetTitle(),passDataset[file_counter],*passDataset[file_counter]->get(),0,final_Wpass[file_counter]->GetName());
+        MC_Fail= new RooDataSet(failDataset[file_counter]->GetName(),failDataset[file_counter]->GetTitle(),failDataset[file_counter],*failDataset[file_counter]->get(),0,final_Wfail[file_counter]->GetName()) ;
+      }else{
+        MC_Pass->append(*passWeightDataset[file_counter]);
+        MC_Fail->append(*failWeightDataset[file_counter]);
+      }
       if(rescale==1){
         histoD_pass[file_counter]->Scale(scaleFactor*lumi/counts);
         histoD_fail[file_counter]->Scale(scaleFactor*lumi/counts);
@@ -395,6 +792,8 @@ int main(int argc, char* argv[]){
         ++bkg_counter;
         histoBkg_pass[bkg_counter]= new TH1D(Form("histo_%s_pass", bkg_name.c_str()), Form("histo_%s_pass", bkg_name.c_str()),bins,min,max);
         histoBkg_fail[bkg_counter]= new TH1D(Form("histo_%s_fail", bkg_name.c_str()), Form("histo_%s_fail", bkg_name.c_str()),bins,min,max);
+        histoBkg_pass[bkg_counter]->Sumw2();
+        histoBkg_fail[bkg_counter]->Sumw2();
         histoBkg_pass[bkg_counter]->SetStats(0);
         histoBkg_fail[bkg_counter]->SetStats(0);
         //histoBkg[bkg_counter]->SetLineColor(COLOR[bkg_counter]);
@@ -448,9 +847,11 @@ int main(int argc, char* argv[]){
   }
 
   TCanvas *c_passed_MC = new TCanvas("c_passed_MC", "Grafico1", 200, 10, 600, 400);
+  allBkgHisto_pass_toy= new TH1D("allBkgHisto_pass_toy","generated with allBkgHisto_pass", bins,min,max);
+  allBkgHisto_pass_toy->FillRandom(allBkgHisto_pass,(int)allBkgHisto_pass->Integral());
   RooDataHist *dh_totalPass = new RooDataHist("dh_totalPass", "dh_totalPass", ak08Pruned_1_mass_pass_MC, Import(*allBkgHisto_pass));
   RooPlot* frame1_pass = ak08Pruned_1_mass_pass_MC.frame(Bins(22),Title("Pass sample")) ;
-  modelPass_MC.fitTo(*dh_totalPass);
+  modelPass_MC.fitTo(*dh_totalPass, SumW2Error(kTRUE));
   dh_totalPass->plotOn(frame1_pass);
   modelPass_MC.plotOn(frame1_pass, Components(gx_pass_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
   modelPass_MC.plotOn(frame1_pass, Components(p2_pass_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
@@ -461,12 +862,14 @@ int main(int argc, char* argv[]){
   */
   gPad->SetLeftMargin(0.15) ; frame1_pass->GetYaxis()->SetTitleOffset(1.4) ; frame1_pass->Draw() ;
   
-  c_passed_MC->SaveAs("provaRoofit.png");
+  c_passed_MC->SaveAs(Form("%s_provaRoofit.png", prefix.c_str()));
   
   TCanvas *c_fail_MC = new TCanvas("c_fail_MC", "Grafico1", 200, 10, 600, 400);
-  RooDataHist *dh_totalFail = new RooDataHist("dh_totalFail", "dh_totalFail", ak08Pruned_1_mass_fail_MC, Import(*allBkgHisto_fail));
+  allBkgHisto_fail_toy= new TH1D("allBkgHisto_fail_toy","generated with allBkgHisto_fail", bins,min,max);
+  allBkgHisto_fail_toy->FillRandom(allBkgHisto_fail,(int)allBkgHisto_fail->Integral());
+  RooDataHist *dh_totalFail = new RooDataHist("dh_totalFail", "dh_totalFail", ak08Pruned_1_mass_fail_MC, Import(*allBkgHisto_fail_toy));
   RooPlot* frame1_fail = ak08Pruned_1_mass_fail_MC.frame(Bins(22),Title("Fail sample")) ;
-  model_fail_MC.fitTo(*dh_totalFail);
+  model_fail_MC.fitTo(*dh_totalFail, SumW2Error(kTRUE));
   dh_totalFail->plotOn(frame1_fail);
   model_fail_MC.plotOn(frame1_fail, Components(gx_fail_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
   model_fail_MC.plotOn(frame1_fail, Components(cheby_fail_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
@@ -474,61 +877,390 @@ int main(int argc, char* argv[]){
   //model_fail_MC.paramOn(frame1_fail);
   gPad->SetLeftMargin(0.15) ; frame1_fail->GetYaxis()->SetTitleOffset(1.4) ; frame1_fail->Draw() ;
   
-  c_fail_MC->SaveAs("provaRoofit_1.png");
+  c_fail_MC->SaveAs(Form("%s_provaRoofit_1.png",prefix.c_str()));
 
 
   //Simultaneous fit
-  RooDataHist *dh_totalPass_sim = new RooDataHist("dh_totalPass_sim", "dh_totalPass_sim", ak08Pruned_1_mass_sim_MC, Import(*allBkgHisto_pass));
-  RooDataHist *dh_totalFail_sim = new RooDataHist("dh_totalFail_sim", "dh_totalFail_sim", ak08Pruned_1_mass_sim_MC, Import(*allBkgHisto_fail));
-  RooDataHist combData_MC("combData_MC","combined data for MC",ak08Pruned_1_mass_sim_MC,Index(sample_MC),Import("passed",*dh_totalPass_sim), Import("failed", *dh_totalFail_sim));
-  //adding
-  
-  //end adding
+  frame("Simultaneous fit");
+
+  RooDataHist *dh_totalPass_sim = new RooDataHist("dh_totalPass_sim", "dh_totalPass_sim", ak08Pruned_1_mass, Import(*allBkgHisto_pass));
+  RooDataHist *dh_totalFail_sim = new RooDataHist("dh_totalFail_sim", "dh_totalFail_sim", ak08Pruned_1_mass, Import(*allBkgHisto_fail));
+  RooDataHist combData_MC("combData_MC","combined data for MC",ak08Pruned_1_mass,Index(sample_MC),Import("passed",*dh_totalPass_sim), Import("failed", *dh_totalFail_sim));
+  RooDataSet combData_MC_unbinned("combData_MC_unbinned","combData_MC_unbinned", ak08Pruned_1_mass,Index(sample_MC),Import("passed",*MC_Pass), Import("failed",*MC_Fail)); 
   RooSimultaneous simPdf_MC("simPdf_MC","simultaneous pdf for MC",sample_MC) ;
-  simPdf_MC.addPdf(modelPass_sim_MC,"passed") ;
-  simPdf_MC.addPdf(model_fail_sim_MC, "failed");
+  simPdf_MC.addPdf(const_modelPass_sim_MC,"passed") ;
+  simPdf_MC.addPdf(const_model_fail_sim_MC, "failed");
   //simPdf_MC.addParameters(efficiency, mean_pass_sim_MC, sigma_pass_sim_MC,a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC,Nsig_sim_MC,Nbkg_pass_sim_MC,mean_fail_sim_MC,sigma_fail_sim_MC,a_fail_sim_MC,a1_fail_sim_MC,a2_fail_sim_MC,Nbkg_fail_sim_MC);
-  simPdf_MC.fitTo(combData_MC);
-  TCanvas *c_sim_MC = new TCanvas("c_sim_MC", "Simultaneous PDF",1);// 200, 10, 600, 400);
-  c_sim_MC->Divide(2) ;
-  RooPlot* frame1_sim = ak08Pruned_1_mass_sim_MC.frame(Bins(22),Title("Pass sample")) ;
-  RooPlot* frame2_sim = ak08Pruned_1_mass_sim_MC.frame(Bins(22),Title("Fail sample")) ;
-  dh_totalPass_sim->plotOn(frame1_sim);//,Cut("sample_MC==sample_MC::passed"));
-  //combData_MC.plotOn(frame1_sim,Cut("sample_MC==sample_MC::passed"));
-  /*gx_pass_sim_MC.plotOn(frame1_sim, LineColor(kRed));
-  p2_pass_sim_MC.plotOn(frame1_sim, LineColor(kGreen));*/
-  //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"), Components(gx_pass_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kRed));//,Normalization(1.0,RooAbsReal::RelativeExpected));
-  //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"), Components(p2_pass_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kGreen));//,Normalization(1.0,RooAbsReal::RelativeExpected));
-  modelPass_sim_MC.plotOn(frame1_sim);
-  modelPass_sim_MC.plotOn(frame1_sim,Components(gx_pass_sim_MC),LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
-  modelPass_sim_MC.plotOn(frame1_sim,Components(p2_pass_sim_MC),LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  //gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
+
+  simPdf_MC.fitTo(combData_MC_unbinned, SumW2Error(kTRUE));
+  TCanvas *c_sim_MC_pass = new TCanvas("c_sim_MC_pass", "Simultaneous PDF Pass",1);// 200, 10, 600, 400);
+  //c_sim_MC->Divide(2) ;
+  RooPlot* frame1_sim = ak08Pruned_1_mass.frame(Bins(bins),Title("Pass sample")) ;
+  RooPlot* frame2_sim = ak08Pruned_1_mass.frame(Bins(bins),Title("Fail sample")) ;
+  //TF1* myFunc=(TF1 *)const_modelPass_sim_MC->asTF(ak08Pruned_1_mass,efficiency, RooArgList(const_mean_pass_sim_MC, const_sigma_pass_sim_MC,const_a_pass_sim_MC,const_a1_pass_sim_MC,const_a2_pass_sim_MC,const_Nsig_sim_MC,const_Nbkg_pass_sim_MC,const_mean_fail_sim_MC,const_sigma_fail_sim_MC,const_a_fail_sim_MC,const_a1_fail_sim_MC,const_a2_fail_sim_MC,const_Nbkg_fail_sim_MC));
+  //dh_totalPass_sim->plotOn(frame1_sim, DataError(RooAbsData::SumW2), LineColor(2));//, LineStyle(1),LineWidth(2) /* DrawOption("l") , XErrorSize(0)*/); const_modelPass_sim_MC.plotOn(frame1_sim);
+  MC_Pass->plotOn(frame1_sim, DataError(RooAbsData::SumW2));
+  const_modelPass_sim_MC.plotOn(frame1_sim);
+  const_modelPass_sim_MC.plotOn(frame1_sim,Components(const_dcb_pass_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  const_modelPass_sim_MC.plotOn(frame1_sim,Components(const_cheby_pass_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+ 
   //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
   //simPdf_MC.paramOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
-  dh_totalFail_sim->plotOn(frame2_sim);
+  
   /*gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
   cheby_fail_sim_MC.plotOn(frame2_sim, LineColor(kGreen));*/
-  model_fail_sim_MC.plotOn(frame2_sim);
-  model_fail_sim_MC.plotOn(frame2_sim,Components(gx_fail_sim_MC),LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected) );
-  model_fail_sim_MC.plotOn(frame2_sim,Components(cheby_fail_sim_MC),LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
-  //simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"), Components(gx_fail_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kRed),Normalization(1.0,RooAbsReal::RelativeExpected));
-  //simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"), Components(cheby_fail_sim_MC),ProjWData(sample_MC,combData_MC), LineColor(kGreen),Normalization(1.0,RooAbsReal::RelativeExpected));
-  //simPdf_MC.plotOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ;
-  //simPdf_MC.paramOn(frame2_sim,Slice(sample_MC,"failed"),ProjWData(sample_MC,combData_MC)) ; 
-  c_sim_MC->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1_sim->GetYaxis()->SetTitleOffset(1.4) ; frame1_sim->Draw() ;
-  c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
-  c_sim_MC->SaveAs("provaRoofitSim.png");
-
-
+  //dh_totalFail_sim->plotOn(frame2_sim, LineColor(2), DataError(RooAbsData::SumW2));
+  MC_Fail->plotOn(frame2_sim, DataError(RooAbsData::SumW2));
+  const_model_fail_sim_MC.plotOn(frame2_sim);
+  const_model_fail_sim_MC.plotOn(frame2_sim,Components(const_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
+  const_model_fail_sim_MC.plotOn(frame2_sim,Components(const_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  /*c_sim_MC->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_sim->GetYaxis()->SetTitleOffset(1.4) ; frame1_sim->Draw() ;
+  //c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  c_sim_MC_pass->SaveAs(Form("%s_provaRoofitSimPass.png",prefix.c_str()));
+  c_sim_MC_pass->SaveAs(Form("%s_provaRoofitSimPass.pdf",prefix.c_str()));
+  
+  TCanvas *c_sim_MC_fail = new TCanvas("c_sim_MC_fail", "Simultaneous PDF Fail",1);// 200, 10, 600, 400);
+  //TH1 * mio = dh_totalFail_sim->createHistogram("mio",ak08Pruned_1_mass);
+  gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  c_sim_MC_fail->SaveAs(Form("%s_provaRoofitSimFail.png",prefix.c_str()));
+  c_sim_MC_fail->SaveAs(Form("%s_provaRoofitSimFail.pdf",prefix.c_str()));
   RooRealVar t("t", "t", 2, 0,10);
   std::cout<<t.getValV()<<std::endl;
+
+
+  //Data
+  
+
+  RooDataHist *dh_totalPass_data = new RooDataHist("dh_totalPass_data", "dh_totalPass_data", ak08Pruned_1_mass, Import(*dataHisto_pass));
+  RooDataHist *dh_totalFail_data = new RooDataHist("dh_totalFail_data", "dh_totalFail_data", ak08Pruned_1_mass, Import(*dataHisto_fail));
+  RooDataHist combData_data("combData_data","combined data for data",ak08Pruned_1_mass,Index(sample_data),Import("passed",*dh_totalPass_data), Import("failed", *dh_totalFail_data));
+ 
+  RooDataSet combData_data_unbin("combData_data_unbin","combData_data_unbin",ak08Pruned_1_mass,Index(sample_data),Import("passed",*dataPass), Import("failed", *dataFail));
+  RooSimultaneous simPdf_data("simPdf_data","simultaneous pdf for data",sample_data) ;
+  simPdf_data.addPdf(const_data_modelPass_sim_MC,"passed") ;
+  simPdf_data.addPdf(const_data_model_fail_sim_MC, "failed");
+/////////  simPdf_data.fitTo(combData_data_unbin);// DATA are not weighted!, SumW2Error(kTRUE));
+  simPdf_data.fitTo(combData_data_unbin);
+  TCanvas *c_sim_data_pass = new TCanvas("c_sim_data_pass", "Simultaneous PDF Pass",1);// 200, 10, 600, 400);
+  //c_sim_MC->Divide(2) ;
+  RooPlot* frame1_data = ak08Pruned_1_mass.frame(Bins(bins),Title("Pass sample")) ;
+  RooPlot* frame2_data = ak08Pruned_1_mass.frame(Bins(bins),Title("Fail sample")) ;
+  //dh_totalPass_data->plotOn(frame1_data);//,Cut("sample_MC==sample_MC::passed"));
+  dataPass->plotOn(frame1_data);
+  const_data_modelPass_sim_MC.plotOn(frame1_data);
+  const_data_modelPass_sim_MC.plotOn(frame1_data,Components(const_data_dcb_pass_sim_MC),LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
+  const_data_modelPass_sim_MC.plotOn(frame1_data,Components(const_data_cheby_pass_sim_MC),LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  //dh_totalFail_data->plotOn(frame2_data, DataError(RooAbsData::SumW2));
+  dataFail->plotOn(frame2_data);
+  /*gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
+  cheby_fail_sim_MC.plotOn(frame2_sim, LineColor(kGreen));*/
+  const_model_fail_sim_MC.plotOn(frame2_data);
+  const_model_fail_sim_MC.plotOn(frame2_data,Components(const_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
+  const_model_fail_sim_MC.plotOn(frame2_data,Components(const_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  /*c_sim_MC->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_data->GetYaxis()->SetTitleOffset(1.4) ; frame1_data->Draw() ;
+  //c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  c_sim_data_pass->SaveAs(Form("%s_provaRoofitDataPass.png",prefix.c_str()));
+  c_sim_data_pass->SaveAs(Form("%s_provaRoofitDataPass.pdf",prefix.c_str()));
+  
+  TCanvas *c_sim_data_fail = new TCanvas("c_sim_data_fail", "Simultaneous PDF Fail",1);// 200, 10, 600, 400);
+  gPad->SetLeftMargin(0.15) ; frame2_data->GetYaxis()->SetTitleOffset(1.4) ; frame2_data->Draw() ;
+  c_sim_data_fail->SaveAs(Form("%s_provaRoofitDataFail.png",prefix.c_str()));
+  c_sim_data_fail->SaveAs(Form("%s_provaRoofitDataFail.pdf",prefix.c_str()));
+
+#ifdef doTOY
+  //definition only for TOY fit
+  RooRealVar const_efficiency_toy ("const_efficiency_toy", "efficiency",  .91, 0 ,1.);
+  RooRealVar const_mean_pass_toy("const_mean_pass_toy", "Double CB mean", 78., 75.,85.);
+  RooRealVar const_sigma_pass_toy("const_sigma_pass_toy", "Double CB Width", 8.,6.,8.); //it was 8.,5.,10.
+  RooConstVar const_dCBCutL_pass_toy("const_dCBCutL_pass_toy", "Double CB Cut left", 1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
+  RooConstVar const_dCBCutR_pass_toy("const_dCBCutR_pass_toy", "Double CB Cut right", 1.9);//***** tau21_04  2.);//***** tau21_06 1.9);//1.9);
+  RooConstVar const_dCBPowerL_pass_toy("const_dCBPowerL_pass_toy", "Double CB Power left", 1.1);//***** tau21_04 1.14);//***** tau21_06 1.16);
+  RooConstVar const_dCBPowerR_pass_toy("const_dCBPowerR_pass_toy", "Double CB Power right", 5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
+  RooDCBShape const_dcb_pass_toy("const_dcb_pass_toy", "double crystal ball", ak08Pruned_1_mass, const_mean_pass_toy, const_sigma_pass_toy, const_dCBCutL_pass_toy, const_dCBCutR_pass_toy, const_dCBPowerL_pass_toy, const_dCBPowerR_pass_toy);
+  RooRealVar const_a_pass_toy("const_a_pass_toy","a_pass_sim_MC",-.01,-.1,-.001);//, 0.01,100.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
+  RooRealVar const_a1_pass_toy("const_a1_pass_toy","a1_pass_sim_MC",-.4, -1.,-.1);//,-100,-.1);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
+  RooConstVar const_a2_pass_toy("const_a2_pass_toy","a2_pass_sim_MC",.07);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
+  RooChebychev const_cheby_pass_toy("const_cheby_pass_toy","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_pass_toy,const_a1_pass_toy /*,const_a2_pass_toy*/)) ;
+  RooRealVar const_Nsig_toy("const_Nsig_toy", "Nsig_sim_MC", 1000.,0.,10000000.);
+  RooFormulaVar const_k_pass_toy("const_k_pass_toy", "pass norm", "(const_Nsig_toy*const_efficiency_toy)", RooArgList(const_Nsig_toy, const_efficiency_toy));
+  RooRealVar const_Nbkg_pass_toy("const_Nbkg_pass_toy", "Nbkg_pass_sim_MC", 1000., 0.,100000000.);
+  RooAddPdf const_modelPass_toy("const_modelPass_toy", "modelPass_sim_MC", RooArgList(const_dcb_pass_toy,const_cheby_pass_toy), RooArgList(const_k_pass_toy, const_Nbkg_pass_toy));
+
+
+  //+++ Fail part +++
+  RooConstVar const_sigmaRatio("const_sigmaRatio", "ratio MC sigma", 1.25);
+  //RooRealVar const_mean_fail_toy("const_mean_fail_toy", "Double CB mean", 75.4, 75.,85.);//***** tau21_04 76.53);//***** tau21_06 75.5);
+  RooConstVar const_meanRatio("const_meanRatio", "ratio mean MC", .94);
+  RooFormulaVar const_mean_fail_toy("const_mean_fail_toy", "Double CB mean", "(const_meanRatio*const_mean_pass_toy)", RooArgList(const_meanRatio, const_mean_pass_toy));
+  RooRealVar const_sigma_fail_toy("const_sigma_fail_toy", "Double CB Width", 10.,8,12); //working points 10, 0, 40 for tau21<.4
+  //RooFormulaVar const_sigma_fail_toy("const_sigma_fail_toy", "Double CB Width","(const_sigmaRatio*const_sigma_pass_toy)", RooArgList(const_sigmaRatio, const_sigma_pass_toy));
+  RooConstVar const_dCBCutL_fail_toy("const_dCBCutL_fail_toy", "Double CB Cut left",.48);//***** tau21_04 .7);//***** tau21_06 .8);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
+  RooConstVar const_dCBCutR_fail_toy("const_dCBCutR_fail_toy", "Double CB Cut right", 1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
+  RooConstVar const_dCBPowerL_fail_toy("const_dCBPowerL_fail_toy", "Double CB Power left", 1.);//***** tau21_04 1.5);//***** tau21_06 2.5 .72);//.82); //.72);
+  RooConstVar const_dCBPowerR_fail_toy("const_dCBPowerR_fail_toy", "Double CB Power right",9.5);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
+  RooDCBShape const_dcb_fail_toy("const_dcb_fail_toy", "double crystal ball", ak08Pruned_1_mass, const_mean_fail_toy, const_sigma_fail_toy, const_dCBCutL_fail_toy, const_dCBCutR_fail_toy, const_dCBPowerL_fail_toy, const_dCBPowerR_fail_toy);
+  RooRealVar const_a_fail_toy("const_a_fail_toy","a_fail_sim_MC", -1.06,-2.,-.5);//,-100,-.1);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
+  RooRealVar const_a1_fail_toy("const_a1_fail_toy","a1_fail_sim_MC", .31,0.,.6);//,.1,100);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
+  RooConstVar const_a2_fail_toy("const_a2_fail_toy","a2_fail_sim_MC", -.05);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
+  RooChebychev const_cheby_fail_toy("const_cheby_fail_toy","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_fail_toy,const_a1_fail_toy/*, const_a2_fail_toy*/)) ;
+  
+  RooRealVar const_Nbkg_fail_toy("const_Nbkg_fail_toy", "Nbkg_fail_sim_MC", 1000., 0., 10000000.);
+  RooFormulaVar const_k_fail_toy("const_k_fail_toy", "fail norm", "(const_Nsig_toy*(1-const_efficiency_toy))", RooArgList(const_Nsig_toy, const_efficiency_toy));
+  RooAddPdf const_model_fail_toy("const_model_fail_toy", "model_fail_sim_MC", RooArgList(const_dcb_fail_toy,const_cheby_fail_toy), RooArgList(const_k_fail_toy, const_Nbkg_fail_toy));
+
+  //end of constant part
+  TTree* toyTree = new TTree("toyTree","data from my toy MC");
+
+  //Toy generation part
+  frame("Generating toys!!!");
+
+  RooMCStudy* mcstudy_pass = new RooMCStudy(const_modelPass_sim_MC,ak08Pruned_1_mass,Binned(kTRUE),Silence(),Extended(), FitOptions(Save(kTRUE),PrintEvalErrors(0)));
+  RooMCStudy* mcstudy_fail = new RooMCStudy(const_model_fail_sim_MC,ak08Pruned_1_mass,Binned(kTRUE),Silence(),Extended(), FitOptions(Save(kTRUE),PrintEvalErrors(0)));
+  mcstudy_pass->generate(toyGen,MC_Pass->sumEntries()/*950*0.91+1600*/, kTRUE);//(const_Nbkg_pass_sim_MC.getValV()+(const_Nsig_sim_MC.getValV()*const_efficiency.getValV()))/10, kTRUE);
+  mcstudy_fail->generate(toyGen,MC_Fail->sumEntries()/*950*0.09+563*/,kTRUE);//(const_Nbkg_fail_sim_MC.getValV()+(const_Nsig_sim_MC.getValV()*(1-const_efficiency.getValV())))/10, kTRUE);
+
+
+  RooPlot* frame2_MCStudy = ak08Pruned_1_mass.frame(Bins(bins),Title("Pass sample"));
+  RooPlot* frame3_MCStudy = ak08Pruned_1_mass.frame(Bins(bins),Title("Pass sample"));
+  //(RooAbsData &)*(mcstudy->genData(i))
+  double eff= const_efficiency.getValV();
+  double mean=const_mean_pass_sim_MC.getValV();
+  double sigma=const_sigma_pass_sim_MC.getValV();
+  double a0=const_a_pass_sim_MC.getValV();
+  double a1=const_a1_pass_sim_MC.getValV();
+  double a2=const_a2_pass_sim_MC.getValV();
+  double sigma_f=const_sigma_fail_sim_MC.getValV();
+  double a0_f=const_a_fail_sim_MC.getValV();
+  double a1_f=const_a1_fail_sim_MC.getValV();
+  double a2_f=const_a2_fail_sim_MC.getValV();
+  double Nbkg_f=const_Nbkg_fail_sim_MC.getValV();
+  double Nbkg=const_Nbkg_pass_sim_MC.getValV();
+  double Nsig=const_Nsig_sim_MC.getValV();
+  //variables for tree
+  double eff_toy, eff_toy_err;
+  double mean_toy, mean_toy_err;
+  double mean1_toy, mean1_toy_err;
+  double sigma_toy, sigma_toy_err;
+  double a0_toy, a0_toy_err;
+  double a1_toy, a1_toy_err;
+  double a2_toy, a2_toy_err;
+  double sigma_f_toy, sigma_f_toy_err;
+  double a0_f_toy, a0_f_toy_err;
+  double a1_f_toy, a1_f_toy_err;
+  double a2_f_toy, a2_f_toy_err;
+  double Nbkg_f_toy, Nbkg_f_toy_err;
+  double Nbkg_toy, Nbkg_toy_err;
+  double Nsig_toy, Nsig_toy_err;
+  toyTree->Branch("eff_toy", &eff_toy, "eff_toy/D");
+  toyTree->Branch("eff_toy_err",&eff_toy_err,"eff_toy_err/D");
+  toyTree->Branch("mean_toy", &mean_toy,"mean_toy/D");
+  toyTree->Branch("mean_toy_err",&mean_toy_err,"mean_toy_err/D");
+  toyTree->Branch("mean1_toy", &mean1_toy,"mean1_toy/D");
+  toyTree->Branch("mean1_toy_err",&mean1_toy_err,"mean1_toy_err/D");
+  toyTree->Branch("sigma_toy", &sigma_toy,"sigma_toy/D");
+  toyTree->Branch("sigma_toy_err", &sigma_toy_err,"sigma_toy_err/D");
+  toyTree->Branch("a0_toy", &a0_toy,"a0_toy/D");
+  toyTree->Branch("a0_toy_err",&a0_toy_err,"a0_toy_err/D");
+  toyTree->Branch("a1_toy",&a1_toy,"a1_toy/D");
+  toyTree->Branch("a1_toy_err",&a1_toy_err,"a1_toy_err/D");
+  //toyTree->Branch("a2_toy",&a2_toy, "a2_toy/D");
+  //toyTree->Branch("a2_toy_err", &a2_toy_err,"a2_toy_err/D");
+  toyTree->Branch("sigma_f_toy",&sigma_f_toy,"sigma_f_toy/D");
+  toyTree->Branch("sigma_f_toy_err",&sigma_f_toy_err,"sigma_f_toy_err/D");
+  toyTree->Branch("a0_f_toy",&a0_f_toy,"a0_f_toy/D");
+  toyTree->Branch("a0_f_toy_err",&a0_f_toy_err,"a0_f_toy_err/D");
+  toyTree->Branch("a1_f_toy",&a1_f_toy,"a1_f_toy/D");
+  toyTree->Branch("a1_f_toy_err",&a1_f_toy_err,"a1_f_toy_err/D");
+  //toyTree->Branch("a2_f_toy",&a2_f_toy,"a2_f_toy/D");
+  //toyTree->Branch("a2_f_toy_err",&a2_f_toy_err,"a2_f_toy_err/D");
+  toyTree->Branch("Nbkg_f_toy",&Nbkg_f_toy,"Nbkg_f_toy/D");
+  toyTree->Branch("Nbkg_f_toy_err",&Nbkg_f_toy_err,"Nbkg_f_toy_err/D");
+  toyTree->Branch("Nbkg_toy",&Nbkg_toy,"Nbkg_toy/D");
+  toyTree->Branch("Nbkg_toy_err",&Nbkg_toy_err,"Nbkg_toy_err/D");
+  toyTree->Branch("Nsig_toy",&Nsig_toy,"Nsig_toy/D");
+  toyTree->Branch("Nsig_toy_err",&Nsig_toy_err,"Nsig_toy_err/D");
+  TH1 *allBkgHisto_pass_test= new TH1D("allBkgHisto_fail_pass","allBkgHisto_pass", bins,min,max);
+  TH1 *allBkgHisto_fail_test= new TH1D("allBkgHisto_fail_test","allBkgHisto_fail", bins,min,max);
+
+  TH1F* pull_eff= new TH1F("pull_eff","pull_eff", 40,-10,10);
+  TH1F* pull_mean= new TH1F("pull_mean","pull_mean", 40,-10,10);
+  TH1F* pull_sigma= new TH1F("pull_sigma","pull_sigma", 40,-10,10);
+  TH1F* pull_a0= new TH1F("pull_a0","pull_a0", 40,-10,10);
+  TH1F* pull_a1= new TH1F("pull_a1","pull_a1", 40,-10,10);
+  TH1F* pull_a2= new TH1F("pull_a2","pull_a2", 40,-10,10);
+  TH1F* pull_sigma_f= new TH1F("pull_sigma_f","pull_sigma_f", 40,-10,10);
+  TH1F* pull_a0_f= new TH1F("pull_a0_f","pull_a0_f", 40,-10,10);
+  TH1F* pull_a1_f= new TH1F("pull_a1_f","pull_a1_f", 40,-10,10);
+  TH1F* pull_a2_f= new TH1F("pull_a2_f","pull_a2_f", 40,-10,10);
+  TH1F* pull_Nbkg_f= new TH1F("pull_Nbkg_f","pull_Nbkg_f", 40,-10,10);
+  TH1F* pull_Nbkg= new TH1F("pull_Nbkg","pull_Nbkg", 40,-10,10);
+  TH1F* pull_Nsig= new TH1F("pull_Nsig","pull_Nsig", 40,-10,10);
+  RooDataHist *dh_totalPass_toy;
+  RooDataHist *dh_totalFail_toy;
+  RooDataSet *ds_toy_pass;
+  RooDataSet *ds_toy_fail;
+  RooSimultaneous simPdf_toy("simPdf_toy","simultaneous pdf for MC",sample_MC) ;
+  simPdf_toy.addPdf(const_modelPass_toy,"passed") ;
+  simPdf_toy.addPdf(const_model_fail_toy, "failed");
+  int index=0;
+
+  for(int i=0; i<toyGen; ++i){ 
+
+    if((i%100)==0) std::cout<<"++++ Toy: "<<i<<std::endl;
+    const_modelPass_toy.Clear();
+    const_model_fail_toy.Clear();
+    
+    allBkgHisto_pass_test=((RooAbsData &)*(mcstudy_pass->genData(i))).createHistogram("ak08Pruned_1_mass",bins);
+    allBkgHisto_fail_test=((RooAbsData &)*(mcstudy_fail->genData(i))).createHistogram("ak08Pruned_1_mass",bins);
+
+    dh_totalPass_toy = new RooDataHist("dh_totalPass_toy", "dh_totalPass_data_test", ak08Pruned_1_mass, Import(*allBkgHisto_pass_test));
+    dh_totalFail_toy = new RooDataHist("dh_totalPass_toy", "dh_totalPass_data_test", ak08Pruned_1_mass, Import(*allBkgHisto_fail_test));
+    
+//    ds_toy_pass =const_modelPass_sim_MC.generate(RooArgSet(ak08Pruned_1_mass),*MC_Pass, 1000);//(RooDataSet &)(mcstudy_pass->genData(i)) ;//new RooDataSet("ds_toy_pass","ds_toy_pass", ak08Pruned_1_mass,*(mcstudy_pass->genData(i)));
+//    ds_toy_fail =const_model_fail_sim_MC.generate(RooArgSet(ak08Pruned_1_mass),*MC_Fail, 1000);//new RooDataSet("ds_toy_fail","ds_toy_fail", ak08Pruned_1_mass,Import((RooDataSet &)*mcstudy_fail->genData(i))); 
+//    RooDataSet combData_MC_toy_unbin("combData_MC_toy_unbin","combData_MC_toy_unbin",ak08Pruned_1_mass,Index(sample_MC),Import("passed",*(ds_toy_pass)), Import("failed", *(ds_toy_fail)));
+    RooDataHist combData_MC_toy("combData_MC_toy","combined data for MC",ak08Pruned_1_mass,Index(sample_MC),Import("passed",*(dh_totalPass_toy)), Import("failed",*(dh_totalFail_toy)));
+    RooMsgService::instance().setSilentMode(true);
+    RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
+    
+    simPdf_toy.fitTo(combData_MC_toy, PrintEvalErrors(-1), SumW2Error(kTRUE)); 
+    std::cout<<"++++++++++++++++++++ "<<const_efficiency_toy.getValV()<<std::endl;
+    eff_toy=const_efficiency_toy.getValV(); eff_toy_err=const_efficiency_toy.getError();
+    mean_toy=const_mean_pass_toy.getValV(); mean_toy_err=const_mean_pass_toy.getError();
+    //mean1_toy=const_mean_fail_toy.getValV(); mean1_toy_err=const_mean_fail_toy.getError();
+    sigma_toy=const_sigma_pass_toy.getValV(); sigma_toy_err=const_sigma_pass_toy.getError();
+    a0_toy=const_a_pass_toy.getValV(); a0_toy_err=const_a_pass_toy.getError();
+    a1_toy=const_a1_pass_toy.getValV(); a1_toy_err=const_a1_pass_toy.getError();
+    //a2_toy=const_a2_pass_toy.getValV(); a2_toy_err=const_a2_pass_toy.getError();
+    sigma_f_toy=const_sigma_fail_toy.getValV(); sigma_f_toy_err=const_sigma_fail_toy.getError();
+    a0_f_toy=const_a_fail_toy.getValV(); a0_f_toy_err=const_a_fail_toy.getError();
+    a1_f_toy=const_a1_fail_toy.getValV(); a1_f_toy_err=const_a1_fail_toy.getError();
+    //a2_f_toy=const_a2_fail_toy.getValV(); a2_f_toy_err=const_a2_fail_toy.getError();
+    Nbkg_f_toy=const_Nbkg_fail_toy.getValV(); Nbkg_f_toy_err=const_Nbkg_fail_toy.getError();
+    Nbkg_toy=const_Nbkg_pass_toy.getValV(); Nbkg_toy_err=const_Nbkg_pass_toy.getError();
+    Nsig_toy=const_Nsig_sim_MC.getValV(); Nsig_toy_err=const_Nsig_sim_MC.getError();
+    //std::cout<<(const_efficiency.getValV()-eff)/const_efficiency.getError()<<" "<<(const_mean_pass_sim_MC.getValV()-mean)/const_mean_pass_sim_MC.getError()<<" "<<(const_sigma_pass_sim_MC.getValV()-sigma)/const_sigma_pass_sim_MC.getError()<<" "<<(const_a_pass_sim_MC.getValV()-a0)/const_a_pass_sim_MC.getError()<<" "<<(const_a1_pass_sim_MC.getValV()-a1)/const_a1_pass_sim_MC.getError()<<" "<<(const_a2_pass_sim_MC.getValV()-a2)/const_a2_pass_sim_MC.getError()<<" "<<(const_sigma_fail_sim_MC.getValV()-sigma_f)/const_sigma_fail_sim_MC.getError()<<" "<<std::endl; 
+    pull_eff->Fill((const_efficiency_toy.getValV()-eff)/const_efficiency_toy.getError());
+    std::cout<<eff<<" "<<eff_toy<<" "<<eff_toy_err<<std::endl;
+    std::cout<<"Pull: "<<(const_efficiency_toy.getValV()-eff)/const_efficiency_toy.getError()<<std::endl;
+    pull_mean->Fill((const_mean_pass_toy.getValV()-mean)/const_mean_pass_toy.getError());
+    pull_sigma->Fill((const_sigma_pass_toy.getValV()-sigma)/const_sigma_pass_toy.getError());
+    pull_a0->Fill((const_a_pass_toy.getValV()-a0)/const_a_pass_toy.getError());
+    pull_a1->Fill((const_a1_pass_toy.getValV()-a1)/const_a1_pass_toy.getError());
+    //pull_a2->Fill((const_a2_pass_toy.getValV()-a2)/const_a2_pass_toy.getError());
+    pull_sigma_f->Fill((const_sigma_fail_toy.getValV()-sigma_f)/const_sigma_fail_toy.getError());
+    pull_a0_f->Fill((const_a_fail_toy.getValV()-a0_f)/const_a_fail_toy.getError());
+    pull_a1_f->Fill((const_a1_fail_toy.getValV()-a1_f)/const_a1_fail_toy.getError());
+    ////pull_a2_f->Fill((const_a2_fail_toy.getValV()-a2_f)/const_a2_fail_toy.getError());
+    pull_Nbkg_f->Fill((const_Nbkg_fail_toy.getValV()-Nbkg_f)/const_Nbkg_fail_toy.getError());
+    pull_Nbkg->Fill((const_Nbkg_pass_toy.getValV()-Nbkg)/const_Nbkg_pass_toy.getError());
+    pull_Nsig->Fill((const_Nsig_toy.getValV()-Nsig)/const_Nsig_toy.getError());
+    //if(const_sigma_pass_toimPdf_MClV()<9) index=i;
+    toyTree->Fill();
+
+    dh_totalPass_toy->Clear();
+    dh_totalFail_toy->Clear();
+    combData_MC_toy.Clear();
+    allBkgHisto_pass_test->Clear();
+    allBkgHisto_fail_test->Clear();
+    delete allBkgHisto_pass_test;
+    delete allBkgHisto_fail_test;
+  }//end loop over toys 
+
+  
+
+  dh_totalPass_toy->plotOn(frame2_MCStudy);
+  //(mcstudy_pass->genData(0))->plotOn(frame2_MCStudy);
+  const_modelPass_toy.plotOn(frame2_MCStudy);
+  const_modelPass_toy.plotOn(frame2_MCStudy,Components(const_dcb_pass_toy),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  const_modelPass_toy.plotOn(frame2_MCStudy,Components(const_cheby_pass_toy),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+
+  dh_totalFail_toy->plotOn(frame3_MCStudy);
+  const_model_fail_toy.plotOn(frame3_MCStudy);
+  const_model_fail_toy.plotOn(frame3_MCStudy,Components(const_dcb_fail_toy),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
+  const_model_fail_toy.plotOn(frame3_MCStudy,Components(const_cheby_fail_toy),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+
+  TCanvas* c_toy = new TCanvas("c_toy","c_toy",1) ;
+  
+  //allBkgHisto_pass_test->Draw();
+  gPad->SetLeftMargin(0.15) ; frame2_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame2_MCStudy->Draw();
+  c_toy->SaveAs(Form("%s_toyMC.pdf",prefix.c_str()));
+  TCanvas* c_toy1 = new TCanvas("c_toy1","c_toy",1) ;
+  gPad->SetLeftMargin(0.15) ; frame2_MCStudy->GetYaxis()->SetTitleOffset(1.4) ; frame3_MCStudy->Draw();
+  c_toy1->SaveAs(Form("%s_toyMC1.pdf",prefix.c_str())); 
+
+  TFile *outFile = new TFile(Form("%s.root",prefix.c_str()), "RECREATE");
+
+  TCanvas* c_MCStudy1 = new TCanvas("c_MCStudy1","c_toy",1) ;
+  pull_eff->Draw("hist");
+  pull_eff->Write();
+  TCanvas* c_MCStudy3 = new TCanvas("c_MCStudy3","c_toy",1) ;
+  pull_mean->Draw("hist");
+  pull_mean->Write();
+  TCanvas* c_MCStudy4 = new TCanvas("c_MCStudy4","c_toy",1) ;
+  pull_sigma->Draw("hist");
+  pull_sigma->Write();
+  TCanvas* c_MCStudy5 = new TCanvas("c_MCStudy5","c_toy",1) ;
+  pull_a0->Draw("hist");
+  pull_a0->Write();
+  TCanvas* c_MCStudy6 = new TCanvas("c_MCStudy6","c_toy",1) ;
+  pull_a1->Draw("hist");
+  pull_a1->Write();
+  TCanvas* c_MCStudy7 = new TCanvas("c_MCStudy7","c_toy",1) ;
+  pull_a2->Draw("hist");
+  pull_a2->Write();
+  TCanvas* c_MCStudy8 = new TCanvas("c_MCStudy8","c_toy",1) ;
+  pull_sigma_f->Draw("hist");
+  pull_sigma_f->Write();
+  TCanvas* c_MCStudy9 = new TCanvas("c_MCStudy9","c_toy",1) ;
+  pull_a0_f->Draw("hist");
+  pull_a0_f->Write();
+  TCanvas* c_MCStudy10 = new TCanvas("c_MCStudy10","c_toy",1) ;
+  pull_a1_f->Draw("hist");
+  pull_a1_f->Write();
+  TCanvas* c_MCStudy11 = new TCanvas("c_MCStudy11","c_toy",1) ;
+  pull_a2_f->Draw("hist");
+  pull_a2_f->Write();
+  TCanvas* c_MCStudy12 = new TCanvas("c_MCStudy12","c_toy",1) ;
+  pull_Nbkg_f->Draw("hist");
+  pull_Nbkg_f->Write();
+  TCanvas* c_MCStudy13 = new TCanvas("c_MCStudy13","c_toy",1) ;
+  pull_Nbkg->Draw("hist");
+  pull_Nbkg->Write();
+  TCanvas* c_MCStudy14 = new TCanvas("c_MCStudy14","c_toy",1) ;
+  pull_Nsig->Draw("hist");
+  pull_Nsig->Write();
+
+  toyTree->Write();
+  outFile->Close();
+  c_MCStudy1->SaveAs(Form("%s_mcstudy1.pdf",prefix.c_str()));
+  c_MCStudy3->SaveAs(Form("%s_mcstudy3.pdf",prefix.c_str()));
+  c_MCStudy4->SaveAs(Form("%s_mcstudy4.pdf",prefix.c_str()));
+  c_MCStudy5->SaveAs(Form("%s_mcstudy5.pdf",prefix.c_str()));
+  c_MCStudy6->SaveAs(Form("%s_mcstudy6.pdf",prefix.c_str()));
+  c_MCStudy7->SaveAs(Form("%s_mcstudy7.pdf",prefix.c_str()));
+  c_MCStudy8->SaveAs(Form("%s_mcstudy8.pdf",prefix.c_str()));
+  c_MCStudy9->SaveAs(Form("%s_mcstudy9.pdf",prefix.c_str()));
+  c_MCStudy10->SaveAs(Form("%s_mcstudy10.pdf",prefix.c_str()));
+  c_MCStudy11->SaveAs(Form("%s_mcstudy11.pdf",prefix.c_str()));
+  c_MCStudy12->SaveAs(Form("%s_mcstudy12.pdf",prefix.c_str()));
+  c_MCStudy13->SaveAs(Form("%s_mcstudy13.pdf",prefix.c_str()));
+  c_MCStudy14->SaveAs(Form("%s_mcstudy14.pdf",prefix.c_str()));
+  
+  std::cout<<"Generated: "<<(Nsig*eff)+Nbkg<<" for passed toy"<<std::endl;
+  std::cout<<"Generated: "<<(Nsig*(1-eff))+Nbkg_f<<" for passed toy"<<std::endl;
+
+#endif //doTOY
+
+  std::cout<<"Pass: "<<MC_Pass->numEntries()<<" "<<MC_Pass->sumEntries()<<std::endl;
+  std::cout<<"Fail: "<<MC_Fail->numEntries()<<" "<<MC_Fail->sumEntries()<<std::endl;
+
 
   std::cout<<""<<std::endl;
   std::cout << "------ TIME ELAPSED DURING ANALYSIS  ----- " << timer.RealTime() << " s" <<std::endl;
   std::cout<<""<<std::endl;
-
-
-
+  
   return 0;
-
 
 }
