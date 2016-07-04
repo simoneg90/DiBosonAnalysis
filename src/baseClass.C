@@ -1,5 +1,6 @@
 #define baseClass_cxx
 #include "baseClass.h"
+#include <fstream>
 //#include <boost/lexical_cast.hpp>
 
 baseClass::baseClass(string * inputList, string * cutFile, string * treeName, string * outputFileName, string * cutEfficFile):
@@ -195,8 +196,54 @@ int baseClass::readInputList()
             std::cout<<crabCount_<<std::endl;
 
           }*/
-
+        ////  std::string fileString=pName;
+        ////  std::string reduceString=fileString.substr(62,500);//fileString.size()-5);
+        ////  //std::string p="/treeProducerDarkMatterMonoJet_tree_";
+        ////  std::string from ="/treeProducerDarkMatterMonoJet_tree_";
+        ////  std::string to="_Chunk";
+        ////  size_t start_pos = reduceString.find(from);
+        ////      if(start_pos == std::string::npos)
+        ////                return false;
+        ////          reduceString.replace(start_pos, from.length(), to);
+        ////  //string::size_type n = p.length();
+        ////  //  for (string::size_type i = reduceString.find(p);i != string::npos;  i = reduceString.find(p)){
+        ////  //          reduceString.erase(i, n);
+        ////  //  }
+        ////  //input.erase(std::remove(input.begin(),input.end(),' '),input.end());
+        ////  std::string from1 =".root";
+        ////  std::string to1="/skimAnalyzerCount/SkimReport.txt";
+        ////  size_t start_pos1 = reduceString.find(from1);
+        ////  if(start_pos1 == std::string::npos)
+        ////    return false;
+        ////  reduceString.replace(start_pos1, from1.length(), to1);
+        ////  std::cout<<"New string +++++++++++++++++++++++++ "<<reduceString.c_str()<<std::endl;
+        ////  std::string skimFile="/afs/cern.ch/work/s/sgelli/private/CMSSW_Heppy/src/CMGTools/MonoXAnalysis/cfg/"+reduceString;
+        ////  std::cout<<"New string +++++++++++++++++++++++++ "<<skimFile.c_str()<<std::endl;
+        ////  std::ifstream skimList;
+        ////  skimList.open(skimFile.c_str());
+        ////  if(skimList==NULL){
+        ////        std::cout<<"ERROR! SkimList-> File: "<<skimFile.c_str() <<" doesn't exist!"<<std::endl;
+        ////        exit(-1);
+        ////  }
+        ////  std::string a;
+        ////  std::string b;
+        ////  std::string c;
+        ////  std::string d;
+        ////  int counterSkim=0;
+        ////  double evtProcessed;
+        ////  while(skimList>>a>>b>>c>>d){
+        ////    std::cout<<" "<<a.c_str()<<" "<<b.c_str()<<" "<<c.c_str()<<" "<<d.c_str()<<std::endl;
+        ////    if(counterSkim==1){
+        ////      evtProcessed=atof(b.c_str());
+        ////      break;
+        ////    }
+        ////    ++counterSkim;
+        ////  }
+        ////  std::cout<<"Events processed: "<<evtProcessed<<std::endl;
+        ////  //exit(-1);
 	  string s0 = "Count";
+        /////////////  TriggerPass = new TH1F("TriggerPass","TriggerPass",1, 0, 2);
+        /////////////  TriggerPass->SetBinContent(1,10);//evtProcessed);
 	  TriggerPass = (TH1F*)f->Get(s0.c_str());  //removed by Simone...
 	  if(f) STDOUT("file exists!");
          
@@ -205,7 +252,8 @@ int baseClass::readInputList()
 	  }
 	  else{
 	    STDOUT("ERROR: object doesn't exist!!"); 
-            break; //added by Simone
+            exit(-1); //added by Simone
+            //break; //added by Simone
 	  }
 	  TriggerPass->Print();
 	  TriggerPass->SetName("TriggerPass");

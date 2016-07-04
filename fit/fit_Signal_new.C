@@ -29,10 +29,11 @@ using namespace RooFit ;
 #define nbins 18 //24
 #define xmin 40  //30
 #define xMax 130 //150
-#define Lumi 2.2*1000 //[pb-1]
+#define Lumi 3.99*1000 //[pb-1]
 
 void fit_Signal_new()
 {
+  bool doWeight = 0;  //if you want to have reweighted dataset->1 otherwise use 0
   gSystem->AddIncludePath("-I$ROOFITSYS/include");
   gROOT->GetInterpreter()->AddIncludePath("$ROOFITSYS/include");
   gSystem->SetIncludePath("-I$ROOFITSYS/include");
@@ -46,7 +47,7 @@ void fit_Signal_new()
   //model_ttbar.fitTo(*dh_ttbarMatch) ;
   //ak08_subjetDR<.1&&subjet1_btagLoose==0&&subjet2_btagLoose==0&&
 
-  std::string match= "ak08Ungroomed_1_tau21>.5&&genW_genBquark2_DR>.8&&genW_genBquark1_DR>.8&&ak08Ungroomed_WGen_DR<.1";
+  std::string match= "ak08Ungroomed_1_tau21<.6&&genW_genBquark2_DR>.8&&genW_genBquark1_DR>.8&&ak08Ungroomed_WGen_DR<.1";
   std::string unmatch= "ak08Ungroomed_1_tau21<.6&&((genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||ak08Ungroomed_WGen_DR>.1)";
   std::string pass= "ak08Ungroomed_1_tau21<.6";
 
@@ -71,9 +72,10 @@ void fit_Signal_new()
 
 
   TFile *file_ttbar;
-  file_ttbar=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/TTBar_Inclusive_tot.root");//"/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/TTBar_Inclusive.root");///cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/output/bulkGraviton1000_reduced_skim.root");//");
+  file_ttbar=TFile::Open("../ttbar_output_new/TT_Inclusive_20160703_190901/rootfile_tt_inclusive__20160703_190901_0_reduced_skim.root");//"../ttbar_output_new/TT_Inclusive_20160623_191418/rootfile_inputListTest__20160623_191418_0_reduced_skim.root");//"/afs/cern.ch/work/s/sgelli/private/CMSSW_Analysis/src/DiBosonAnalysis/rootFolder/TTBar_Inclusive.root");//"/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/TTBar_Inclusive.root");///cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/output/bulkGraviton1000_reduced_skim.root");//");
   std::cout<<"opened file"<<std::endl;
   double nEvt_ttbar= ((TH1D *)(file_ttbar->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
+  std::cout<<"+++++++++++++++++"<<nEvt_ttbar<<std::endl;
   double xSec_ttbar = 831.76;
 
   RooRealVar ak08Pruned_1_mass("ak08Pruned_1_mass","ak08Pruned_1_mass", 40,130);
@@ -83,10 +85,12 @@ void fit_Signal_new()
   RooRealVar ak08Ungroomed_WGen_DR("ak08Ungroomed_WGen_DR","ak08Ungroomed_WGen_DR",-10,10);
 
   TFile *file_ttbar2;
-  file_ttbar2=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ttbar_redu.root");
+  file_ttbar2=TFile::Open("../ttbar_output_new/TT_Inclusive_20160703_190901/rootfile_tt_inclusive__20160703_190901_0_reduced_skim_redu.root");//"/afs/cern.ch/work/s/sgelli/private/CMSSW_Analysis/src/DiBosonAnalysis/ttbar_output_new/TT_Inclusive_redu.root");//ttbar_redu.root");
+  std::cout<<"After tree assigned"<<std::endl;
   TTree *tree_ttbar=(TTree *)file_ttbar2->Get("mio");//tree_ttbar->CopyTree(cut_matched_pass.c_str());
   
   RooDataSet *ds_ttbar = new RooDataSet("ds_ttbar","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_ttbar));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  std::cout<<"RooDataset defined"<<std::endl;
   ds_ttbar->Print();
 
   RooDataSet* dsC_match = (RooDataSet*) ds_ttbar->reduce(match.c_str()) ;
@@ -96,6 +100,7 @@ void fit_Signal_new()
   dsC_unmatch->SetName("dsC_unmatch");
   dsC_unmatch->Print();
   double weight_ttbar=xSec_ttbar*Lumi/nEvt_ttbar;
+  if(!doWeight) weight_ttbar=1;
   //RooConstVar *mioPeso[10];
   //mioPeso[0]= new RooConstVar("mioPeso0","mioPeso0",weight_ttbar);
   //RooFormulaVar *wFunc_mio[10];
@@ -176,12 +181,18 @@ void fit_Signal_new()
   //dcb.fitTo(*dh_ttbarMatch) ;
   //cheby_ttbar.fitTo(*dh_ttbarMatch) ;
   //dcb_unmatch.fitTo(*dh_ttbarUnMatch);
+  //dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE));
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
 
   RooPlot* frame1_ttbar = ak08Pruned_1_mass.frame(Bins(nbins),Title("TopTop Pass/Match sample")) ;
   //dh_ttbarMatch->plotOn(frame1_ttbar, LineColor(2), DataError(RooAbsData::SumW2)) ;
   ////////
   //dsC->plotOn(frame1_ttbar);//,DataError(RooAbsData::SumW2)); 
-  wdata_ttbar_match->plotOn(frame1_ttbar,DataError(RooAbsData::SumW2));
+  
+  wdata_ttbar_match/*dsC_match*/->plotOn(frame1_ttbar,DataError(RooAbsData::SumW2));
+  dcb.plotOn(frame1_ttbar);
   wdata_ttbar_unmatch.plotOn(frame1_ttbar,DataError(RooAbsData::SumW2), LineColor(2));
   
 
@@ -207,11 +218,11 @@ void fit_Signal_new()
   std::cout<<"    Single Top     "<<std::endl;
   std::cout<<"+++++++++++++++++++"<<std::endl;
   TFile *file_Stop1;
-  file_Stop1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_s-channel_4f.root");//testMuonEff/firstTest_reduced_skim.root");
+  file_Stop1=TFile::Open("../ttbar_output_new/SingleTop_sChannel_20160703_141827/rootfile_SingleTop_sChannel__20160703_141827_0_reduced_skim.root");//"/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_s-channel_4f.root");//testMuonEff/firstTest_reduced_skim.root");
   double nEvt_Stop1= ((TH1D *)(file_Stop1->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_Stop1 = 47.13;
   TFile *file_Stop1_primo;
-  file_Stop1_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_s-channel_4f_redu.root");
+  file_Stop1_primo=TFile::Open("../ttbar_output_new/SingleTop_sChannel_20160703_141827/rootfile_SingleTop_sChannel__20160703_141827_0_reduced_skim_redu.root");//"/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_s-channel_4f_redu.root");
   TTree *tree_Stop1=(TTree *)file_Stop1_primo->Get("mio");
   
   RooDataSet ds_Stop1("ds_Stop1","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop1));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -224,6 +235,7 @@ void fit_Signal_new()
   dsC_Stop1_unmatch->SetName("dsC_Stop1_unmatch");
   dsC_Stop1_unmatch->Print();
   double weight_Stop1=xSec_Stop1*Lumi/nEvt_Stop1;
+  if(!doWeight) weight_Stop1=1;
   RooConstVar w_Stop1 ("w_Stop1", "w_Stop1", weight_Stop1);
   RooFormulaVar wFunc_Stop1("wFunc_Stop1","event weight","w_Stop1",RooArgList(w_Stop1,ak08Pruned_1_mass)) ;
   RooRealVar* W_Stop1_match = (RooRealVar*) dsC_Stop1_match->addColumn(wFunc_Stop1) ;
@@ -236,11 +248,11 @@ void fit_Signal_new()
 
 
   TFile *file_Stop2;
-  file_Stop2=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_tW-channel_top.root");//testMuonEff/firstTest_reduced_skim.root");
+  file_Stop2=TFile::Open("../ttbar_output_new/SingleTop_tW_20160703_141828/rootfile_SingleTop_tW__20160703_141828_0_reduced_skim.root");//"/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_tW-channel_top.root");//testMuonEff/firstTest_reduced_skim.root");
   double nEvt_Stop2= ((TH1D *)(file_Stop2->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_Stop2 = 35.6;
   TFile *file_Stop2_primo;
-  file_Stop2_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_tW-channel_top_redu.root");
+  file_Stop2_primo=TFile::Open("../ttbar_output_new/SingleTop_tW_20160703_141828/rootfile_SingleTop_tW__20160703_141828_0_reduced_skim_redu.root");
   TTree *tree_Stop2=(TTree *)file_Stop2_primo->Get("mio");
   
   RooDataSet ds_Stop2("ds_Stop2","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop2));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -252,6 +264,7 @@ void fit_Signal_new()
   dsC_Stop2_unmatch->SetName("dsC_Stop2_unmatch");
   dsC_Stop2_unmatch->Print();
   double weight_Stop2=xSec_Stop2*Lumi/nEvt_Stop2;
+  if(!doWeight) weight_Stop2=1;
   RooConstVar w_Stop2 ("w_Stop2", "w_Stop2", weight_Stop2);
   RooFormulaVar wFunc_Stop2("wFunc_Stop2","event weight","w_Stop2",RooArgList(w_Stop2,ak08Pruned_1_mass)) ;
   RooRealVar* W_Stop2_match = (RooRealVar*) dsC_Stop2_match->addColumn(wFunc_Stop2) ;
@@ -262,11 +275,11 @@ void fit_Signal_new()
   std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
 
   TFile *file_Stop3; 
-  file_Stop3=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_tW-channel_antitop.root");//testMuonEff/firstTest_reduced_skim.root");
+  file_Stop3=TFile::Open("../ttbar_output_new/SingleTop_tbarW_20160703_141828/rootfile_SingleTop_tbarW__20160703_141828_0_reduced_skim.root");//testMuonEff/firstTest_reduced_skim.root");
   double nEvt_Stop3= ((TH1D *)(file_Stop3->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_Stop3 = 35.6;
   TFile *file_Stop3_primo;
-  file_Stop3_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_tW-channel_antitop_redu.root");
+  file_Stop3_primo=TFile::Open("../ttbar_output_new/SingleTop_tbarW_20160703_141828/rootfile_SingleTop_tbarW__20160703_141828_0_reduced_skim_redu.root");
   TTree *tree_Stop3=(TTree *)file_Stop3_primo->Get("mio");
   
   RooDataSet ds_Stop3("ds_Stop3","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop3));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -278,6 +291,7 @@ void fit_Signal_new()
   dsC_Stop3_unmatch->SetName("dsC_Stop3_unmatch");
   dsC_Stop3_unmatch->Print();
   double weight_Stop3=xSec_Stop3*Lumi/nEvt_Stop3;
+  if(!doWeight) weight_Stop3=1;
   RooConstVar w_Stop3 ("w_Stop3", "w_Stop3", weight_Stop3);
   RooFormulaVar wFunc_Stop3("wFunc_Stop3","event weight","w_Stop3",RooArgList(w_Stop3,ak08Pruned_1_mass)) ;
   RooRealVar* W_Stop3_match = (RooRealVar*) dsC_Stop3_match->addColumn(wFunc_Stop3) ;
@@ -289,71 +303,68 @@ void fit_Signal_new()
 
 
 
-  TFile *file_Stop4; 
-  file_Stop4=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_antitop.root");//testMuonEff/firstTest_reduced_skim.root");
-  double nEvt_Stop4= ((TH1D *)(file_Stop4->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
-  double xSec_Stop4 = 26;
-  TFile *file_Stop4_primo;
-  file_Stop4_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_antitop_redu.root");
-  TTree *tree_Stop4=(TTree *)file_Stop4_primo->Get("mio");
-  
-  RooDataSet ds_Stop4("ds_Stop4","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop4));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
-      
-  RooDataSet* dsC_Stop4_match = (RooDataSet*) ds_Stop4.reduce(match.c_str()) ; 
-  RooDataSet* dsC_Stop4_unmatch = (RooDataSet*) ds_Stop4.reduce(unmatch.c_str()) ;
-  dsC_Stop4_match->SetName("dsC_Stop4_match");
-  dsC_Stop4_match->Print();
-  dsC_Stop4_unmatch->SetName("dsC_Stop4_unmatch");
-  dsC_Stop4_unmatch->Print();
-  double weight_Stop4=xSec_Stop4*Lumi/nEvt_Stop4;
-  RooConstVar w_Stop4 ("w_Stop4", "w_Stop4", weight_Stop4);
-  RooFormulaVar wFunc_Stop4("wFunc_Stop4","event weight","w_Stop4",RooArgList(w_Stop4,ak08Pruned_1_mass)) ;
-  RooRealVar* W_Stop4_match = (RooRealVar*) dsC_Stop4_match->addColumn(wFunc_Stop4) ;
-  std::cout<<"+++++++++++++++++++"<<wFunc_Stop4.getValV()<<std::endl;
-  RooDataSet wdata_Stop4_match(dsC_Stop4_match->GetName(),dsC_Stop4_match->GetTitle(),dsC_Stop4_match,*dsC_Stop4_match->get(),0,W_Stop4_match->GetName()) ;
-  RooRealVar* w1_Stop4 = (RooRealVar*) dsC_Stop4_unmatch->addColumn(wFunc_Stop4) ;
-  RooDataSet wdata_Stop4_unmatch(dsC_Stop4_unmatch->GetName(),dsC_Stop4_unmatch->GetTitle(),dsC_Stop4_unmatch,*dsC_Stop4_unmatch->get(),0,w1_Stop4->GetName()) ;
-  std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-  
-  TFile *file_Stop5; 
-  file_Stop5=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_top.root");//testMuonEff/firstTest_reduced_skim.root");
-  double nEvt_Stop5= ((TH1D *)(file_Stop5->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
-  double xSec_Stop5 = 43.8;
-  TFile *file_Stop5_primo;
-  file_Stop5_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_top_redu.root");
-  TTree *tree_Stop5=(TTree *)file_Stop5_primo->Get("mio");
-  
-  RooDataSet ds_Stop5("ds_Stop5","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop5));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
-      
-  RooDataSet* dsC_Stop5_match = (RooDataSet*) ds_Stop5.reduce(match.c_str()) ; 
-  RooDataSet* dsC_Stop5_unmatch = (RooDataSet*) ds_Stop5.reduce(unmatch.c_str()) ;
-  dsC_Stop5_match->SetName("dsC_Stop5_match");
-  dsC_Stop5_match->Print();
-  dsC_Stop5_unmatch->SetName("dsC_Stop5_unmatch");
-  dsC_Stop5_unmatch->Print();
-  double weight_Stop5=xSec_Stop5*Lumi/nEvt_Stop5;
-  RooConstVar w_Stop5 ("w_Stop5", "w_Stop5", weight_Stop5);
-  RooFormulaVar wFunc_Stop5("wFunc_Stop5","event weight","w_Stop5",RooArgList(w_Stop5,ak08Pruned_1_mass)) ;
-  RooRealVar* W_Stop5_match = (RooRealVar*) dsC_Stop5_match->addColumn(wFunc_Stop5) ;
-  std::cout<<"+++++++++++++++++++"<<wFunc_Stop5.getValV()<<std::endl;
-  RooDataSet wdata_Stop5_match(dsC_Stop5_match->GetName(),dsC_Stop5_match->GetTitle(),dsC_Stop5_match,*dsC_Stop5_match->get(),0,W_Stop5_match->GetName()) ;
-  RooRealVar* w1_Stop5 = (RooRealVar*) dsC_Stop5_unmatch->addColumn(wFunc_Stop5) ;
-  RooDataSet wdata_Stop5_unmatch(dsC_Stop5_unmatch->GetName(),dsC_Stop5_unmatch->GetTitle(),dsC_Stop5_unmatch,*dsC_Stop5_unmatch->get(),0,w1_Stop5->GetName()) ;
-  std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+///////  TFile *file_Stop4; 
+///////  file_Stop4=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_antitop.root");//testMuonEff/firstTest_reduced_skim.root");
+///////  double nEvt_Stop4= ((TH1D *)(file_Stop4->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
+///////  double xSec_Stop4 = 26;
+///////  TFile *file_Stop4_primo;
+///////  file_Stop4_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_antitop_redu.root");
+///////  TTree *tree_Stop4=(TTree *)file_Stop4_primo->Get("mio");
+///////  
+///////  RooDataSet ds_Stop4("ds_Stop4","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop4));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+///////      
+///////  RooDataSet* dsC_Stop4_match = (RooDataSet*) ds_Stop4.reduce(match.c_str()) ; 
+///////  RooDataSet* dsC_Stop4_unmatch = (RooDataSet*) ds_Stop4.reduce(unmatch.c_str()) ;
+///////  dsC_Stop4_match->SetName("dsC_Stop4_match");
+///////  dsC_Stop4_match->Print();
+///////  dsC_Stop4_unmatch->SetName("dsC_Stop4_unmatch");
+///////  dsC_Stop4_unmatch->Print();
+///////  double weight_Stop4=xSec_Stop4*Lumi/nEvt_Stop4;
+///////  RooConstVar w_Stop4 ("w_Stop4", "w_Stop4", weight_Stop4);
+///////  RooFormulaVar wFunc_Stop4("wFunc_Stop4","event weight","w_Stop4",RooArgList(w_Stop4,ak08Pruned_1_mass)) ;
+///////  RooRealVar* W_Stop4_match = (RooRealVar*) dsC_Stop4_match->addColumn(wFunc_Stop4) ;
+///////  std::cout<<"+++++++++++++++++++"<<wFunc_Stop4.getValV()<<std::endl;
+///////  RooDataSet wdata_Stop4_match(dsC_Stop4_match->GetName(),dsC_Stop4_match->GetTitle(),dsC_Stop4_match,*dsC_Stop4_match->get(),0,W_Stop4_match->GetName()) ;
+///////  RooRealVar* w1_Stop4 = (RooRealVar*) dsC_Stop4_unmatch->addColumn(wFunc_Stop4) ;
+///////  RooDataSet wdata_Stop4_unmatch(dsC_Stop4_unmatch->GetName(),dsC_Stop4_unmatch->GetTitle(),dsC_Stop4_unmatch,*dsC_Stop4_unmatch->get(),0,w1_Stop4->GetName()) ;
+///////  std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+///////  
+///////  TFile *file_Stop5; 
+///////  file_Stop5=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_top.root");//testMuonEff/firstTest_reduced_skim.root");
+///////  double nEvt_Stop5= ((TH1D *)(file_Stop5->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
+///////  double xSec_Stop5 = 43.8;
+///////  TFile *file_Stop5_primo;
+///////  file_Stop5_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_top_redu.root");
+///////  TTree *tree_Stop5=(TTree *)file_Stop5_primo->Get("mio");
+///////  
+///////  RooDataSet ds_Stop5("ds_Stop5","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop5));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+///////      
+///////  RooDataSet* dsC_Stop5_match = (RooDataSet*) ds_Stop5.reduce(match.c_str()) ; 
+///////  RooDataSet* dsC_Stop5_unmatch = (RooDataSet*) ds_Stop5.reduce(unmatch.c_str()) ;
+///////  dsC_Stop5_match->SetName("dsC_Stop5_match");
+///////  dsC_Stop5_match->Print();
+///////  dsC_Stop5_unmatch->SetName("dsC_Stop5_unmatch");
+///////  dsC_Stop5_unmatch->Print();
+///////  double weight_Stop5=xSec_Stop5*Lumi/nEvt_Stop5;
+///////  RooConstVar w_Stop5 ("w_Stop5", "w_Stop5", weight_Stop5);
+///////  RooFormulaVar wFunc_Stop5("wFunc_Stop5","event weight","w_Stop5",RooArgList(w_Stop5,ak08Pruned_1_mass)) ;
+///////  RooRealVar* W_Stop5_match = (RooRealVar*) dsC_Stop5_match->addColumn(wFunc_Stop5) ;
+///////  std::cout<<"+++++++++++++++++++"<<wFunc_Stop5.getValV()<<std::endl;
+///////  RooDataSet wdata_Stop5_match(dsC_Stop5_match->GetName(),dsC_Stop5_match->GetTitle(),dsC_Stop5_match,*dsC_Stop5_match->get(),0,W_Stop5_match->GetName()) ;
+///////  RooRealVar* w1_Stop5 = (RooRealVar*) dsC_Stop5_unmatch->addColumn(wFunc_Stop5) ;
+///////  RooDataSet wdata_Stop5_unmatch(dsC_Stop5_unmatch->GetName(),dsC_Stop5_unmatch->GetTitle(),dsC_Stop5_unmatch,*dsC_Stop5_unmatch->get(),0,w1_Stop5->GetName()) ;
+///////  std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
 
   
   
   
-  RooDataSet *nuovo;
-  nuovo= new RooDataSet(dsC_Stop5_unmatch->GetName(),dsC_Stop5_unmatch->GetTitle(),dsC_Stop5_unmatch,*dsC_Stop5_unmatch->get(),0,w1_Stop5->GetName()) ;
-  nuovo->append(*wdata_ttbar_match); 
+////  RooDataSet *nuovo;
+////  nuovo= new RooDataSet(dsC_Stop5_unmatch->GetName(),dsC_Stop5_unmatch->GetTitle(),dsC_Stop5_unmatch,*dsC_Stop5_unmatch->get(),0,w1_Stop5->GetName()) ;
+////  nuovo->append(*wdata_ttbar_match); 
   //return;
-  dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE)) ;//wdata_ttbar_match, RooFit::SumW2Error(kTRUE)) ;
-  dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE)) ;//wdata_ttbar_match, RooFit::SumW2Error(kTRUE)) ;
-  dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE)) ;//wdata_ttbar_match, RooFit::SumW2Error(kTRUE)) ;
-  dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE)) ;//wdata_ttbar_match, RooFit::SumW2Error(kTRUE)) ;
-  dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE)) ;//wdata_ttbar_match, RooFit::SumW2Error(kTRUE)) ;
-  dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE)) ;//wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
   RooPlot* testMio= ak08Pruned_1_mass.frame(Bins(nbins),Title("total Match sample")) ;
   //ds_ttbarMatch->plotOn(testMio, DataError(RooAbsData::SumW2));
   wdata_ttbar_match->plotOn(testMio,DataError(RooAbsData::SumW2));
@@ -364,7 +375,7 @@ void fit_Signal_new()
   gPad->SetLeftMargin(0.15) ; testMio->GetYaxis()->SetTitleOffset(1.4) ; testMio->Draw() ;
 
   //end new addition
-  return;
+  //return;
   RooRealVar mean_Stop("mean_Stop","mean",80,60,100) ;
   RooRealVar sigma_Stop("sigma_Stop","sigma",2,0,8) ;
   RooGaussian gx_Stop("gx_Stop","gx",ak08Pruned_1_mass,mean_Stop,sigma_Stop) ;
@@ -383,8 +394,11 @@ void fit_Signal_new()
   RooAddPdf model_Stop("model_Stop","model",RooArgList(gx_Stop, cheby_Stop/*gx_Stop1*/), RooArgList(NStop_true,k_Stop));//, px_ctl)) ;
   wdata_Stop1_match.append(wdata_Stop2_match);
   wdata_Stop1_match.append(wdata_Stop3_match);
-  wdata_Stop1_match.append(wdata_Stop4_match);
-  model_Stop.fitTo(wdata_Stop1_match, RooFit::SumW2Error(kTRUE));
+///  wdata_Stop1_match.append(wdata_Stop4_match);
+  model_Stop.fitTo(wdata_Stop1_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+  model_Stop.fitTo(wdata_Stop1_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+  model_Stop.fitTo(wdata_Stop1_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+
   //model_Stop.fitTo(*dh_StopMatch) ;
   //gx_Stop_norm.fitTo(*dh_StopMatch) ;
 
@@ -421,11 +435,11 @@ void fit_Signal_new()
   std::cout<<"      DiBoson      "<<std::endl;
   std::cout<<"+++++++++++++++++++"<<std::endl;
   TFile *file_WW;
-  file_WW=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WW.root");//testMuonEff/firstTest_re    duced_skim.root");
+  file_WW=TFile::Open("../ttbar_output_new/WW_20160703_141826/rootfile_ww__20160703_141826_0_reduced_skim.root");//testMuonEff/firstTest_reduced_skim.root");
   double nEvt_WW= ((TH1D *)(file_WW->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_WW = 118.7;
   TFile *file_WW1;
-  file_WW1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WW_redu.root");
+  file_WW1=TFile::Open("../ttbar_output_new/WW_20160703_141826/rootfile_ww__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_WW=(TTree *)file_WW1->Get("mio");
   
   RooDataSet ds_WW("ds_WW","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_WW));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -434,6 +448,7 @@ void fit_Signal_new()
   dsC_WW->SetName("dsC_WW");
   dsC_WW->Print();
   double weight_WW=xSec_WW*Lumi/nEvt_WW;
+  if(!doWeight) weight_WW=1;
   RooConstVar w_WW ("w_WW", "w_WW", weight_WW);
   RooFormulaVar wFunc_WW("wFunc_WW","event weight","w_WW",RooArgList(w_WW,ak08Pruned_1_mass)) ;
   RooRealVar* W_WW = (RooRealVar*) dsC_WW->addColumn(wFunc_WW) ;
@@ -443,11 +458,11 @@ void fit_Signal_new()
   
 
   TFile *file_WZ;
-  file_WZ=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WZ.root");//testMuonEff/firstTest_re    duced_skim.r    oot");
+  file_WZ=TFile::Open("../ttbar_output_new/WZ_20160703_141826/rootfile_wz__20160703_141826_0_reduced_skim.root");//testMuonEff/firstTest_reduced_skim.root");
   double nEvt_WZ= ((TH1D *)(file_WZ->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_WZ = 16.5;
   TFile *file_WZ1;
-  file_WZ1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WZ_redu.root");
+  file_WZ1=TFile::Open("../ttbar_output_new/WZ_20160703_141826/rootfile_wz__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_WZ=(TTree *)file_WZ1->Get("mio");
  
   RooDataSet ds_WZ("ds_WZ","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_WZ));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -456,6 +471,7 @@ void fit_Signal_new()
   dsC_WZ->SetName("dsC_WZ");
   dsC_WZ->Print();
   double weight_WZ=xSec_WZ*Lumi/nEvt_WZ;
+  if(!doWeight) weight_WZ=1;
   RooConstVar w_WZ ("w_WZ", "w_WZ", weight_WZ);
   RooFormulaVar wFunc_WZ("wFunc_WZ","event weight","w_WZ",RooArgList(w_WZ,ak08Pruned_1_mass)) ;
   RooRealVar* W_WZ = (RooRealVar*) dsC_WZ->addColumn(wFunc_WZ) ;
@@ -465,11 +481,11 @@ void fit_Signal_new()
 
 
   TFile *file_ZZ;
-  file_ZZ=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ZZ.root");//testMuonEff/firstTest_re    duced_skim.r        oot");
+  file_ZZ=TFile::Open("../ttbar_output_new/ZZ_20160703_141827/rootfile_zz__20160703_141827_0_reduced_skim.root");//testMuonEff/firstTest_re    duced_skim.r        oot");
   double nEvt_ZZ= ((TH1D *)(file_ZZ->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_ZZ = 47.13;
   TFile *file_ZZ1;
-  file_ZZ1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ZZ_redu.root");
+  file_ZZ1=TFile::Open("../ttbar_output_new/ZZ_20160703_141827/rootfile_zz__20160703_141827_0_reduced_skim_redu.root");
   TTree *tree_ZZ=(TTree *)file_ZZ1->Get("mio");
   
   RooDataSet ds_ZZ("ds_ZZ","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_ZZ));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -478,6 +494,7 @@ void fit_Signal_new()
   dsC_ZZ->SetName("dsC_ZZ");
   dsC_ZZ->Print();
   double weight_ZZ=xSec_ZZ*Lumi/nEvt_ZZ;
+  if(!doWeight) weight_ZZ=1;
   RooConstVar w_ZZ ("w_ZZ", "w_ZZ", weight_ZZ);
   RooFormulaVar wFunc_ZZ("wFunc_ZZ","event weight","w_ZZ",RooArgList(w_ZZ,ak08Pruned_1_mass)) ;
   RooRealVar* W_ZZ = (RooRealVar*) dsC_ZZ->addColumn(wFunc_ZZ) ;
@@ -488,19 +505,16 @@ void fit_Signal_new()
   
   
   
-  
-  
-  
 
   std::cout<<"+++++++++++++++++++"<<std::endl;
   std::cout<<"      W+Jets       "<<std::endl;
   std::cout<<"+++++++++++++++++++"<<std::endl;
   TFile *file_W_100_200;
-  file_W_100_200=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_100_200.root");
+  file_W_100_200=TFile::Open("../ttbar_output_new/WJets_100_200_20160703_141822/rootfile_wjets100_200__20160703_141822_0_reduced_skim.root");
   double nEvt_W_100_200= ((TH1D *)(file_W_100_200->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_100_200 = 1629.87;
   TFile *file_W_100_200_1;
-  file_W_100_200_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_100_200_redu.root");
+  file_W_100_200_1=TFile::Open("../ttbar_output_new/WJets_100_200_20160703_141822/rootfile_wjets100_200__20160703_141822_0_reduced_skim_redu.root");
   TTree *tree_W_100_200=(TTree *)file_W_100_200_1->Get("mio");
   
   RooDataSet ds_W_100_200("ds_W_100_200","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_100_200));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -509,6 +523,7 @@ void fit_Signal_new()
   dsC_W_100_200->SetName("dsC_W_100_200");
   dsC_W_100_200->Print();
   double weight_W_100_200=xSec_W_100_200*Lumi/nEvt_W_100_200;
+  if(!doWeight) weight_W_100_200=1;
   RooConstVar w_W_100_200 ("w_W_100_200", "w_W_100_200", weight_W_100_200);
   RooFormulaVar wFunc_W_100_200("wFunc_W_100_200","event weight","w_W_100_200",RooArgList(w_W_100_200,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_100_200 = (RooRealVar*) dsC_W_100_200->addColumn(wFunc_W_100_200) ;
@@ -518,11 +533,11 @@ void fit_Signal_new()
 
 
   TFile *file_W_200_400;
-  file_W_200_400=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_200_400.root");
+  file_W_200_400=TFile::Open("../ttbar_output_new/WJets_200_400_20160703_141824/rootfile_wjets200_400__20160703_141824_0_reduced_skim.root");
   double nEvt_W_200_400= ((TH1D *)(file_W_200_400->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_200_400 = 435.6;
   TFile *file_W_200_400_1;
-  file_W_200_400_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_200_400_redu.root");
+  file_W_200_400_1=TFile::Open("../ttbar_output_new/WJets_200_400_20160703_141824/rootfile_wjets200_400__20160703_141824_0_reduced_skim_redu.root");
   TTree *tree_W_200_400=(TTree *)file_W_200_400_1->Get("mio");
 
   RooDataSet ds_W_200_400("ds_W_200_400","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_200_400));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -531,6 +546,7 @@ void fit_Signal_new()
   dsC_W_200_400->SetName("dsC_W_200_400");
   dsC_W_200_400->Print();
   double weight_W_200_400=xSec_W_200_400*Lumi/nEvt_W_200_400;
+  if(!doWeight) weight_W_200_400=1;
   RooConstVar w_W_200_400 ("w_W_200_400", "w_W_200_400", weight_W_200_400);
   RooFormulaVar wFunc_W_200_400("wFunc_W_200_400","event weight","w_W_200_400",RooArgList(w_W_200_400,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_200_400 = (RooRealVar*) dsC_W_200_400->addColumn(wFunc_W_200_400) ;
@@ -540,11 +556,11 @@ void fit_Signal_new()
 
 
   TFile *file_W_400_600;
-  file_W_400_600=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_400_600.root");
+  file_W_400_600=TFile::Open("../ttbar_output_new/WJets_400_600_20160703_141825/rootfile_wjets400_600__20160703_141825_0_reduced_skim.root");
   double nEvt_W_400_600= ((TH1D *)(file_W_400_600->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_400_600 = 56.17;
   TFile *file_W_400_600_1;
-  file_W_400_600_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_400_600_redu.root");
+  file_W_400_600_1=TFile::Open("../ttbar_output_new/WJets_400_600_20160703_141825/rootfile_wjets400_600__20160703_141825_0_reduced_skim_redu.root");
   TTree *tree_W_400_600=(TTree *)file_W_400_600_1->Get("mio");
   
   RooDataSet ds_W_400_600("ds_W_400_600","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_400_600));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -553,6 +569,7 @@ void fit_Signal_new()
   dsC_W_400_600->SetName("dsC_W_400_600");
   dsC_W_400_600->Print();
   double weight_W_400_600=xSec_W_400_600*Lumi/nEvt_W_400_600;
+  if(!doWeight) weight_W_400_600=1;
   RooConstVar w_W_400_600 ("w_W_400_600", "w_W_400_600", weight_W_400_600);
   RooFormulaVar wFunc_W_400_600("wFunc_W_400_600","event weight","w_W_400_600",RooArgList(w_W_400_600,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_400_600 = (RooRealVar*) dsC_W_400_600->addColumn(wFunc_W_400_600) ;
@@ -562,11 +579,11 @@ void fit_Signal_new()
 
 
   TFile *file_W_600_800;
-  file_W_600_800=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_600_800.root");
+  file_W_600_800=TFile::Open("../ttbar_output_new/WJets_600_800_20160703_141825/rootfile_wjets600_800__20160703_141825_0_reduced_skim.root");
   double nEvt_W_600_800= ((TH1D *)(file_W_600_800->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_600_800 = 14.61;
   TFile *file_W_600_800_1;
-  file_W_600_800_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_600_800_redu.root");
+  file_W_600_800_1=TFile::Open("../ttbar_output_new/WJets_600_800_20160703_141825/rootfile_wjets600_800__20160703_141825_0_reduced_skim_redu.root");
   TTree *tree_W_600_800=(TTree *)file_W_600_800_1->Get("mio");
   
   RooDataSet ds_W_600_800("ds_W_600_800","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_600_800));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -575,6 +592,7 @@ void fit_Signal_new()
   dsC_W_600_800->SetName("dsC_W_600_800");
   dsC_W_600_800->Print();
   double weight_W_600_800=xSec_W_600_800*Lumi/nEvt_W_600_800;
+  if(!doWeight) weight_W_600_800=1;
   RooConstVar w_W_600_800 ("w_W_600_800", "w_W_600_800", weight_W_600_800);
   RooFormulaVar wFunc_W_600_800("wFunc_W_600_800","event weight","w_W_600_800",RooArgList(w_W_600_800,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_600_800 = (RooRealVar*) dsC_W_600_800->addColumn(wFunc_W_600_800) ;
@@ -585,11 +603,11 @@ void fit_Signal_new()
 
 
   TFile *file_W_800_1200;
-  file_W_800_1200=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_800_1200.root");
+  file_W_800_1200=TFile::Open("../ttbar_output_new/WJets_800_1200_20160703_141825/rootfile_wjets800_1200__20160703_141825_0_reduced_skim.root");
   double nEvt_W_800_1200= ((TH1D *)(file_W_800_1200->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_800_1200 = 6.36;
   TFile *file_W_800_1200_1;
-  file_W_800_1200_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_800_1200_redu.root");
+  file_W_800_1200_1=TFile::Open("../ttbar_output_new/WJets_800_1200_20160703_141825/rootfile_wjets800_1200__20160703_141825_0_reduced_skim_redu.root");
   TTree *tree_W_800_1200=(TTree *)file_W_800_1200_1->Get("mio");
   
   RooDataSet ds_W_800_1200("ds_W_800_1200","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_800_1200));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -598,6 +616,7 @@ void fit_Signal_new()
   dsC_W_800_1200->SetName("dsC_W_800_1200");
   dsC_W_800_1200->Print();
   double weight_W_800_1200=xSec_W_800_1200*Lumi/nEvt_W_800_1200;
+  if(!doWeight) weight_W_800_1200=1;
   RooConstVar w_W_800_1200 ("w_W_800_1200", "w_W_800_1200", weight_W_800_1200);
   RooFormulaVar wFunc_W_800_1200("wFunc_W_800_1200","event weight","w_W_800_1200",RooArgList(w_W_800_1200,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_800_1200 = (RooRealVar*) dsC_W_800_1200->addColumn(wFunc_W_800_1200) ;
@@ -607,11 +626,11 @@ void fit_Signal_new()
 
 
   TFile *file_W_1200_2500;
-  file_W_1200_2500=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_1200_2500.root");
+  file_W_1200_2500=TFile::Open("../ttbar_output_new/WJets_1200_2500_20160703_141826/rootfile_wjets1200_2500__20160703_141826_0_reduced_skim.root");
   double nEvt_W_1200_2500= ((TH1D *)(file_W_1200_2500->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_1200_2500 = 1.61;
   TFile *file_W_1200_2500_1;
-  file_W_1200_2500_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_1200_2500_redu.root");
+  file_W_1200_2500_1=TFile::Open("../ttbar_output_new/WJets_1200_2500_20160703_141826/rootfile_wjets1200_2500__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_W_1200_2500=(TTree *)file_W_1200_2500_1->Get("mio");
   
   RooDataSet ds_W_1200_2500("ds_W_1200_2500","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_1200_2500));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -620,6 +639,7 @@ void fit_Signal_new()
   dsC_W_1200_2500->SetName("dsC_W_1200_2500");
   dsC_W_1200_2500->Print();
   double weight_W_1200_2500=xSec_W_1200_2500*Lumi/nEvt_W_1200_2500;
+  if(!doWeight) weight_W_1200_2500=1;
   RooConstVar w_W_1200_2500 ("w_W_1200_2500", "w_W_1200_2500", weight_W_1200_2500);
   RooFormulaVar wFunc_W_1200_2500("wFunc_W_1200_2500","event weight","w_W_1200_2500",RooArgList(w_W_1200_2500,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_1200_2500 = (RooRealVar*) dsC_W_1200_2500->addColumn(wFunc_W_1200_2500) ;
@@ -629,11 +649,11 @@ void fit_Signal_new()
 
 
   TFile *file_W_2500_Inf;
-  file_W_2500_Inf=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/WJets_2500_Inf.root");
+  file_W_2500_Inf=TFile::Open("../ttbar_output_new/WJets_2500_Inf_20160703_141826/rootfile_wjets2500_Inf__20160703_141826_0_reduced_skim.root");
   double nEvt_W_2500_Inf= ((TH1D *)(file_W_2500_Inf->Get("DijetFilter/EventCount/EventCounter")))->GetBinContent(1);
   double xSec_W_2500_Inf = 37;
   TFile *file_W_2500_Inf_1;
-  file_W_2500_Inf_1=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/W_2500_Inf_redu.root");
+  file_W_2500_Inf_1=TFile::Open("../ttbar_output_new/WJets_2500_Inf_20160703_141826/rootfile_wjets2500_Inf__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_W_2500_Inf=(TTree *)file_W_2500_Inf_1->Get("mio");
   
   RooDataSet ds_W_2500_Inf("ds_W_2500_Inf","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_2500_Inf));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
@@ -642,6 +662,7 @@ void fit_Signal_new()
   dsC_W_2500_Inf->SetName("dsC_W_2500_Inf");
   dsC_W_2500_Inf->Print();
   double weight_W_2500_Inf=xSec_W_2500_Inf*Lumi/nEvt_W_2500_Inf;
+  if(!doWeight) weight_W_2500_Inf=1;
   RooConstVar w_W_2500_Inf ("w_W_2500_Inf", "w_W_2500_Inf", weight_W_2500_Inf);
   RooFormulaVar wFunc_W_2500_Inf("wFunc_W_2500_Inf","event weight","w_W_2500_Inf",RooArgList(w_W_2500_Inf,ak08Pruned_1_mass)) ;
   RooRealVar* W_W_2500_Inf = (RooRealVar*) dsC_W_2500_Inf->addColumn(wFunc_W_2500_Inf) ;
@@ -653,7 +674,7 @@ void fit_Signal_new()
   TCanvas* c_Wjet = new TCanvas("c_Wjet","c_Wjet",1);//,800,400) ;
 
   RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", 1,-100,100);
-  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", 0.1,-100,100);
+  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", -0.1,-100,100);
   RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", -0.1,-100,100);
   /*RooRealVar a_pass1("a_pass1","a_Stop", 1,-1,1);
   RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
@@ -696,10 +717,12 @@ void fit_Signal_new()
   wdata_ttbar_unmatch.append(wdata_Stop1_unmatch);
   wdata_ttbar_unmatch.append(wdata_Stop2_unmatch);
   wdata_ttbar_unmatch.append(wdata_Stop3_unmatch);
-  wdata_ttbar_unmatch.append(wdata_Stop4_unmatch);
-  wdata_ttbar_unmatch.append(wdata_Stop5_unmatch);
+  //wdata_ttbar_unmatch.append(wdata_Stop4_unmatch);
+  //wdata_ttbar_unmatch.append(wdata_Stop5_unmatch);
   RooPlot* frame1_bkg = ak08Pruned_1_mass.frame(Bins(nbins),Title("BackGround Pass sample")) ;
-  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));
+  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
   //dh_bkgPass->plotOn(frame1_bkg) ;
   wdata_ttbar_unmatch.plotOn(frame1_bkg, DataError(RooAbsData::SumW2));
 
@@ -714,7 +737,7 @@ void fit_Signal_new()
 
   std::cout<<"+++++++++++++++++++++++++++++++++++"<<std::endl;
   //std::cout<<"ttbar Integral (match): "<<hh_ttbarMatch->Integral()<<" "<<matched_ttbar<<std::endl;
-  return;
+  //return;
 
 
   RooRealVar mean_pass("mean_pass","mean_pass", 80, 60,95);
@@ -756,9 +779,16 @@ void fit_Signal_new()
   RooAddPdf modelPass("modelPass", "modelPass", RooArgList(/*gx_pass*/dcbx,cheby_pass), RooArgList( Nsig, Nbkg));
   //RooProdPdf modelPass("modelPass", "modelPass", RooArgList(gx_pass_norm,p2_pass_norm));
 ///////  modelPass.fitTo(*dh_totalPass);
-  
+  wdata_ttbar_match->append(wdata_ttbar_unmatch);
+  std::cout<<"FITTING"<<std::endl;
+  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  std::cout<<"After fit"<<std::endl;
   RooPlot* frame1_pass = ak08Pruned_1_mass.frame(Bins(nbins),Title("Pass sample")) ;
   //gx_pass.plotOn(frame1_pass, LineColor(kRed));
+  std::cout<<"PLOTTING!!!"<<std::endl;
+  wdata_ttbar_match->plotOn(frame1_pass,DataError(RooAbsData::SumW2));
   modelPass.plotOn(frame1_pass, Components(cheby_pass), LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
   modelPass.plotOn(frame1_pass, Components(dcbx), LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
   //cheby_pass.plotOn(frame1_pass, LineColor(kGreen));
@@ -768,5 +798,5 @@ void fit_Signal_new()
   TCanvas* c_pass = new TCanvas("c_pass","c_pass",800,400) ;
   gPad->SetLeftMargin(0.15) ; frame1_pass->GetYaxis()->SetTitleOffset(1.4) ; frame1_pass->Draw() ;
 
-    return;
+  return;
 }

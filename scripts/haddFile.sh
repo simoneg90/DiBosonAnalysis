@@ -18,6 +18,7 @@ done
 
 timestamp="$(date +"%m_%d_%Y_%H_%M_%S")"
 echo ${timestamp}
-cp -r ${2} /t3/users/${3}/rootFolder_${timestamp}
+#Only when working in Rome's T2
+#cp -r ${2} /t3/users/${3}/rootFolder_${timestamp}
 
 echo "Finished"

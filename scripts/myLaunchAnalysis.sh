@@ -9,7 +9,7 @@ for file in $(ls ${1})
 do
   echo ${1}$file"/"
   echo "OUTPUT" ${2}"/"$file
-  python scripts/submit_batch_T2_split.py -q cmslong -i  ${1}$file"/" -o ${2}"/"$file
+  python scripts/submit_batch_T2_split.py -q 8nh -i  ${1}$file"/" -o ${2}"/"$file
 
 done
 

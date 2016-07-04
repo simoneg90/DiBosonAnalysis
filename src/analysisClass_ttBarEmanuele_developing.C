@@ -78,8 +78,8 @@ void analysisClass::Loop()
    std::cout << "analysisClass::Loop(): nentries = " << nentries << std::endl;   
 
    double lepton_mass;
-   std::vector <int> goodLepton, looseLepton, goodAK08, goodAK04, goodAK08_lep, goodAK04_lep, goodAK08Pruned, goodEle, goodMuon, looseEle, looseMuon;
-   TLorentzVector genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum, bGen1, bGen2;
+   std::vector <int> goodLepton, looseLepton, goodAK08, goodAK04, goodAK04_lep, goodEle, goodMuon, looseEle, looseMuon;
+   TLorentzVector electron, muon, genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum, bGen1, bGen2;
    int btag_ak04_loose, btag_ak04_medium, btag_ak04_tight, b_counter;
    int subjet_index1, subjet_index2;
    ////// The following ~7 lines have been taken from rootNtupleClass->Loop() /////
@@ -105,9 +105,7 @@ void analysisClass::Loop()
      looseLepton.clear();
      goodAK04.clear();
      goodAK08.clear();
-     goodAK08_lep.clear();
      goodAK04_lep.clear();
-     goodAK08Pruned.clear();
      goodEle.clear();
      goodMuon.clear();
      looseEle.clear();
@@ -115,7 +113,7 @@ void analysisClass::Loop()
 
      resetCuts();
    
-
+     //std::cout<<"reset cuts"<<std::endl;
 //=== Forse da inserire ===
 
 /*     fillVariableWithValue("run",runNo);     
@@ -127,53 +125,90 @@ void analysisClass::Loop()
     
 
     for(int i=0; i<nLepGood; ++i){
-      if(((abs(LepGood_pdgId[i])==11 &&(abs(LepGood_eleClusterEta[i])<1.4442 && LepGood_isEcalDriven[i] && abs(LepGood_eleClusterDEta[i])<0.004 && abs(LepGood_eleDPhi[i])<0.06 && (LepGood_eleHoE[i]<1.0/LepGood_superCluster_energy[i]+0.05) && (LepGood_e2x5Max[i]/LepGood_e5x5[i]>0.94 || LepGood_e1x5[i]/LepGood_e5x5[i]>0.83) && abs(LepGood_ele_dxy[i])<0.02) || (abs(LepGood_eleClusterEta[i])>1.566 && abs(LepGood_eleClusterEta[i])<2.5 && LepGood_isEcalDriven[i] && abs(LepGood_eleClusterDEta[i])<0.006 && abs(LepGood_eleDPhi[i])< 0.06 and (LepGood_eleHoE[i]<5.0/LepGood_superCluster_energy[i]+0.05) && abs(LepGood_ele_dxy[i])<0.05 && LepGood_full5x5_sigmaIetaIeta[i]<0.03) )&&  LepGood_pt[i]>30 && (abs(LepGood_eta[i])<1.442 || (abs(LepGood_eta[i])>1.56 && abs(LepGood_eta[i])<2.5))) || (abs(LepGood_pdgId[i])==13 && LepGood_muonGlobal[i] && LepGood_nChamberHits[i] > 0 && LepGood_nMuonStation[i] > 1 && LepGood_muonPtRatio[i]<0.3 && LepGood_muonDB[i]< 0.2 && LepGood_pixelHits[i]>0 && LepGood_muonTrackerLayer[i]>5&&LepGood_pt[i]>30 && abs(LepGood_eta[i])<2.1)){// && selLeptons_relIso03[0]<0.1)){
-        goodLepton.push_back(i);
-        //std::cout<<"Passing tight selection"<<std::endl;
-        CreateAndFillUserTH1D("goodEleTightSelection", 2,-.5,1.5, 1);
-      }//end if 'good' lepton cuts
-      else if(((abs(LepGood_pdgId[i])==11 && LepGood_pt[i]>35 && (abs(LepGood_eta[i])<1.442 || (abs(LepGood_eta[i])>1.56 && abs(LepGood_eta[i])<2.5))) || (abs(LepGood_pdgId[i])==13 && LepGood_pt[i]>20 && abs(LepGood_eta[i])<2.1))){// && selLeptons_relIso03[i]<0.1))){
-        looseLepton.push_back(i);
-        //if(abs(selLeptons_pdgId[i])==11) lepton_mass=e_mass;
-        //if(abs(selLeptons_pdgId[i])==13) lepton_mass=mu_mass;
-        //leptonLoose.SetPtEtaPhiM(selLeptons_pt[i],selLeptons_eta[i],selLeptons_phi[i], lepton_mass);
-      }//end if loose lepton
-      if(abs(LepGood_pdgId[i])==13 &&  LepGood_pt[i]>53 && abs(LepGood_eta[i])<2.1){
+      //loop for muons
+      //std::cout<<"Loop muon"<<std::endl;
+      //std::cout<<"PDGID: "<<abs(LepGood_pdgId[i])<<std::endl;
+      if((abs(LepGood_pdgId[i])==13 && LepGood_isGlobalMuon[i] && LepGood_nChamberHits[i] > 0 && LepGood_nStations[i] > 1 && LepGood_muonPtRatio[i]<0.3 && LepGood_muonDB[i]< 0.2 && LepGood_pixelHits[i]>0 && LepGood_trackerLayers[i]>5&&LepGood_pt[i]>30 && abs(LepGood_eta[i])<2.1)){
+      
         goodMuon.push_back(i);
+        goodLepton.push_back(i);
+      
       }
-      else if(abs(LepGood_pdgId[i])==13  && LepGood_pt[i]>20 && abs(LepGood_eta[i])<2.4 && (LepGood_muTrackIso[i]/LepGood_pt[i])<0.1){
-        // if(abs(LepGood_pdgId[i])==13 && LepGood_isMyGoodMuon[i]==1 && LepGood_pt[i]>53 && abs(LepGood_eta[i])<2.1 && (LepGood_muTrackIso[i]/LepGood_pt[i])<0.1){
-        looseMuon.push_back(i);
-        
+    }//end loop for muons
+
+    for(int i=0; i<nLepGood; ++i){
+      //std::cout<<"Loop ele"<<std::endl;
+      //loop for electrons
+      //if((abs(LepGood_pdgId[i])==11)){
+      if((abs(LepGood_pdgId[i])==11&&(abs(LepGood_etaSc[i])<1.4442 && LepGood_isEcalDriven[i] && abs(LepGood_eleClusterDEta[i])<0.004 && abs(LepGood_dPhiScTrkIn[i])<0.06 && (LepGood_hadronicOverEm[i]<1.0/LepGood_superCluster_energy[i]+0.05) && (LepGood_e2x5Max[i]/LepGood_e5x5[i]>0.94 || LepGood_e1x5[i]/LepGood_e5x5[i]>0.83) && abs(LepGood_dxy[i])<0.02) || (abs(LepGood_etaSc[i])>1.566 && abs(LepGood_etaSc[i])<2.5 && LepGood_isEcalDriven[i] && abs(LepGood_eleClusterDEta[i])<0.006 && abs(LepGood_dPhiScTrkIn[i])< 0.06 && (LepGood_hadronicOverEm[i]<5.0/LepGood_superCluster_energy[i]+0.05) && abs(LepGood_dxy[i])<0.05 && LepGood_full5x5_sigmaIetaIeta[i]<0.03) )&&  LepGood_pt[i]>30 && (abs(LepGood_eta[i])<1.442 || (abs(LepGood_eta[i])>1.56 && abs(LepGood_eta[i])<2.5))){
+
+        //std::cout<<"elettrone"<<std::endl;
+        electron.SetPtEtaPhiM(LepGood_pt[i],LepGood_eta[i],LepGood_phi[i],e_mass);
+
+        if(goodMuon.size()==0){
+          //std::cout<<"Eccolo"<<std::endl;
+          goodEle.push_back(i);
+          goodLepton.push_back(i);
+        }
+        for(int j=0; j<goodMuon.size(); ++j){
+          muon.SetPtEtaPhiM(LepGood_pt[goodMuon[j]],LepGood_eta[goodMuon[j]],LepGood_phi[goodMuon[j]],LepGood_mass[goodMuon[j]]);
+          //std::cout<<"DR muon ele "<<muon.DeltaR(electron)<<std::endl;
+          fillVariableWithValue("muon_ele_DR",muon.DeltaR(electron));
+          if(muon.DeltaR(electron)>.1){
+            //std::cout<<"deltaR cut passed"<<std::endl;
+            goodEle.push_back(i);
+            goodLepton.push_back(i);
+          }
+        }//electron cleaning
       }
-      if(abs(LepGood_pdgId[i])==11 && LepGood_pt[i]>120 && abs(LepGood_eta[i])<2.1){
-        goodEle.push_back(i);
-      }else if((abs(LepGood_pdgId[i])==11  && LepGood_pt[i]>35 && abs(LepGood_eta[i])<2.4)){
-        looseEle.push_back(i);
-      }
-    }//end if nLepGood
+    }//end loop for electrons
+    //std::cout<<"Electrons: "<<goodEle.size()<<" muons: "<<goodMuon.size()<<std::endl;
 
     for(int i=0; i<nFatJet;++i){
       if((((FatJet_neHEF[i]<0.99 && FatJet_neEmEF[i]<0.99 && (FatJet_chMult[i]+FatJet_neMult[i])>1) && ((abs(FatJet_eta[i])<=2.4 && FatJet_chHEF[i]>0 && FatJet_chMult[i]>0 && FatJet_chEmEF[i]<0.99) || abs(FatJet_eta[i])>2.4) && abs(FatJet_eta[i])<=3.0)||((FatJet_neEmEF[i]<0.90 && FatJet_neMult[i]>10 && abs(FatJet_eta[i])>3.0 ))) && FatJet_pt[i]>100 && abs(FatJet_eta[i])<2.4){
-        goodAK08.push_back(i);
+        ak08.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
+        for(int j=0; j<goodLepton.size(); ++j){
+          lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[j]],LepGood_eta[goodLepton[j]],LepGood_phi[goodLepton[j]],LepGood_mass[goodLepton[j]]);
+          if(ak08.DeltaR(lepton)>.1)goodAK08.push_back(i);
+          fillVariableWithValue("ak08_lepton_DR", ak08.DeltaR(lepton));
+        }
       }//end if good AK08
     }//end loop over nFatJet
 
     for(int i=0; i<nJet; ++i){
       if((((Jet_neHEF[i]<0.99 && Jet_phEF[i]<0.99 && (Jet_chHMult[i]+Jet_neHMult[i]+Jet_phMult[i]+Jet_eMult[i])>1) && ((abs(Jet_eta[i])<=2.4 && Jet_chHEF[i]>0 && (Jet_chHMult[i]+Jet_eMult[i])>0 && Jet_eEF[i]<0.99) || abs(Jet_eta[i])>2.4) && abs(Jet_eta[i])<=3.0)||((Jet_phEF[i]<0.90 && (Jet_neHMult[i]+Jet_phMult[i])>10 && abs(Jet_eta[i])>3.0 ))) && Jet_pt[i]>30 && abs(Jet_eta[i])<2.4){
-        CreateAndFillUserTH1D("goodAk04LooseSelection", 2,-.5,1.5, 1);
+        //CreateAndFillUserTH1D("goodAk04LooseSelection", 2,-.5,1.5, 1);
+        ak04.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
+        for(int j=0; j<goodLepton.size(); ++j){
+          lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[j]],LepGood_eta[goodLepton[j]],LepGood_phi[goodLepton[j]],LepGood_mass[goodLepton[j]]);
+          if(ak04.DeltaR(lepton)>.3)goodAK04.push_back(i);
+        }
         goodAK04.push_back(i);
       }
     }//end loop over nJet
 
     fillVariableWithValue("lepton_goodNumber", goodLepton.size());
-    fillVariableWithValue("lepton_looseNumber", looseLepton.size());
+   // fillVariableWithValue("lepton_looseNumber", looseLepton.size());
     fillVariableWithValue("ak08_goodNumber", goodAK08.size());
-    fillVariableWithValue("nLepton",nLepGood);
+    fillVariableWithValue("nInitialLepton",nLepGood);
     fillVariableWithValue("nGoodEle", goodEle.size());
-    fillVariableWithValue("nLooseEle", looseEle.size());
+  //  fillVariableWithValue("nLooseEle", looseEle.size());
     fillVariableWithValue("nGoodMuon", goodMuon.size());
-    fillVariableWithValue("nLooseMuon", looseMuon.size());
+    fillVariableWithValue("nGoodLepton",goodEle.size()+goodMuon.size());
+  //  fillVariableWithValue("nLooseMuon", looseMuon.size());
+    if(goodEle.size()>=1){
+      fillVariableWithValue("electron_1_pt", LepGood_pt[goodEle[0]]);
+      fillVariableWithValue("electron_1_eta", LepGood_eta[goodEle[0]]);
+      fillVariableWithValue("electron_1_phi", LepGood_phi[goodEle[0]]);
+
+    }
+    if(goodMuon.size()>=1){
+      fillVariableWithValue("muon_1_pt", LepGood_pt[goodMuon[0]]);
+      fillVariableWithValue("muon_1_eta", LepGood_eta[goodMuon[0]]);
+      fillVariableWithValue("muon_1_phi", LepGood_phi[goodMuon[0]]);
+      
+    }
+
     if(goodAK08.size()>=1){
       fillVariableWithValue("ak08Ungroomed_1_pt", FatJet_pt[goodAK08[0]]);
       fillVariableWithValue("ak08Ungroomed_1_eta", FatJet_eta[goodAK08[0]]);
@@ -189,40 +224,58 @@ void analysisClass::Loop()
 
     double minDR_W=999;
     int w_counter=0;
-    for (int w=0; w<nGenPart; ++w){
-      if(abs(GenPart_pdgId[w])==24){
-        genW.SetPtEtaPhiM(GenPart_pt[w], GenPart_eta[w], GenPart_phi[w], W_mass);
-        if(goodLepton.size()>=1){
-          if(abs(LepGood_pdgId[goodLepton[0]])==11) lepton_mass=e_mass;
-          if(abs(LepGood_pdgId[goodLepton[0]])==13) lepton_mass=mu_mass;
-          lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[0]],LepGood_eta[goodLepton[0]],LepGood_phi[goodLepton[0]], lepton_mass);
-        } 
-        if(wGenSum.DeltaR(genW)<minDR_W){
-          minDR_W=wGenSum.DeltaR(genW);
-          w_counter=w;
-        }
-      }//if gen Boson==W
-    }
-    genW.SetPtEtaPhiM(GenPart_pt[w_counter], GenPart_eta[w_counter], GenPart_phi[w_counter], W_mass);
-    fillVariableWithValue("ak08Ungroomed_WGen_DR",ak08.DeltaR(genW));
-    fillVariableWithValue("WGen_quark_DR", minDR_W);
-    fillVariableWithValue("W_Gen_pt", GenPart_pt[w_counter]);
-    fillVariableWithValue("W_Gen_eta", GenPart_eta[w_counter]);
-    fillVariableWithValue("W_Gen_phi", GenPart_phi[w_counter]);
-    fillVariableWithValue("lepton_WGen_DR", lepton.DeltaR(genW));
-    b_counter=0;
-    for(int p=0; p<nGenPart; ++p){
-      if((abs(GenPart_pdgId[p])==5) && (abs(GenPart_motherId[p])==6)){//b found
-        if(b_counter==0) bGen1.SetPtEtaPhiM(GenPart_pt[p],GenPart_eta[p],GenPart_phi[p],GenPart_mass[p]);
-        if(b_counter==1) bGen2.SetPtEtaPhiM(GenPart_pt[p],GenPart_eta[p],GenPart_phi[p],GenPart_mass[p]);
-        ++b_counter;
-      }//end if b quark
-    }//end loop over genParticles to find the good bGenJets
-    fillVariableWithValue("genW_genBquark1_DR", genW.DeltaR(bGen1));
-    fillVariableWithValue("genW_genBquarkMin_DR", TMath::Min(genW.DeltaR(bGen1), genW.DeltaR(bGen2)));
-    fillVariableWithValue("genW_genBquarkMax_DR", TMath::Max(genW.DeltaR(bGen1), genW.DeltaR(bGen2)));
-    //std::cout<<"1. "<<genW.DeltaR(bGen1)<<std::endl;
-    fillVariableWithValue("genW_genBquark2_DR", genW.DeltaR(bGen2));
+    //std::cout<<"gen part"<<std::endl;
+    if(isData==0){
+      for (int w=0; w<nGenPart; ++w){
+        if(abs(GenPart_pdgId[w])==24){
+          genW.SetPtEtaPhiM(GenPart_pt[w], GenPart_eta[w], GenPart_phi[w], W_mass);
+          if(goodLepton.size()>=1){
+            if(abs(LepGood_pdgId[goodLepton[0]])==11) lepton_mass=e_mass;
+            if(abs(LepGood_pdgId[goodLepton[0]])==13) lepton_mass=mu_mass;
+            lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[0]],LepGood_eta[goodLepton[0]],LepGood_phi[goodLepton[0]], lepton_mass);
+          } 
+          if(ak08.DeltaR(genW)<minDR_W){
+            minDR_W=ak08.DeltaR(genW);
+            w_counter=w;
+          }
+        }//if gen Boson==W
+      }
+    
+      //std::cout<<"Second call for gen part"<<std::endl;
+      genW.SetPtEtaPhiM(GenPart_pt[w_counter], GenPart_eta[w_counter], GenPart_phi[w_counter], W_mass);
+      fillVariableWithValue("ak08Ungroomed_WGen_DR",ak08.DeltaR(genW));
+      fillVariableWithValue("WGen_quark_DR", minDR_W);
+      fillVariableWithValue("W_Gen_pt", GenPart_pt[w_counter]);
+      fillVariableWithValue("W_Gen_eta", GenPart_eta[w_counter]);
+      fillVariableWithValue("W_Gen_phi", GenPart_phi[w_counter]);
+      fillVariableWithValue("lepton_WGen_DR", lepton.DeltaR(genW));
+      b_counter=0;
+      for(int p=0; p<nGenPart; ++p){
+        if((abs(GenPart_pdgId[p])==5) && (abs(GenPart_motherId[p])==6)){//b found
+          if(b_counter==0) bGen1.SetPtEtaPhiM(GenPart_pt[p],GenPart_eta[p],GenPart_phi[p],GenPart_mass[p]);
+          if(b_counter==1) bGen2.SetPtEtaPhiM(GenPart_pt[p],GenPart_eta[p],GenPart_phi[p],GenPart_mass[p]);
+          ++b_counter;
+        }//end if b quark
+      }//end loop over genParticles to find the good bGenJets
+      fillVariableWithValue("genW_genBquark1_DR", genW.DeltaR(bGen1));
+      fillVariableWithValue("genW_genBquarkMin_DR", TMath::Min(genW.DeltaR(bGen1), genW.DeltaR(bGen2)));
+      fillVariableWithValue("genW_genBquarkMax_DR", TMath::Max(genW.DeltaR(bGen1), genW.DeltaR(bGen2)));
+      //std::cout<<"1. "<<genW.DeltaR(bGen1)<<std::endl;
+      fillVariableWithValue("genW_genBquark2_DR", genW.DeltaR(bGen2));
+    }else{
+      fillVariableWithValue("ak08Ungroomed_WGen_DR",ak08.DeltaR(genW));
+      fillVariableWithValue("WGen_quark_DR", -999.);
+      fillVariableWithValue("W_Gen_pt", -999.);
+      fillVariableWithValue("W_Gen_eta", -999.);
+      fillVariableWithValue("W_Gen_phi", -999.);
+      fillVariableWithValue("lepton_WGen_DR", -999.);
+      fillVariableWithValue("genW_genBquark1_DR", -999.);
+      fillVariableWithValue("genW_genBquarkMin_DR", -999.);
+      fillVariableWithValue("genW_genBquarkMax_DR", -999.);
+      fillVariableWithValue("genW_genBquark2_DR", -999.);
+
+
+    }//end if isData
 
     if(goodLepton.size()>=1){
       if(abs(LepGood_pdgId[goodLepton[0]])==11) lepton_mass=e_mass;
@@ -241,11 +294,11 @@ void analysisClass::Loop()
       fillVariableWithValue("WType1_phi",W.Phi());
       fillVariableWithValue("WType1_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
 
-      if(goodAK08.size()>1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08));
+      if(goodAK08.size()>=1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08)); //DO NOT USE IT for the analysis cut!!!!!
       fillVariableWithValue("nAK04", goodAK04.size());
       for(int j=0; j<goodAK04.size(); ++j){
         ak04.SetPtEtaPhiM(Jet_pt[goodAK04[j]], Jet_eta[goodAK04[j]], Jet_phi[goodAK04[j]], Jet_mass[goodAK04[j]]);
-        if(ak04.DeltaR(ak08)>.8 && ak04.DeltaR(lepton)>.3){
+        if(ak04.DeltaR(ak08)>.8 ){//&& ak04.DeltaR(lepton)>.3){
           CreateAndFillUserTH1D("Ak04_lepton&AK08_DRCut", 2,-.5,1.5, 1);
           goodAK04_lep.push_back(goodAK04[j]);
           if(Jet_btagCSV[goodAK04[j]]>0.605){
@@ -288,7 +341,7 @@ void analysisClass::Loop()
     fillVariableWithValue("nPrimaryVertexes", nVert);
     fillVariableWithValue("CSC_filter",Flag_CSCTightHaloFilter);
     fillVariableWithValue("eeBADFilter", Flag_eeBadScFilter);
-    fillVariableWithValue("run", run);
+    //fillVariableWithValue("run", run);
 
 
 

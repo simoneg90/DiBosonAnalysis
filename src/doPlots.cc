@@ -6,7 +6,7 @@
 #include "TGraphAsymmErrors.h"
 #include "TPad.h"
 #include "time.h"
-#include "CMS_lumi.h"
+//#include "CMS_lumi.h"
 //#include "CMS_lumi.C"
 
 #include <fstream>
@@ -304,7 +304,16 @@ int main(int argc, char* argv[]){
   int sgn_counter=0;
   bool isData=0;
   THStack *bkgStack = new THStack("bkgStack","");
-  while(inputList>>bkg_nameTMP>>bkg_file>>scaleFactor>>variable>>cut>>bins>>min>>max>>xTitle>>yTitle){
+  std::cout<<"Before while"<<std::endl;
+  int line_counter=0;
+  //When working at Rome T2
+  //while(inputList>>bkg_nameTMP>>bkg_file>>scaleFactor>>variable>>cut>>bins>>min>>max>>xTitle>>yTitle){
+  //When working at lxplus
+  while(true){
+    
+    inputList>>bkg_nameTMP>>bkg_file>>scaleFactor>>variable>>cut>>bins>>min>>max>>xTitle>>yTitle;
+    ++line_counter;
+    if(inputList.eof()) break;
     std::cout<<"BKG: "<<bkg_nameTMP.c_str()<<" File: "<<bkg_file.c_str()<<" scaleFactor: "<<scaleFactor<<std::endl;
     if(strcmp(cut.c_str(), "-")==0) cut="";
     std::cout<<"CUT: "<<cut.c_str()<<std::endl;
@@ -315,6 +324,7 @@ int main(int argc, char* argv[]){
       breakLine();
       exit(-1);
     }
+    //exit(1);
     bkgCounts[file_counter]=((TH1D *)(file[file_counter]->Get("DijetFilter/EventCount/EventCounter")));
     std::cout<<"Total Events: "<<bkgCounts[file_counter]->GetBinContent(1)<<std::endl;
     counts=bkgCounts[file_counter]->GetBinContent(1);

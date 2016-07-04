@@ -41,7 +41,7 @@
 
 #include <fstream>
 
-#define doTOY 1
+//#define doTOY 1
 
 using namespace RooFit;
 
