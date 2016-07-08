@@ -47,9 +47,9 @@ void fit_Signal_new()
   //model_ttbar.fitTo(*dh_ttbarMatch) ;
   //ak08_subjetDR<.1&&subjet1_btagLoose==0&&subjet2_btagLoose==0&&
 
-  std::string match= "ak08Ungroomed_1_tau21<.6&&genW_genBquark2_DR>.8&&genW_genBquark1_DR>.8&&ak08Ungroomed_WGen_DR<.1";
-  std::string unmatch= "ak08Ungroomed_1_tau21<.6&&((genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||ak08Ungroomed_WGen_DR>.1)";
-  std::string pass= "ak08Ungroomed_1_tau21<.6";
+  std::string match= "ak08Ungroomed_1_tau21>.6&&genW_genBquark2_DR>.8&&genW_genBquark1_DR>.8&&ak08Ungroomed_WGen_DR<.1";
+  std::string unmatch= "ak08Ungroomed_1_tau21>.6&&((genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||ak08Ungroomed_WGen_DR>.1)";
+  std::string pass= "ak08Ungroomed_1_tau21>.6";
 
 
 
@@ -134,7 +134,7 @@ void fit_Signal_new()
   //return;
   RooRealVar Nttbar_true("Nttbar_true","Nttbar_true", 1000,0,10000);
   RooRealVar mean_ttbar("mean_ttbar","mean",78,74,85) ;
-  RooRealVar sigma_ttbar("sigma_ttbar","sigma",4,0,20) ;
+  RooRealVar sigma_ttbar("sigma_ttbar","sigma",6,4,20) ;
   RooGaussian gx_ttbar("gx_ttbar","gx",ak08Pruned_1_mass,mean_ttbar,sigma_ttbar) ;
   RooExtendPdf gx_ttbar_norm("gx_ttbar_norm", "gx_ttbar_norm", gx_ttbar, Nttbar_true);
   RooRealVar NttbarBKG_true("NttbarBKG_true","NttbarBKG_true", 100,0,10000);
@@ -182,9 +182,9 @@ void fit_Signal_new()
   //cheby_ttbar.fitTo(*dh_ttbarMatch) ;
   //dcb_unmatch.fitTo(*dh_ttbarUnMatch);
   //dcb.fitTo(*dsC_match, RooFit::SumW2Error(kTRUE));
-  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
-  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
-  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE));//, RooFit::Strategy(2)) ;
+//  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+//  dcb.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
 
   RooPlot* frame1_ttbar = ak08Pruned_1_mass.frame(Bins(nbins),Title("TopTop Pass/Match sample")) ;
   //dh_ttbarMatch->plotOn(frame1_ttbar, LineColor(2), DataError(RooAbsData::SumW2)) ;
@@ -673,13 +673,13 @@ void fit_Signal_new()
 
   TCanvas* c_Wjet = new TCanvas("c_Wjet","c_Wjet",1);//,800,400) ;
 
-  RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", 1,-100,100);
-  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", -0.1,-100,100);
-  RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", -0.1,-100,100);
+  RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", .1,-1.,1.);
+  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", 0.1,-1.,1.);
+  RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", -0.1,-1.,1.);
   /*RooRealVar a_pass1("a_pass1","a_Stop", 1,-1,1);
   RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
   RooRealVar a2_pass1("a2_pass1","a2_Stop", -0.1,-1,1);
-  */RooChebychev cheby_pass_bkg("cheby_pass_bkg","cheby_pass",ak08Pruned_1_mass,RooArgSet(a_pass_bkg,a1_pass_bkg));//, a2_pass_bkg)) ;
+  */RooChebychev cheby_pass_bkg("cheby_pass_bkg","cheby_pass",ak08Pruned_1_mass,RooArgSet(a_pass_bkg,a1_pass_bkg, a2_pass_bkg));//, a2_pass_bkg)) ;
   RooRealVar a_bkg("a_bkg","a_bkg", 0.1,-1,1);
   RooRealVar a1_bkg("a1_bkg","a1_bkg", 0.1,-1,1);
   RooRealVar a2_bkg("a2_bkg","a2_bkg", 0.1,-1,1);
@@ -696,8 +696,10 @@ void fit_Signal_new()
   //RooGenericPdf passBkg("passBkg", "passBkg", "(1+(TMath::Erf((ak08Pruned_1_mass-a_bkg)/b_bkg)))*0.5*exp(-(mean_bkg-ak08Pruned_1_mass)*(mean_bkg-ak08Pruned_1_mass)/(2*sigma_bkg*sigma_bkg))", RooArgSet(ak08Pruned_1_mass, a_bkg, b_bkg, mean_bkg, sigma_bkg));
   RooRealVar a_bkg_exp("a_bkg_exp","a_bkg_exp", .1,-1,1);
   RooExponential exp_bkg("exp_bkg","exp_bkg", ak08Pruned_1_mass, a_bkg_exp);
-
-  RooArgusBG argus("argus","argus", a_pass_bkg,a1_pass_bkg, a2_bkg);
+  RooConstVar slope("slope","slope", -5.); 
+  RooRealVar cutOff("cutOff","cutOff", 40,100,170);
+  RooRealVar pow("pow","pow",10,-20,20);
+  RooArgusBG argus("argus","argus", ak08Pruned_1_mass,cutOff, slope, pow);//a_pass_bkg,a1_pass_bkg, a2_pass_bkg);
 //////  cheby_pass_bkg/*exp_bkg*/.fitTo(*dh_bkgPass) ;
   
   
@@ -720,14 +722,14 @@ void fit_Signal_new()
   //wdata_ttbar_unmatch.append(wdata_Stop4_unmatch);
   //wdata_ttbar_unmatch.append(wdata_Stop5_unmatch);
   RooPlot* frame1_bkg = ak08Pruned_1_mass.frame(Bins(nbins),Title("BackGround Pass sample")) ;
-  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+  /*argus*/cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));//, RooFit::Strategy(2));
+  //argus/*cheby_pass_bkg*/.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+  //argus/*cheby_pass_bkg*/.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
   //dh_bkgPass->plotOn(frame1_bkg) ;
   wdata_ttbar_unmatch.plotOn(frame1_bkg, DataError(RooAbsData::SumW2));
 
-  cheby_pass_bkg.plotOn(frame1_bkg);
-  cheby_pass_bkg.paramOn(frame1_bkg);
+  /*argus*/cheby_pass_bkg.plotOn(frame1_bkg);
+  /*argus*/cheby_pass_bkg.paramOn(frame1_bkg);
   //RooPlot* frame2_ttbar = ak08Pruned_1_mass.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   //dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
   TCanvas* c_bkg = new TCanvas("c_bkg","c_bkg",1);//,800,400) ;
@@ -737,7 +739,7 @@ void fit_Signal_new()
 
   std::cout<<"+++++++++++++++++++++++++++++++++++"<<std::endl;
   //std::cout<<"ttbar Integral (match): "<<hh_ttbarMatch->Integral()<<" "<<matched_ttbar<<std::endl;
-  //return;
+  return;
 
 
   RooRealVar mean_pass("mean_pass","mean_pass", 80, 60,95);
@@ -753,8 +755,8 @@ void fit_Signal_new()
   RooRealVar a2_pass("a2_pass","a2_pass", 0.1,-1,1);
   RooPolynomial p2_pass("p2_pass","p2_pass",ak08Pruned_1_mass,RooArgList(a_pass,a1_pass,a2_pass),0) ;
 
-  RooRealVar Nsig("Nsig", "Nsig", 1200,10,10000);//(Nttbar_true.getValV()+NStop_true.getValV())+1000);
-  RooRealVar Nbkg("Nbkg", "Nbkg", 100,10,100000);
+  RooRealVar Nsig("Nsig", "Nsig", 1200,10,1000000000000);//(Nttbar_true.getValV()+NStop_true.getValV())+1000);
+  RooRealVar Nbkg("Nbkg", "Nbkg", 100,10,10000000000000);
   RooExtendPdf gx_pass_norm("gx_pass_norm", "gx_pass_norm", gx_pass, Nsig);
   RooExtendPdf p2_pass_norm("p2_pass_norm","p2_pass_norm", p2_pass, Nbkg);
   //RooAddPdf gauss2_pass("gauss2_pass", "gauss2_pass",RooArgList(gx_pass,gx_pass1) );
@@ -775,15 +777,15 @@ void fit_Signal_new()
   /*RooRealVar a_pass1("a_pass1","a_Stop", 1,-1,1);
   RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
   RooRealVar a2_pass1("a2_pass1","a2_Stop", -0.1,-1,1);
-  */RooChebychev cheby_pass("cheby_pass","cheby_pass",ak08Pruned_1_mass,RooArgSet(a_pass1,a1_pass1, a2_pass1, a_pass)) ;
+  */RooChebychev cheby_pass("cheby_pass","cheby_pass",ak08Pruned_1_mass,RooArgSet(a_pass1,a1_pass1, a2_pass1));//, a2_pass1, a_pass)) ;
   RooAddPdf modelPass("modelPass", "modelPass", RooArgList(/*gx_pass*/dcbx,cheby_pass), RooArgList( Nsig, Nbkg));
   //RooProdPdf modelPass("modelPass", "modelPass", RooArgList(gx_pass_norm,p2_pass_norm));
 ///////  modelPass.fitTo(*dh_totalPass);
   wdata_ttbar_match->append(wdata_ttbar_unmatch);
   std::cout<<"FITTING"<<std::endl;
   modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
-  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
-  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+//  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
+//  modelPass.fitTo(*wdata_ttbar_match, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2)) ;
   std::cout<<"After fit"<<std::endl;
   RooPlot* frame1_pass = ak08Pruned_1_mass.frame(Bins(nbins),Title("Pass sample")) ;
   //gx_pass.plotOn(frame1_pass, LineColor(kRed));

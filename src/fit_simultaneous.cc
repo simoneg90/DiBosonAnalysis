@@ -396,16 +396,16 @@ int main(int argc, char* argv[]){
   //constant part
 
   RooRealVar const_efficiency ("const_efficiency", "efficiency",  .91, 0 ,1.);
-  RooRealVar const_mean_pass_sim_MC("const_mean_pass_sim_MC", "Double CB mean", 78., 75.,85.);//78.7);//78., 75.,85.);
-  RooRealVar const_sigma_pass_sim_MC("const_sigma_pass_sim_MC", "Double CB Width", 8.,5.,10.);//8.4);//8.,5.,10.);
-  RooConstVar const_dCBCutL_pass_sim_MC("const_dCBCutL_pass_sim_MC", "Double CB Cut left", 1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
-  RooConstVar const_dCBCutR_pass_sim_MC("const_dCBCutR_pass_sim_MC", "Double CB Cut right", 1.9);//***** tau21_04  2.);//***** tau21_06 1.9);//1.9);
-  RooConstVar const_dCBPowerL_pass_sim_MC("const_dCBPowerL_pass_sim_MC", "Double CB Power left", 1.1);//***** tau21_04 1.14);//***** tau21_06 1.16);
-  RooConstVar const_dCBPowerR_pass_sim_MC("const_dCBPowerR_pass_sim_MC", "Double CB Power right", 5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
+  RooRealVar const_mean_pass_sim_MC("const_mean_pass_sim_MC", "Double CB mean", 80., 78., 87.);//, 75.,85.);//78.7);//78., 75.,85.);
+  RooRealVar const_sigma_pass_sim_MC("const_sigma_pass_sim_MC", "Double CB Width", 8.,5.,8.5);//,5.,10.);//8.4);//8.,5.,10.);
+  RooConstVar const_dCBCutL_pass_sim_MC("const_dCBCutL_pass_sim_MC", "Double CB Cut left", 3.7);//1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
+  RooConstVar const_dCBCutR_pass_sim_MC("const_dCBCutR_pass_sim_MC", "Double CB Cut right", 4.1);//***** tau21_04  2.);//***** tau21_06 1.9);//1.9);
+  RooConstVar const_dCBPowerL_pass_sim_MC("const_dCBPowerL_pass_sim_MC", "Double CB Power left", 2.3);//***** tau21_04 1.14);//***** tau21_06 1.16);
+  RooConstVar const_dCBPowerR_pass_sim_MC("const_dCBPowerR_pass_sim_MC", "Double CB Power right", 3.9);//5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
   RooDCBShape const_dcb_pass_sim_MC("const_dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_mean_pass_sim_MC, const_sigma_pass_sim_MC, const_dCBCutL_pass_sim_MC, const_dCBCutR_pass_sim_MC, const_dCBPowerL_pass_sim_MC, const_dCBPowerR_pass_sim_MC);
-  RooRealVar const_a_pass_sim_MC("const_a_pass_sim_MC","a_pass_sim_MC",-.01,-.1,-.001);//, 0.001,.1);//.1,.01,1.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
+  RooRealVar const_a_pass_sim_MC("const_a_pass_sim_MC","a_pass_sim_MC",.01, .001,.1);//.06,.001,.2);//, 0.001,.1);//.1,.01,1.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
   RooRealVar const_a1_pass_sim_MC("const_a1_pass_sim_MC","a1_pass_sim_MC",-.4,-1.,-.1);//,-1.,-.1);//-.5,-1.,-.01);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
-  RooConstVar const_a2_pass_sim_MC("const_a2_pass_sim_MC","a2_pass_sim_MC",.001);//.07,-.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
+  RooRealVar const_a2_pass_sim_MC("const_a2_pass_sim_MC","a2_pass_sim_MC",.01,-.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
   //RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass,RooArgList(a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC),0) ;
   RooChebychev const_cheby_pass_sim_MC("const_cheby_pass_sim_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_pass_sim_MC,const_a1_pass_sim_MC));//, const_a2_pass_sim_MC)) ;
   RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass,const_mean_pass_sim_MC, const_sigma_pass_sim_MC);
@@ -419,20 +419,20 @@ int main(int argc, char* argv[]){
 
   //+++ Fail part +++
   RooConstVar const_sim_sigmaRatio("const_sim_sigmaRatio", "ratio data sigma", 1.51);
-  RooConstVar const_sim_meanRatio("const_sim_meanRatio", "ratio mean data", .96);
+  RooConstVar const_sim_meanRatio("const_sim_meanRatio", "ratio mean data", .98);//.96);
   RooFormulaVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", "(const_sim_meanRatio*const_mean_pass_sim_MC)", RooArgList(const_sim_meanRatio,const_mean_pass_sim_MC));
   //RooRealVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", 76,75,85);
   //RooFormulaVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width","(const_sim_sigmaRatio*const_sigma_pass_sim_MC", RooArgList(const_sim_sigmaRatio,const_sigma_pass_sim_MC));
 
   //RooConstVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", 75.);//***** tau21_04 76.53);//***** tau21_06 75.5);
-  RooRealVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width", 10.,5,15); //working points 10, 0, 40 for tau21<.4
-  RooConstVar const_dCBCutL_fail_sim_MC("const_dCBCutL_fail_sim_MC", "Double CB Cut left",.48);//***** tau21_04 .7);//***** tau21_06 .8);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
-  RooConstVar const_dCBCutR_fail_sim_MC("const_dCBCutR_fail_sim_MC", "Double CB Cut right",1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
-  RooConstVar const_dCBPowerL_fail_sim_MC("const_dCBPowerL_fail_sim_MC", "Double CB Power left", 1.);//***** tau21_04 1.5);//***** tau21_06 2.5 .72);//.82); //.72);
+  RooRealVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width", 13.1,13.,16.);//5.7, 5., 15.);//10.,5,15); //working points 10, 0, 40 for tau21<.4
+  RooConstVar const_dCBCutL_fail_sim_MC("const_dCBCutL_fail_sim_MC", "Double CB Cut left",.35);//.48);//***** tau21_04 .7);//***** tau21_06 .8);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
+  RooConstVar const_dCBCutR_fail_sim_MC("const_dCBCutR_fail_sim_MC", "Double CB Cut right",1.);//1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
+  RooConstVar const_dCBPowerL_fail_sim_MC("const_dCBPowerL_fail_sim_MC", "Double CB Power left",.73);// 1.);//***** tau21_04 1.5);//***** tau21_06 2.5 .72);//.82); //.72);
   RooConstVar const_dCBPowerR_fail_sim_MC("const_dCBPowerR_fail_sim_MC", "Double CB Power right",9.5);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
   RooDCBShape const_dcb_fail_sim_MC("const_dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_mean_fail_sim_MC, const_sigma_fail_sim_MC, const_dCBCutL_fail_sim_MC, const_dCBCutR_fail_sim_MC, const_dCBPowerL_fail_sim_MC, const_dCBPowerR_fail_sim_MC);
-  RooRealVar const_a_fail_sim_MC("const_a_fail_sim_MC","a_fail_sim_MC", -1.06,-2.,-.5);//, -3.,-.1);//-1.1,-2.,0.);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
-  RooRealVar const_a1_fail_sim_MC("const_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);//,.1,2.);//.34,-1.,.5);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
+  RooRealVar const_a_fail_sim_MC("const_a_fail_sim_MC","a_fail_sim_MC", -1.02, -2.,-.5);//-1.06,-2.,-.5);//, -3.,-.1);//-1.1,-2.,0.);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
+  RooRealVar const_a1_fail_sim_MC("const_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);//.31,0.,.6);//,.1,2.);//.34,-1.,.5);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
   RooConstVar const_a2_fail_sim_MC("const_a2_fail_sim_MC","a2_fail_sim_MC", .01);//-.05,-1.,.0);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
   RooChebychev const_cheby_fail_sim_MC("const_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_fail_sim_MC,const_a1_fail_sim_MC));//, const_a2_fail_sim_MC)) ;
   
@@ -448,41 +448,41 @@ int main(int argc, char* argv[]){
   //RooRealVar ak08Pruned_1_mass_data("ak08Pruned_1_mass_data","ak08Pruned_1_mass_data",mass_min,mass_max) ;
   //constant part data
   RooRealVar const_data_efficiency ("const_data_efficiency", "efficiency",  .91, 0 ,1.);
-  RooRealVar const_data_mean_pass_sim_MC("const_data_mean_pass_sim_MC", "Double CB mean", 78., 75.,85.);
-  RooRealVar const_data_sigma_pass_sim_MC("const_data_sigma_pass_sim_MC", "Double CB Width", 8.,5.,10.);
-  RooConstVar const_data_dCBCutL_pass_sim_MC("const_data_dCBCutL_pass_sim_MC", "Double CB Cut left", 1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
-  RooConstVar const_data_dCBCutR_pass_sim_MC("const_data_dCBCutR_pass_sim_MC", "Double CB Cut right", 1.9);//***** tau21_04  2.);//***** tau21_06 1.6);//1.9);
-  RooConstVar const_data_dCBPowerL_pass_sim_MC("const_data_dCBPowerL_pass_sim_MC", "Double CB Power left", 1.1);//***** tau21_04 1.14);//***** tau21_06 1.16);
-  RooConstVar const_data_dCBPowerR_pass_sim_MC("const_data_dCBPowerR_pass_sim_MC", "Double CB Power right", 5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
+  RooRealVar const_data_mean_pass_sim_MC("const_data_mean_pass_sim_MC", "Double CB mean", 82., 78., 87.);//78., 75.,85.);
+  RooRealVar const_data_sigma_pass_sim_MC("const_data_sigma_pass_sim_MC", "Double CB Width", 8.,5.,8.5);
+  RooConstVar const_data_dCBCutL_pass_sim_MC("const_data_dCBCutL_pass_sim_MC", "Double CB Cut left", 3.7); 
+  RooConstVar const_data_dCBCutR_pass_sim_MC("const_data_dCBCutR_pass_sim_MC", "Double CB Cut right", 4.1);
+  RooConstVar const_data_dCBPowerL_pass_sim_MC("const_data_dCBPowerL_pass_sim_MC", "Double CB Power left", 2.3);
+  RooConstVar const_data_dCBPowerR_pass_sim_MC("const_data_dCBPowerR_pass_sim_MC", "Double CB Power right", 3.9);
   RooDCBShape const_data_dcb_pass_sim_MC("const_data_dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_data_mean_pass_sim_MC, const_data_sigma_pass_sim_MC, const_data_dCBCutL_pass_sim_MC, const_data_dCBCutR_pass_sim_MC, const_data_dCBPowerL_pass_sim_MC, const_data_dCBPowerR_pass_sim_MC);
-  RooRealVar const_data_a_pass_sim_MC("const_data_a_pass_sim_MC","a_pass_sim_MC",-.01, -.1,-.001);//.1, 0.01,1.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
-  RooRealVar const_data_a1_pass_sim_MC("const_data_a1_pass_sim_MC","a1_pass_sim_MC",-.4,-1.,-.1);//-.5,-1.,-.01);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
+  RooRealVar const_data_a_pass_sim_MC("const_data_a_pass_sim_MC","a_pass_sim_MC",.01, .001,.1);
+  RooRealVar const_data_a1_pass_sim_MC("const_data_a1_pass_sim_MC","a1_pass_sim_MC",-.4,-1.,-.1);
   RooConstVar const_data_a2_pass_sim_MC("const_data_a2_pass_sim_MC","a2_pass_sim_MC",.03);//.07,-0.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
   RooChebychev const_data_cheby_pass_sim_MC("const_data_cheby_pass_pass_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_pass_sim_MC,const_data_a1_pass_sim_MC, const_data_a2_pass_sim_MC)) ;
-  RooRealVar const_data_Nsig_sim_MC("const_data_Nsig_sim_MC", "Nsig_sim_MC", 300.,100,10000);
+  RooRealVar const_data_Nsig_sim_MC("const_data_Nsig_sim_MC", "Nsig_sim_MC", 300.,100,1000000000000);
   RooFormulaVar const_data_k_pass_sim("const_data_k_pass_sim", "pass norm", "(const_data_Nsig_sim_MC*const_data_efficiency)", RooArgList(const_data_Nsig_sim_MC, const_data_efficiency));
-  RooRealVar const_data_Nbkg_pass_sim_MC("const_data_Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 575., 400.,10000.);
+  RooRealVar const_data_Nbkg_pass_sim_MC("const_data_Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 575., 400.,1000000000000.);
   RooAddPdf const_data_modelPass_sim_MC("const_data_modelPass_sim_MC", "modelPass_sim_MC", RooArgList(const_data_dcb_pass_sim_MC,const_data_cheby_pass_sim_MC), RooArgList(const_data_k_pass_sim, const_data_Nbkg_pass_sim_MC));
 
 
   //+++ Fail part +++
   //RooConstVar const_data_sigmaRatio("const_data_sigmaRatio", "ratio data sigma", 1.25);
-  RooConstVar const_data_meanRatio("const_data_meanRatio", "ratio mean data", .96);
+  RooConstVar const_data_meanRatio("const_data_meanRatio", "ratio mean data", .98);
   RooFormulaVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", "(const_data_meanRatio*const_data_mean_pass_sim_MC)", RooArgList(const_data_meanRatio,const_data_mean_pass_sim_MC));
   //RooFormulaVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width","(const_data_sigmaRatio*const_data_sigma_pass_sim_MC", RooArgList(const_data_sigmaRatio,const_data_sigma_pass_sim_MC));
   //RooConstVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", 75.5);//***** tau21_04 76.53);//***** tau21_06 75.5);
-  RooRealVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width", 10.,5.,15.);//10.,5,15); //working points 10, 0, 40 for tau21<.4
-  RooConstVar const_data_dCBCutL_fail_sim_MC("const_data_dCBCutL_fail_sim_MC", "Double CB Cut left",.48);//***** tau21_04 .7);//***** tau21_06 .18);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
-  RooConstVar const_data_dCBCutR_fail_sim_MC("const_data_dCBCutR_fail_sim_MC", "Double CB Cut right", 1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
-  RooConstVar const_data_dCBPowerL_fail_sim_MC("const_data_dCBPowerL_fail_sim_MC", "Double CB Power left", 1.);//***** tau21_04 1.5);//***** tau21_06 .72);//.82); //.72);
-  RooConstVar const_data_dCBPowerR_fail_sim_MC("const_data_dCBPowerR_fail_sim_MC", "Double CB Power right",9.5);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
+  RooRealVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width", 13.1,13.,16.);
+  RooConstVar const_data_dCBCutL_fail_sim_MC("const_data_dCBCutL_fail_sim_MC", "Double CB Cut left",.35);
+  RooConstVar const_data_dCBCutR_fail_sim_MC("const_data_dCBCutR_fail_sim_MC", "Double CB Cut right", 1.);
+  RooConstVar const_data_dCBPowerL_fail_sim_MC("const_data_dCBPowerL_fail_sim_MC", "Double CB Power left", .73);//***** tau21_04 1.5);//***** tau21_06 .72);//.82); //.72);
+  RooConstVar const_data_dCBPowerR_fail_sim_MC("const_data_dCBPowerR_fail_sim_MC", "Double CB Power right",9.5);
   RooDCBShape const_data_dcb_fail_sim_MC("const_data_dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_data_mean_fail_sim_MC, const_data_sigma_fail_sim_MC, const_data_dCBCutL_fail_sim_MC, const_data_dCBCutR_fail_sim_MC, const_data_dCBPowerL_fail_sim_MC, const_data_dCBPowerR_fail_sim_MC);
-  RooRealVar const_data_a_fail_sim_MC("const_data_a_fail_sim_MC","a_fail_sim_MC", -1.06,-2.,-.5);//-1.1,-2.,0.);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
-  RooRealVar const_data_a1_fail_sim_MC("const_data_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);//.34,-.1,.5);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
+  RooRealVar const_data_a_fail_sim_MC("const_data_a_fail_sim_MC","a_fail_sim_MC", -1.02,-2.,-.5);
+  RooRealVar const_data_a1_fail_sim_MC("const_data_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);
   RooConstVar const_data_a2_fail_sim_MC("const_data_a2_fail_sim_MC","a2_fail_sim_MC", -.05);//-.05,-1.,0.);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
   RooChebychev const_data_cheby_fail_sim_MC("const_data_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_fail_sim_MC,const_data_a1_fail_sim_MC, const_data_a2_fail_sim_MC)) ;
   
-  RooRealVar const_data_Nbkg_fail_sim_MC("const_data_Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 292., 100., 10000.);
+  RooRealVar const_data_Nbkg_fail_sim_MC("const_data_Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 292., 100., 1000000000.);
   RooFormulaVar const_data_k_fail_sim("const_data_k_fail_sim", "fail norm", "(const_data_Nsig_sim_MC*(1-const_data_efficiency))", RooArgList(const_data_Nsig_sim_MC, const_data_efficiency));
   RooAddPdf const_data_model_fail_sim_MC("const_data_model_fail_sim_MC", "model_fail_sim_MC", RooArgList(const_data_dcb_fail_sim_MC,const_data_cheby_fail_sim_MC), RooArgList(const_data_k_fail_sim, const_data_Nbkg_fail_sim_MC));
 
@@ -893,7 +893,7 @@ int main(int argc, char* argv[]){
   //simPdf_MC.addParameters(efficiency, mean_pass_sim_MC, sigma_pass_sim_MC,a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC,Nsig_sim_MC,Nbkg_pass_sim_MC,mean_fail_sim_MC,sigma_fail_sim_MC,a_fail_sim_MC,a1_fail_sim_MC,a2_fail_sim_MC,Nbkg_fail_sim_MC);
   //gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
 
-  simPdf_MC.fitTo(combData_MC_unbinned, SumW2Error(kTRUE));
+  simPdf_MC.fitTo(combData_MC_unbinned, SumW2Error(kTRUE));//, RooFit::Strategy(2));
   TCanvas *c_sim_MC_pass = new TCanvas("c_sim_MC_pass", "Simultaneous PDF Pass",1);// 200, 10, 600, 400);
   //c_sim_MC->Divide(2) ;
   RooPlot* frame1_sim = ak08Pruned_1_mass.frame(Bins(bins),Title("Pass sample")) ;
@@ -955,9 +955,9 @@ int main(int argc, char* argv[]){
   dataFail->plotOn(frame2_data);
   /*gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
   cheby_fail_sim_MC.plotOn(frame2_sim, LineColor(kGreen));*/
-  const_model_fail_sim_MC.plotOn(frame2_data);
-  const_model_fail_sim_MC.plotOn(frame2_data,Components(const_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
-  const_model_fail_sim_MC.plotOn(frame2_data,Components(const_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  const_data_model_fail_sim_MC.plotOn(frame2_data);
+  const_data_model_fail_sim_MC.plotOn(frame2_data,Components(const_data_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
+  const_data_model_fail_sim_MC.plotOn(frame2_data,Components(const_data_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
   /*c_sim_MC->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_data->GetYaxis()->SetTitleOffset(1.4) ; frame1_data->Draw() ;
   //c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
   c_sim_data_pass->SaveAs(Form("%s_provaRoofitDataPass.png",prefix.c_str()));
