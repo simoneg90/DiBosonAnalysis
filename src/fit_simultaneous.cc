@@ -613,7 +613,7 @@ int main(int argc, char* argv[]){
 
   std::ifstream inputList; //list of rootFiles used for the analysis
   inputList.open(argv[1]);
-  if(inputList==NULL){
+  if(!inputList){//==NULL){
     std::cout<<"ERROR! File: "<<argv[1]<<" doesn't exist!"<<std::endl;
     exit(-1);
   }
@@ -621,7 +621,7 @@ int main(int argc, char* argv[]){
 
   std::ifstream cutList; //list of cuts to be applied: 1. match HP; 2. unmatch HP; 3. match LP; 4. unmatch LP; 5. Pass; 6. Fail
   cutList.open(argv[2]);
-  if(cutList==NULL){
+  if(!cutList){//==NULL){
     std::cout<<"ERROR! File: "<<argv[2]<<" doesn't exist!"<<std::endl;
     exit(-1);
   }

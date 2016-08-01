@@ -1,1 +1,1 @@
-analysisClass_ttBarEmanuele_developing.C
+analysisClass_VGamma.C

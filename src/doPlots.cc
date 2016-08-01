@@ -275,7 +275,7 @@ int main(int argc, char* argv[]){
   
   std::ifstream inputList;
   inputList.open(argv[1]);
-  if(inputList==NULL){
+  if(!inputList){//==NULL){
     std::cout<<"ERROR! File: "<<argv[1]<<" doesn't exist!"<<std::endl;
     exit(-1);
   }
