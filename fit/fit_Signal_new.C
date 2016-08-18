@@ -21,6 +21,7 @@
 #include "TH1D.h"
 #include "RooArgusBG.h"
 #include "RooDCBShape.cxx"
+#include "otherPdf.cxx"
 //#include "RooDCBShape_cxx.so"
 #include <TF1.h>
 #include <TMath.h>
@@ -83,13 +84,14 @@ void fit_Signal_new()
   RooRealVar genW_genBquark1_DR("genW_genBquark1_DR","genW_genBquark1_DR",-10,10);
   RooRealVar genW_genBquark2_DR("genW_genBquark2_DR","genW_genBquark2_DR",-10,10);
   RooRealVar ak08Ungroomed_WGen_DR("ak08Ungroomed_WGen_DR","ak08Ungroomed_WGen_DR",-10,10);
+  RooRealVar ak08Ungroomed_1_pt("ak08Ungroomed_1_pt","ak08Ungroomed_1_pt", 100,1000);
 
   TFile *file_ttbar2;
   file_ttbar2=TFile::Open("../ttbar_output_new/TT_Inclusive_20160703_190901/rootfile_tt_inclusive__20160703_190901_0_reduced_skim_redu.root");//"/afs/cern.ch/work/s/sgelli/private/CMSSW_Analysis/src/DiBosonAnalysis/ttbar_output_new/TT_Inclusive_redu.root");//ttbar_redu.root");
   std::cout<<"After tree assigned"<<std::endl;
   TTree *tree_ttbar=(TTree *)file_ttbar2->Get("mio");//tree_ttbar->CopyTree(cut_matched_pass.c_str());
   
-  RooDataSet *ds_ttbar = new RooDataSet("ds_ttbar","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_ttbar));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet *ds_ttbar = new RooDataSet("ds_ttbar","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_ttbar));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   std::cout<<"RooDataset defined"<<std::endl;
   ds_ttbar->Print();
 
@@ -225,7 +227,7 @@ void fit_Signal_new()
   file_Stop1_primo=TFile::Open("../ttbar_output_new/SingleTop_sChannel_20160703_141827/rootfile_SingleTop_sChannel__20160703_141827_0_reduced_skim_redu.root");//"/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_s-channel_4f_redu.root");
   TTree *tree_Stop1=(TTree *)file_Stop1_primo->Get("mio");
   
-  RooDataSet ds_Stop1("ds_Stop1","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop1));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_Stop1("ds_Stop1","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop1));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   ds_ttbar->Print();
   
   RooDataSet* dsC_Stop1_match = (RooDataSet*) ds_Stop1.reduce(match.c_str()) ;
@@ -255,7 +257,7 @@ void fit_Signal_new()
   file_Stop2_primo=TFile::Open("../ttbar_output_new/SingleTop_tW_20160703_141828/rootfile_SingleTop_tW__20160703_141828_0_reduced_skim_redu.root");
   TTree *tree_Stop2=(TTree *)file_Stop2_primo->Get("mio");
   
-  RooDataSet ds_Stop2("ds_Stop2","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop2));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_Stop2("ds_Stop2","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop2));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_Stop2_match = (RooDataSet*) ds_Stop2.reduce(match.c_str()) ;
   RooDataSet* dsC_Stop2_unmatch = (RooDataSet*) ds_Stop2.reduce(unmatch.c_str()) ;
@@ -282,7 +284,7 @@ void fit_Signal_new()
   file_Stop3_primo=TFile::Open("../ttbar_output_new/SingleTop_tbarW_20160703_141828/rootfile_SingleTop_tbarW__20160703_141828_0_reduced_skim_redu.root");
   TTree *tree_Stop3=(TTree *)file_Stop3_primo->Get("mio");
   
-  RooDataSet ds_Stop3("ds_Stop3","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop3));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_Stop3("ds_Stop3","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop3));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_Stop3_match = (RooDataSet*) ds_Stop3.reduce(match.c_str()) ;
   RooDataSet* dsC_Stop3_unmatch = (RooDataSet*) ds_Stop3.reduce(unmatch.c_str()) ;
@@ -311,7 +313,7 @@ void fit_Signal_new()
 ///////  file_Stop4_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_antitop_redu.root");
 ///////  TTree *tree_Stop4=(TTree *)file_Stop4_primo->Get("mio");
 ///////  
-///////  RooDataSet ds_Stop4("ds_Stop4","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop4));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+///////  RooDataSet ds_Stop4("ds_Stop4","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop4));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
 ///////      
 ///////  RooDataSet* dsC_Stop4_match = (RooDataSet*) ds_Stop4.reduce(match.c_str()) ; 
 ///////  RooDataSet* dsC_Stop4_unmatch = (RooDataSet*) ds_Stop4.reduce(unmatch.c_str()) ;
@@ -337,7 +339,7 @@ void fit_Signal_new()
 ///////  file_Stop5_primo=TFile::Open("/cmshome/gellisim/Diboson/CMSSW_7_4_15/src/DiBosonAnalysis/rootFolder9/ST_t-channel_top_redu.root");
 ///////  TTree *tree_Stop5=(TTree *)file_Stop5_primo->Get("mio");
 ///////  
-///////  RooDataSet ds_Stop5("ds_Stop5","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop5));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+///////  RooDataSet ds_Stop5("ds_Stop5","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_Stop5));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
 ///////      
 ///////  RooDataSet* dsC_Stop5_match = (RooDataSet*) ds_Stop5.reduce(match.c_str()) ; 
 ///////  RooDataSet* dsC_Stop5_unmatch = (RooDataSet*) ds_Stop5.reduce(unmatch.c_str()) ;
@@ -442,7 +444,7 @@ void fit_Signal_new()
   file_WW1=TFile::Open("../ttbar_output_new/WW_20160703_141826/rootfile_ww__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_WW=(TTree *)file_WW1->Get("mio");
   
-  RooDataSet ds_WW("ds_WW","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_WW));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_WW("ds_WW","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_WW));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_WW = (RooDataSet*) ds_WW.reduce(pass.c_str()) ;
   dsC_WW->SetName("dsC_WW");
@@ -465,7 +467,7 @@ void fit_Signal_new()
   file_WZ1=TFile::Open("../ttbar_output_new/WZ_20160703_141826/rootfile_wz__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_WZ=(TTree *)file_WZ1->Get("mio");
  
-  RooDataSet ds_WZ("ds_WZ","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_WZ));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_WZ("ds_WZ","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_WZ));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_WZ = (RooDataSet*) ds_WZ.reduce(pass.c_str()) ; 
   dsC_WZ->SetName("dsC_WZ");
@@ -488,7 +490,7 @@ void fit_Signal_new()
   file_ZZ1=TFile::Open("../ttbar_output_new/ZZ_20160703_141827/rootfile_zz__20160703_141827_0_reduced_skim_redu.root");
   TTree *tree_ZZ=(TTree *)file_ZZ1->Get("mio");
   
-  RooDataSet ds_ZZ("ds_ZZ","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_ZZ));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_ZZ("ds_ZZ","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_ZZ));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_ZZ = (RooDataSet*) ds_ZZ.reduce(pass.c_str()) ; 
   dsC_ZZ->SetName("dsC_ZZ");
@@ -517,7 +519,7 @@ void fit_Signal_new()
   file_W_100_200_1=TFile::Open("../ttbar_output_new/WJets_100_200_20160703_141822/rootfile_wjets100_200__20160703_141822_0_reduced_skim_redu.root");
   TTree *tree_W_100_200=(TTree *)file_W_100_200_1->Get("mio");
   
-  RooDataSet ds_W_100_200("ds_W_100_200","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_100_200));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_100_200("ds_W_100_200","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_100_200));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_100_200 = (RooDataSet*) ds_W_100_200.reduce(pass.c_str()) ;
   dsC_W_100_200->SetName("dsC_W_100_200");
@@ -540,7 +542,7 @@ void fit_Signal_new()
   file_W_200_400_1=TFile::Open("../ttbar_output_new/WJets_200_400_20160703_141824/rootfile_wjets200_400__20160703_141824_0_reduced_skim_redu.root");
   TTree *tree_W_200_400=(TTree *)file_W_200_400_1->Get("mio");
 
-  RooDataSet ds_W_200_400("ds_W_200_400","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_200_400));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_200_400("ds_W_200_400","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_200_400));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_200_400 = (RooDataSet*) ds_W_200_400.reduce(pass.c_str()) ; 
   dsC_W_200_400->SetName("dsC_W_200_400");
@@ -563,7 +565,7 @@ void fit_Signal_new()
   file_W_400_600_1=TFile::Open("../ttbar_output_new/WJets_400_600_20160703_141825/rootfile_wjets400_600__20160703_141825_0_reduced_skim_redu.root");
   TTree *tree_W_400_600=(TTree *)file_W_400_600_1->Get("mio");
   
-  RooDataSet ds_W_400_600("ds_W_400_600","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_400_600));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_400_600("ds_W_400_600","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_400_600));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_400_600 = (RooDataSet*) ds_W_400_600.reduce(pass.c_str()) ;
   dsC_W_400_600->SetName("dsC_W_400_600");
@@ -586,7 +588,7 @@ void fit_Signal_new()
   file_W_600_800_1=TFile::Open("../ttbar_output_new/WJets_600_800_20160703_141825/rootfile_wjets600_800__20160703_141825_0_reduced_skim_redu.root");
   TTree *tree_W_600_800=(TTree *)file_W_600_800_1->Get("mio");
   
-  RooDataSet ds_W_600_800("ds_W_600_800","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_600_800));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_600_800("ds_W_600_800","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_600_800));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_600_800 = (RooDataSet*) ds_W_600_800.reduce(pass.c_str()) ;
   dsC_W_600_800->SetName("dsC_W_600_800");
@@ -610,7 +612,7 @@ void fit_Signal_new()
   file_W_800_1200_1=TFile::Open("../ttbar_output_new/WJets_800_1200_20160703_141825/rootfile_wjets800_1200__20160703_141825_0_reduced_skim_redu.root");
   TTree *tree_W_800_1200=(TTree *)file_W_800_1200_1->Get("mio");
   
-  RooDataSet ds_W_800_1200("ds_W_800_1200","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_800_1200));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_800_1200("ds_W_800_1200","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_800_1200));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_800_1200 = (RooDataSet*) ds_W_800_1200.reduce(pass.c_str()) ;
   dsC_W_800_1200->SetName("dsC_W_800_1200");
@@ -633,7 +635,7 @@ void fit_Signal_new()
   file_W_1200_2500_1=TFile::Open("../ttbar_output_new/WJets_1200_2500_20160703_141826/rootfile_wjets1200_2500__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_W_1200_2500=(TTree *)file_W_1200_2500_1->Get("mio");
   
-  RooDataSet ds_W_1200_2500("ds_W_1200_2500","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_1200_2500));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_1200_2500("ds_W_1200_2500","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_1200_2500));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_1200_2500 = (RooDataSet*) ds_W_1200_2500.reduce(pass.c_str()) ;
   dsC_W_1200_2500->SetName("dsC_W_1200_2500");
@@ -656,7 +658,7 @@ void fit_Signal_new()
   file_W_2500_Inf_1=TFile::Open("../ttbar_output_new/WJets_2500_Inf_20160703_141826/rootfile_wjets2500_Inf__20160703_141826_0_reduced_skim_redu.root");
   TTree *tree_W_2500_Inf=(TTree *)file_W_2500_Inf_1->Get("mio");
   
-  RooDataSet ds_W_2500_Inf("ds_W_2500_Inf","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_2500_Inf));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
+  RooDataSet ds_W_2500_Inf("ds_W_2500_Inf","ds_ttbar",RooArgSet(ak08Pruned_1_mass, ak08Ungroomed_1_tau21,ak08Ungroomed_1_pt,genW_genBquark1_DR,genW_genBquark2_DR,ak08Ungroomed_WGen_DR),Import(*tree_W_2500_Inf));//,Cut(Form("%s", cut_matched_pass.c_str())));//, (xSec_ttbar*Lumi/nEvt_ttbar)) ;
   
   RooDataSet* dsC_W_2500_Inf = (RooDataSet*) ds_W_2500_Inf.reduce(pass.c_str()) ;
   dsC_W_2500_Inf->SetName("dsC_W_2500_Inf");
@@ -673,16 +675,20 @@ void fit_Signal_new()
 
   TCanvas* c_Wjet = new TCanvas("c_Wjet","c_Wjet",1);//,800,400) ;
 
-  RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", .1,-1.,1.);
-  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", 0.1,-1.,1.);
-  RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", -0.1,-1.,1.);
+  RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", -1.,-2.,2.);
+  //RooConstVar a_pass_bkg("a_pass_bkg","a_pass1", -2.41);
+  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", -1.,-2.,2.);
+  //RooConstVar a1_pass_bkg("a1_pass_bkg","a1_pass1", .05);
+  RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", .1,-2.,2.);
+  //RooConstVar a2_pass_bkg("a2_pass_bkg","a2_pass1", .052);
   /*RooRealVar a_pass1("a_pass1","a_Stop", 1,-1,1);
   RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
   RooRealVar a2_pass1("a2_pass1","a2_Stop", -0.1,-1,1);
-  */RooChebychev cheby_pass_bkg("cheby_pass_bkg","cheby_pass",ak08Pruned_1_mass,RooArgSet(a_pass_bkg,a1_pass_bkg, a2_pass_bkg));//, a2_pass_bkg)) ;
-  RooRealVar a_bkg("a_bkg","a_bkg", 0.1,-1,1);
-  RooRealVar a1_bkg("a1_bkg","a1_bkg", 0.1,-1,1);
-  RooRealVar a2_bkg("a2_bkg","a2_bkg", 0.1,-1,1);
+  */RooChebychev cheby_pass_bkg("cheby_pass_bkg","cheby_pass",ak08Pruned_1_mass,RooArgList(a_pass_bkg,a1_pass_bkg, a2_pass_bkg)) ;
+  RooPolynomial pol_bkg("pol_bkg","pol_bkg", ak08Pruned_1_mass,RooArgList(a_pass_bkg,a1_pass_bkg, a2_pass_bkg),0);
+  RooRealVar a_bkg("a_bkg","a_bkg", 0.1,-2.,2.);
+  RooRealVar a1_bkg("a1_bkg","a1_bkg", 0.1,-2.,2.);
+  RooRealVar a2_bkg("a2_bkg","a2_bkg", 0.1,-2.,2.);
   //RooRealVar ap_bkg("ap_bkg","ap_bkg", 0.5, -10,10);
   RooRealVar mean_bkg("mean_bkg","mean_bkg", 80, 60,95);
   RooRealVar sigma_bkg("sigma_bkg","sigma_bkg", 5, 0,15);
@@ -722,19 +728,34 @@ void fit_Signal_new()
   //wdata_ttbar_unmatch.append(wdata_Stop4_unmatch);
   //wdata_ttbar_unmatch.append(wdata_Stop5_unmatch);
   RooPlot* frame1_bkg = ak08Pruned_1_mass.frame(Bins(nbins),Title("BackGround Pass sample")) ;
-  /*argus*/cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));//, RooFit::Strategy(2));
+  ////Testing new function --- Error Function + Exponential
+  RooRealVar rrv_x("rrv_x","rrv_x", -100.,100.);
+  RooRealVar rrv_c_ErfExp      /*= new RooRealVar*/("rrv_c_ErfExp","rrv_c_ErfExp",-0.026,-0.05, 0.05);
+  RooRealVar rrv_offset_ErfExp /*= new RooRealVar*/("rrv_offset_ErfExp","rrv_offset_ErfExp",41.,0.,100);
+  RooRealVar rrv_width_ErfExp  /*= new RooRealVar*/("rrv_width_ErfExp","rrv_width_ErfExp",30.,1.,100.);
+
+  RooErfExpPdf model_pdf /*      = new RooErfExpPdf*/("model_pdf","model_pdf",ak08Pruned_1_mass,rrv_c_ErfExp,rrv_offset_ErfExp,rrv_width_ErfExp);
+
+
+
+  /*argus*///cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+////  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+////  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
+////  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));//, RooFit::Strategy(2));
   //argus/*cheby_pass_bkg*/.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
   //argus/*cheby_pass_bkg*/.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
   //dh_bkgPass->plotOn(frame1_bkg) ;
+  model_pdf.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));
   wdata_ttbar_unmatch.plotOn(frame1_bkg, DataError(RooAbsData::SumW2));
-
-  /*argus*/cheby_pass_bkg.plotOn(frame1_bkg);
-  /*argus*/cheby_pass_bkg.paramOn(frame1_bkg);
+  model_pdf.plotOn(frame1_bkg); 
+  model_pdf.paramOn(frame1_bkg);
+  /*argus*///cheby_pass_bkg.plotOn(frame1_bkg);
+  /*argus*///cheby_pass_bkg.paramOn(frame1_bkg);
   //RooPlot* frame2_ttbar = ak08Pruned_1_mass.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   //dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
   TCanvas* c_bkg = new TCanvas("c_bkg","c_bkg",1);//,800,400) ;
   //c_ttbar->Divide(2) ;
-  /*c_ttbar->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_bkg->GetYaxis()->SetTitleOffset(1.4) ; frame1_bkg->Draw() ;
+  /*c_ttbar->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_bkg->GetYaxis()->SetTitleOffset(1.4) ; frame1_bkg->Draw() ; std::cout<<"chi square! "<<frame1_bkg->chiSquare()<<std::endl;
   //c_ttbar->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
 
   std::cout<<"+++++++++++++++++++++++++++++++++++"<<std::endl;

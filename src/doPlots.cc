@@ -5,6 +5,7 @@
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "TPad.h"
+#include "TLatex.h"
 #include "time.h"
 //#include "CMS_lumi.h"
 //#include "CMS_lumi.C"
@@ -230,6 +231,10 @@ int main(int argc, char* argv[]){
   Color_t COLOR[] = {kAzure-1, kRed, kCyan, kSpring+7,kGreen+2, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
   //Color_t COLOR[] = {kAzure+8,kAzure-2, kTeal+9, kSpring+7, kPink+7, kPink+6,kOrange-3,kOrange-2,kOrange-1, kMagenta, kCyan};
 
+  //gStyle->SetStripDecimals(kTRUE);
+  //gStyle->SetTickLength(0.03, "XYZ");
+  //gStyle->SetNdivisions(510, "XYZ");
+  //gStyle->SetPadTickY(.1);
   TH1D *histoD[MAX_NUMBER];//histos for project
   TH1D *bkgCounts[MAX_NUMBER];//histos to count events to rescale
   TH1D *histoBkg[MAX_bkg];    //1 histo for each background
@@ -243,7 +248,7 @@ int main(int argc, char* argv[]){
   TCanvas *c[MAX_NUMBER];
   //TLegend *leg[MAX_NUMBER];
   TFile *file[MAX_NUMBER];
-  TLegend *leg = new TLegend(0.65,0.65,0.9,0.9);
+  TLegend *leg = new TLegend(0.65,0.6,0.9,0.85);
   TStopwatch timer;
   timer.Start(true);
 
@@ -348,6 +353,7 @@ int main(int argc, char* argv[]){
         std::cout<<"Data counts: "<<counts<<std::endl;
         //dataHisto->GetXaxis()->SetTitle(xTitle.c_str());
         dataHisto->GetYaxis()->SetTitle(yTitle.c_str());
+        //dataHisto->GetYaxis()->SetRangeUser(-1000.,dataHisto->GetMaximum()*1.3);
         dataHisto->SetMarkerStyle(8);
         dataHisto->SetMarkerColor(1);
         dataHisto->SetLineColor(1);
@@ -394,7 +400,14 @@ int main(int argc, char* argv[]){
   }//end while over inputFile
   std::cout<<"counter del bkg "<<bkg_counter<<std::endl; 
   //TCanvas *c[10];
-  TFile *outFile = new TFile(Form("%s.root",outString.c_str()), "RECREATE");
+  std::string outFileName = "";
+  if(outString.size()<100) {
+    outFileName = outString;
+  }else{
+    outFileName = "long_variable";
+  }
+
+  TFile *outFile = new TFile(Form("%s.root",outFileName.c_str()), "RECREATE");
   for(int i=0; i<=bkg_counter; ++i){
     c[i]=new TCanvas(Form("c%d",i), "Grafico1",1);// 200, 10, 600, 400);
     histoBkg[i]->Draw("hist");
@@ -420,14 +433,23 @@ int main(int argc, char* argv[]){
   effList.open(Form("%s.txt",effFile.c_str()), std::fstream::app);
   
   if(isData==1){
-    TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.3);
+    TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.25);
     pad2->SetBottomMargin(0.2);
     pad2->SetTopMargin(0);
+    //pad2->SetNdivisions(10);
     pad2->Draw();
     TPad *pad1=new TPad("pad1", "top pad", 0,0.3,1,1);
     pad1->SetBottomMargin(0);
     pad1->Draw();
     pad1->cd();
+    float H = pad1->GetWh();
+    float W = pad1->GetWw();
+    float l = pad1->GetLeftMargin();
+    float t = pad1->GetTopMargin();
+    float r = pad1->GetRightMargin();
+    float b = pad1->GetBottomMargin();
+    TString lumiText = "#it{L}=12.9 fb^{-1} (2016) (13 TeV)";//"#bf{CMS Preliminary} #it{L}=12.9 fb^{-1}";
+    TString cmsLogo = "#bf{CMS}  #it{Preliminary}";
     dataHisto->SetStats(0);
     dataHisto->Write();
     std::cout<<"DataHisto Entries: "<<dataHisto->GetEntries()<<std::endl;   
@@ -444,11 +466,33 @@ int main(int argc, char* argv[]){
     bkgStack->Write();
     //bkgStack->Draw("");
     std::cout<<"Drawing bkg"<<std::endl;
+    dataHisto->GetYaxis()->SetRangeUser(0.,dataHisto->GetMaximum()*1.3);
+    //TPaveText *ptText = new TPaveText(.5,.5,.6,.6);
+    //ptText->AddText("stocazzo");
+    //ptText->Draw();
     dataHisto->Draw("EP");
     bkgStack->Draw("SAME");
     dataHisto->Draw("EPSAME");
+    //gPad->Modified();
+    //ptText->Draw();
+    TLatex latex;
+    latex.SetNDC();
+    latex.SetTextAngle(0);
+    latex.SetTextColor(kBlack);    
+    latex.SetTextFont(42);
+    latex.SetTextAlign(31); 
+    float lumiTextOffset = 0.2;
+    float lumiTextSize = 0.04;
+    latex.SetTextSize(lumiTextSize);    
+    latex.DrawLatex(.9,.92,lumiText);//1-r,1-t+lumiTextOffset*t,lumiText);
+    latex.DrawLatex(.25,.92,cmsLogo);
+    latex.Draw();
+    gPad->Modified();
+    gPad->Update();
+    pad1->Update();
     std::cout<<"Redrawing data"<<std::endl;
     TGraphErrors *gr = new TGraphErrors(0);
+    TH1D *fake_plotHisto = new TH1D("fake_plotHisto","fake_plotHisto", bins,min,max);
     integralData=dataHisto->Integral();
     integralBKG=allBkgHisto->Integral();
     double error, ratio;
@@ -462,20 +506,34 @@ int main(int argc, char* argv[]){
       gr->SetPointError(w, dataHisto->GetBinWidth(w)/2,error);
 
     }
-    gr->GetHistogram()->SetMaximum(2);//1.5);
+    gr->GetHistogram()->SetMaximum(2.);//1.5);
     gr->GetHistogram()->SetMinimum(0.1);
     gr->GetXaxis()->SetLimits(min, max);
+    gr->GetYaxis()->SetTitleOffset(.2);
+    gr->GetYaxis()->SetTitleFont(42);
+    gr->GetYaxis()->SetTitleSize(.15);
+    gr->GetXaxis()->SetTitleFont(42);
+    gr->GetXaxis()->SetTitleSize(.15);
+    gr->GetXaxis()->SetTitle(xTitle.c_str());
+    gr->GetYaxis()->SetTitle("DATA/MC");
     //TGraphAsymmErrors *gr= new TGraphAsymmErrors();
     //gr->Divide(dataHisto,allBkgHisto, "pois");
     pad2->cd();
     gStyle->SetTextSize(14);
     gROOT->ForceStyle();
     pad2->SetGrid();
-    gr->Draw("ZAP");
+    fake_plotHisto->GetYaxis()->SetRangeUser(0.,2.);
+    //fake_plotHisto->SetNdivisions(400);
+    fake_plotHisto->SetTitle("");
+    fake_plotHisto->SetStats(0);
+    fake_plotHisto->SetLineColor(0);
+   // fake_plotHisto->Draw("hist");
+    gr->Draw("ZAP");//SAME");
     gr->GetXaxis()->SetLabelFont(43);
     gr->GetXaxis()->SetLabelSize(14);
     gr->GetYaxis()->SetLabelFont(43);
     gr->GetYaxis()->SetLabelSize(14);
+    gr->GetYaxis()->SetNdivisions(5);
     gr->SetMarkerStyle(8);
     gr->SetTitle("");
     allBkgHisto->GetXaxis()->SetLabelFont(43);
@@ -509,6 +567,7 @@ int main(int argc, char* argv[]){
     signalHisto[i]->Draw("histSAME");
 
   }
+  leg->SetBorderSize(0);
   leg->Draw("SAME");
 
   /*Float_t cmsTextSize = 0.043;
@@ -524,8 +583,8 @@ int main(int argc, char* argv[]){
   //TTree *T2 = tree[file_counter]->CopyTree(0);
   //std::cout<<"Drawing legend"<<std::endl;
   //T2->Write();
-  c_histo->SaveAs(Form("%s.png", outString.c_str()));
-  c_histo->SaveAs(Form("%s.pdf", outString.c_str()));
+  c_histo->SaveAs(Form("%s.png", outFileName.c_str()));
+  c_histo->SaveAs(Form("%s.pdf", outFileName.c_str()));
   //c_histo->SaveAs("histograms.png");
   //c_histo->SaveAs("histograms.pdf");
 
