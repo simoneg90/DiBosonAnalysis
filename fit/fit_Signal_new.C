@@ -48,9 +48,9 @@ void fit_Signal_new()
   //model_ttbar.fitTo(*dh_ttbarMatch) ;
   //ak08_subjetDR<.1&&subjet1_btagLoose==0&&subjet2_btagLoose==0&&
 
-  std::string match= "ak08Ungroomed_1_tau21>.6&&genW_genBquark2_DR>.8&&genW_genBquark1_DR>.8&&ak08Ungroomed_WGen_DR<.1";
-  std::string unmatch= "ak08Ungroomed_1_tau21>.6&&((genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||ak08Ungroomed_WGen_DR>.1)";
-  std::string pass= "ak08Ungroomed_1_tau21>.6";
+  std::string match= "ak08Ungroomed_1_tau21>.45&&genW_genBquark2_DR>.8&&genW_genBquark1_DR>.8&&ak08Ungroomed_WGen_DR<.1";
+  std::string unmatch= "ak08Ungroomed_1_tau21>.45&&((genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&ak08Ungroomed_WGen_DR<.1)||(genW_genBquark2_DR<.8&&genW_genBquark1_DR<.8&&ak08Ungroomed_WGen_DR<.1)||ak08Ungroomed_WGen_DR>.1)";
+  std::string pass= "ak08Ungroomed_1_tau21>.45";
 
 
 
@@ -194,7 +194,7 @@ void fit_Signal_new()
   //dsC->plotOn(frame1_ttbar);//,DataError(RooAbsData::SumW2)); 
   
   wdata_ttbar_match/*dsC_match*/->plotOn(frame1_ttbar,DataError(RooAbsData::SumW2));
-  dcb.plotOn(frame1_ttbar);
+  dcb.plotOn(frame1_ttbar, LineColor(4));
   wdata_ttbar_unmatch.plotOn(frame1_ttbar,DataError(RooAbsData::SumW2), LineColor(2));
   
 
@@ -209,6 +209,15 @@ void fit_Signal_new()
   //c_ttbar->Divide(2) ;
   /*c_ttbar->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame1_ttbar->Draw() ;
   //c_ttbar->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
+  //TH1D *myHisto = new TH1D("myHisto","myHisto",18,40,130);
+  //for(int m=0; m<401;++m){
+  //  myHisto->Fill(50);
+  //}
+  //myHisto->SetLineColor(3);
+  //myHisto->SetFillColor(3);
+  //myHisto->Draw("same");
+  //frame1_ttbar->Draw("SAME") ;
+
   TCanvas* c_ttbar_fail = new TCanvas("c_ttbar_fail","c_ttbar_fail",1);//,800,400) ;
   gPad->SetLeftMargin(0.15) ; frame2_ttbar->GetYaxis()->SetTitleOffset(1.4) ; frame2_ttbar->Draw() ;
 
@@ -675,11 +684,11 @@ void fit_Signal_new()
 
   TCanvas* c_Wjet = new TCanvas("c_Wjet","c_Wjet",1);//,800,400) ;
 
-  RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", -1.,-2.,2.);
+  RooRealVar a_pass_bkg("a_pass_bkg","a_pass1", -1.,-100.,100.);
   //RooConstVar a_pass_bkg("a_pass_bkg","a_pass1", -2.41);
-  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", -1.,-2.,2.);
+  RooRealVar a1_pass_bkg("a1_pass_bkg","a1_pass1", -1.,-100.,100.);
   //RooConstVar a1_pass_bkg("a1_pass_bkg","a1_pass1", .05);
-  RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", .1,-2.,2.);
+  RooRealVar a2_pass_bkg("a2_pass_bkg","a2_pass1", .1,-100.,100.);
   //RooConstVar a2_pass_bkg("a2_pass_bkg","a2_pass1", .052);
   /*RooRealVar a_pass1("a_pass1","a_Stop", 1,-1,1);
   RooRealVar a1_pass1("a1_pass1","a1_Stop", 0.1,-1,1);
@@ -737,20 +746,12 @@ void fit_Signal_new()
   RooErfExpPdf model_pdf /*      = new RooErfExpPdf*/("model_pdf","model_pdf",ak08Pruned_1_mass,rrv_c_ErfExp,rrv_offset_ErfExp,rrv_width_ErfExp);
 
 
-
-  /*argus*///cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-////  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-////  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-////  cheby_pass_bkg.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));//, RooFit::Strategy(2));
-  //argus/*cheby_pass_bkg*/.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-  //argus/*cheby_pass_bkg*/.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE), RooFit::Strategy(2));
-  //dh_bkgPass->plotOn(frame1_bkg) ;
-  model_pdf.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));
+model_pdf.fitTo(wdata_ttbar_unmatch, RooFit::SumW2Error(kTRUE));
   wdata_ttbar_unmatch.plotOn(frame1_bkg, DataError(RooAbsData::SumW2));
   model_pdf.plotOn(frame1_bkg); 
   model_pdf.paramOn(frame1_bkg);
-  /*argus*///cheby_pass_bkg.plotOn(frame1_bkg);
-  /*argus*///cheby_pass_bkg.paramOn(frame1_bkg);
+  //p2.plotOn(frame1_bkg);
+  //p2.paramOn(frame1_bkg);
   //RooPlot* frame2_ttbar = ak08Pruned_1_mass.frame(Bins(nbins),Title("TopTop Pass/UnMatch sample")) ;
   //dh_ttbarUnMatch->plotOn(frame2_ttbar) ;
   TCanvas* c_bkg = new TCanvas("c_bkg","c_bkg",1);//,800,400) ;

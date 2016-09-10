@@ -1,4 +1,4 @@
-#include "utility.h"
+#include "../include/utility.h"
 #include "TTree.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
@@ -195,7 +195,7 @@ class RooDCBShape : public RooAbsPdf {
 
 RooDCBShape::~RooDCBShape(){
   std::cout<<"Calling RooDCBShape destructor"<<std::endl;
-}
+};
 
 Double_t RooDCBShape::ApproxErf(Double_t arg) const
 {

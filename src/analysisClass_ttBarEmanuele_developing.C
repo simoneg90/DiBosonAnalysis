@@ -341,6 +341,7 @@ void analysisClass::Loop()
     fillVariableWithValue("nPrimaryVertexes", nVert);
     fillVariableWithValue("CSC_filter",Flag_CSCTightHaloFilter);
     fillVariableWithValue("eeBADFilter", Flag_eeBadScFilter);
+    fillVariableWithValue("nTrueInteractions", nTrueInt);
     //fillVariableWithValue("run", run);
 
 

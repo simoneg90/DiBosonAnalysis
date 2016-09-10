@@ -14,6 +14,7 @@
 #include "RooRealVar.h"
 #include "RooExtendPdf.h"
 #include "RooHist.h"
+#include "TLatex.h"
 #include "RooFormulaVar.h"
 #include "RooDataSet.h"
 #include "RooDataHist.h"
@@ -48,7 +49,7 @@
 #include <fstream>
 
 //#define doTOY 1
-
+#define lowTHR 1
 using namespace RooFit;
 
 #define MAX_bkg 8 //also the n of colors
@@ -62,6 +63,48 @@ int main(int argc, char* argv[]){
 
   Color_t COLOR[] = {kAzure-1, kRed, kCyan, kGreen+2, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
 
+  std::string pass_unbin="ak08Ungroomed_1_tau21<.45";
+  std::string fail_unbin="ak08Ungroomed_1_tau21>.45";
+  bool isHighWP=0;
+
+  double powR_pass;
+  double powL_pass;
+  double cutR_pass;
+  double cutL_pass;
+  double powR_fail;
+  double powL_fail;
+  double cutR_fail;
+  double cutL_fail;
+
+  if (isHighWP==1){
+    powR_pass=3.9;
+    powL_pass=2.3;
+    cutR_pass=4.1;
+    cutL_pass=3.7;
+    powR_fail=9.5;
+    powL_fail=.73;
+    cutR_fail=1.;
+    cutL_fail=.35;
+  } else{
+    powR_pass=6.04;
+    powL_pass=1.16;
+    cutR_pass=2.;
+    cutL_pass=1.77;
+    powR_fail=2.24;
+    powL_fail=1.;
+    cutR_fail=.81;
+    cutL_fail=.89;
+
+  }
+
+  time_t epch = 1461856397;
+  char buffer [80];
+  struct tm * timeinfo;
+  strftime(buffer,80,"Now it's %d/%m/%y.",localtime(&epch));
+  printf("%i -> %s", epch, &buffer);//asctime(gmtime(&epch)));
+  epch = 1468509197;
+  strftime(buffer,80,"Now it's %d/%m/%y.",localtime(&epch));
+  printf("%i -> %s", epch, &buffer);
   frame("Fit environment - VTagging");
   std::cout<<"Preliminary infos: in his program we use a dedicated dictionary to associate the right BKG"<<std::endl;
   std::cout<<"1: ttbar"<<std::endl;
@@ -69,13 +112,6 @@ int main(int argc, char* argv[]){
   std::cout<<"3: WJets"<<std::endl;
   std::cout<<"4: Diboson"<<std::endl;
 
-  frame("OCCHIO!");
-  RooRealVar rrv_x("rrv_x","rrv_x", -100.,100.);
-  RooRealVar rrv_c_ErfExp      /*= new RooRealVar*/("rrv_c_ErfExp","rrv_c_ErfExp",-0.026,-0.05, 0.05);
-  RooRealVar rrv_offset_ErfExp /*= new RooRealVar*/("rrv_offset_ErfExp","rrv_offset_ErfExp",41.,0.,100);
-  RooRealVar rrv_width_ErfExp  /*= new RooRealVar*/("rrv_width_ErfExp","rrv_width_ErfExp",30.,1.,100.);
-  
-  RooErfExpPdf model_pdf ("model_pdf","model_pdf",rrv_x,rrv_c_ErfExp,rrv_offset_ErfExp,rrv_width_ErfExp);
 
   //=============================
   //   FIT FUNCTION DECLARATION
@@ -213,15 +249,15 @@ int main(int argc, char* argv[]){
 
   RooRealVar const_efficiency ("const_efficiency", "efficiency",  .91, 0 ,1.);
   RooRealVar const_mean_pass_sim_MC("const_mean_pass_sim_MC", "Double CB mean", 81., 78., 87.);//, 75.,85.);//78.7);//78., 75.,85.);
-  RooRealVar const_sigma_pass_sim_MC("const_sigma_pass_sim_MC", "Double CB Width", 7.,5.,8.5);//,5.,10.);//8.4);//8.,5.,10.);
-  RooConstVar const_dCBCutL_pass_sim_MC("const_dCBCutL_pass_sim_MC", "Double CB Cut left", 1.77);//3.7);//1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
-  RooConstVar const_dCBCutR_pass_sim_MC("const_dCBCutR_pass_sim_MC", "Double CB Cut right", 2.);//4.1);//***** tau21_04  2.);//***** tau21_06 1.9);//1.9);
-  RooConstVar const_dCBPowerL_pass_sim_MC("const_dCBPowerL_pass_sim_MC", "Double CB Power left", 1.16);//2.3);//***** tau21_04 1.14);//***** tau21_06 1.16);
-  RooConstVar const_dCBPowerR_pass_sim_MC("const_dCBPowerR_pass_sim_MC", "Double CB Power right", 6.09);//3.9);//5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
+  RooRealVar const_sigma_pass_sim_MC("const_sigma_pass_sim_MC", "Double CB Width", 7.,5.,8.);//,5.,10.);//8.4);//8.,5.,10.);
+  RooConstVar const_dCBCutL_pass_sim_MC("const_dCBCutL_pass_sim_MC", "Double CB Cut left", cutL_pass);//1.77);//3.7);//1.85);//***** tau21_04 1.73);//***** tau21_06 1.5);
+  RooConstVar const_dCBCutR_pass_sim_MC("const_dCBCutR_pass_sim_MC", "Double CB Cut right", cutR_pass);//2.);//4.1);//***** tau21_04  2.);//***** tau21_06 1.9);//1.9);
+  RooConstVar const_dCBPowerL_pass_sim_MC("const_dCBPowerL_pass_sim_MC", "Double CB Power left", powL_pass);//1.16);//2.3);//***** tau21_04 1.14);//***** tau21_06 1.16);
+  RooConstVar const_dCBPowerR_pass_sim_MC("const_dCBPowerR_pass_sim_MC", "Double CB Power right", powR_pass);//6.09);//3.9);//5.4);//***** tau21_04 2.26);//***** tau21_06 2.2);// 4.7);
   RooDCBShape const_dcb_pass_sim_MC("const_dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_mean_pass_sim_MC, const_sigma_pass_sim_MC, const_dCBCutL_pass_sim_MC, const_dCBCutR_pass_sim_MC, const_dCBPowerL_pass_sim_MC, const_dCBPowerR_pass_sim_MC);
-  RooRealVar const_a_pass_sim_MC("const_a_pass_sim_MC","a_pass_sim_MC",0.47,0.3,0.5);//.01, .001,.1);//.06,.001,.2);//, 0.001,.1);//.1,.01,1.);//***** tau21_04  .48);//***** tau21_06 .1);//.12);//1,-100,100);
-  RooRealVar const_a1_pass_sim_MC("const_a1_pass_sim_MC","a1_pass_sim_MC",-.54,-.6,-.4);//-.4,-1.,-.1);//,-1.,-.1);//-.5,-1.,-.01);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
-  RooConstVar const_a2_pass_sim_MC("const_a2_pass_sim_MC","a2_pass_sim_MC",-.1);//,-.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
+  RooRealVar const_a_pass_sim_MC("const_a_pass_sim_MC","a_pass_sim_MC",0.138,0.,1.);//questi vanno bene per 0.45 0.47,0.3,0.5);//.01, .001,.1);//.06,  .48);//***** tau21_06 .1);//.12);//1,-100,100);
+  RooRealVar const_a1_pass_sim_MC("const_a1_pass_sim_MC","a1_pass_sim_MC",-.42,0.,-1.);//questi vanno bene per 0.45 -.54,-.6,-.4);//-.4,-1.,-.1);//,-1.,-.1);//-.5,-1.,-.01);//***** tau21_04 -.61);//***** tau21_06 -.5);//-.32);//0.1,-1,1);
+  RooConstVar const_a2_pass_sim_MC("const_a2_pass_sim_MC","a2_pass_sim_MC",.02);//questi vanno bene per 0.45 -.1);//,-.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
   //RooPolynomial p2_pass_sim_MC("p2_pass_sim_MC","p2_pass_sim_MC",ak08Pruned_1_mass,RooArgList(a_pass_sim_MC,a1_pass_sim_MC,a2_pass_sim_MC),0) ;
   RooChebychev const_cheby_pass_sim_MC("const_cheby_pass_sim_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_pass_sim_MC,const_a1_pass_sim_MC, const_a2_pass_sim_MC)) ;
   RooGaussian gx_fail_sim_MC("gx_fail_sim_MC","gx_fail_sim_MC",ak08Pruned_1_mass,const_mean_pass_sim_MC, const_sigma_pass_sim_MC);
@@ -235,23 +271,35 @@ int main(int argc, char* argv[]){
 
   //+++ Fail part +++
   RooConstVar const_sim_sigmaRatio("const_sim_sigmaRatio", "ratio data sigma", 1.51);
-  RooConstVar const_sim_meanRatio("const_sim_meanRatio", "ratio mean data", .96);//.96);
+  RooConstVar const_sim_meanRatio("const_sim_meanRatio", "ratio mean data", .98);//.96);
   RooFormulaVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", "(const_sim_meanRatio*const_mean_pass_sim_MC)", RooArgList(const_sim_meanRatio,const_mean_pass_sim_MC));
   //RooRealVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", 76,75,85);
   //RooFormulaVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width","(const_sim_sigmaRatio*const_sigma_pass_sim_MC", RooArgList(const_sim_sigmaRatio,const_sigma_pass_sim_MC));
 
   //RooConstVar const_mean_fail_sim_MC("const_mean_fail_sim_MC", "Double CB mean", 75.);//***** tau21_04 76.53);//***** tau21_06 75.5);
-  RooRealVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width", 9.6,8.,11.);//5.7, 5., 15.);//10.,5,15); //working points 10, 0, 40 for tau21<.4
-  RooConstVar const_dCBCutL_fail_sim_MC("const_dCBCutL_fail_sim_MC", "Double CB Cut left",.8);//.48);//***** tau21_04 .7);//***** tau21_06 .8);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
-  RooConstVar const_dCBCutR_fail_sim_MC("const_dCBCutR_fail_sim_MC", "Double CB Cut right",.82);//1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
-  RooConstVar const_dCBPowerL_fail_sim_MC("const_dCBPowerL_fail_sim_MC", "Double CB Power left",1.);// 1.);//***** tau21_04 1.5);//***** tau21_06 2.5 .72);//.82); //.72);
-  RooConstVar const_dCBPowerR_fail_sim_MC("const_dCBPowerR_fail_sim_MC", "Double CB Power right",2.24);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
+  RooRealVar const_sigma_fail_sim_MC("const_sigma_fail_sim_MC", "Double CB Width",5.,4.,15.);// 13.1,13.,16.);//9.6,8.,11.);//5.7, 5., 15.);//10.,5,15); //working points 10, 0, 40 for tau21<.4
+  RooConstVar const_dCBCutL_fail_sim_MC("const_dCBCutL_fail_sim_MC", "Double CB Cut left",cutL_fail);//.8);//.48);//***** tau21_04 .7);//***** tau21_06 .8);//.42);// 0.18); //for tau21<0.4 1., 0.1, 50. works
+  RooConstVar const_dCBCutR_fail_sim_MC("const_dCBCutR_fail_sim_MC", "Double CB Cut right",cutR_fail);//.82);//1.);//***** tau21_04 1.4);//***** tau21_06 1.5);//.2);//1.5);
+  RooConstVar const_dCBPowerL_fail_sim_MC("const_dCBPowerL_fail_sim_MC", "Double CB Power left",powL_fail);//1.);// 1.);//***** tau21_04 1.5);//***** tau21_06 2.5 .72);//.82); //.72);
+  RooConstVar const_dCBPowerR_fail_sim_MC("const_dCBPowerR_fail_sim_MC", "Double CB Power right",powR_fail);//2.24);//***** tau21_04  2.);//***** tau21_06 2.3);//2.8);//2.3); //working points 2., -0.2, 50. for tau21<0.6 using 2 DCB for LP and HP when same mu and sigma while 2., 0.2, 50. for tau21<0.4
   RooDCBShape const_dcb_fail_sim_MC("const_dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_mean_fail_sim_MC, const_sigma_fail_sim_MC, const_dCBCutL_fail_sim_MC, const_dCBCutR_fail_sim_MC, const_dCBPowerL_fail_sim_MC, const_dCBPowerR_fail_sim_MC);
-  RooRealVar const_a_fail_sim_MC("const_a_fail_sim_MC","a_fail_sim_MC", -.7,-1.,0.);//-.69, -1.,0.);//-1.06,-2.,-.5);//, -3.,-.1);//-1.1,-2.,0.);//***** tau21_04 -.66);//-.7);//***** tau21_06 -1.1);
-  RooRealVar const_a1_fail_sim_MC("const_a1_fail_sim_MC","a1_fail_sim_MC", .02,0.,.1);//.31,0.,.6);//,.1,2.);//.34,-1.,.5);//***** tau21_04 -.01);//.04);//***** tau21_06 .34);
-  RooConstVar const_a2_fail_sim_MC("const_a2_fail_sim_MC","a2_fail_sim_MC", .067);//-.05,-1.,.0);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
-  RooChebychev const_cheby_fail_sim_MC("const_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_fail_sim_MC,const_a1_fail_sim_MC, const_a2_fail_sim_MC)) ;
+
+  #ifdef highTHR
+  RooRealVar const_a_fail_sim_MC("const_a_fail_sim_MC","a_fail_sim_MC", .1,-1.,1.);////-1.02, -2.,-.5);//-.7,-2.,0.);
+  RooRealVar const_a1_fail_sim_MC("const_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);//.02,0.,.1);
+  RooConstVar const_a2_fail_sim_MC("const_a2_fail_sim_MC","a2_fail_sim_MC", .01);//.067);//-.05,-1.,0.);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
+  //RooChebychev const_cheby_fail_sim_MC("const_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_a_fail_sim_MC,const_a1_fail_sim_MC, const_a2_fail_sim_MC)) ;
+  RooExponential const_cheby_fail_sim_MC("const_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,const_a_fail_sim_MC);
+  #endif
+
+  #ifdef lowTHR
+  RooRealVar rrv_c_ErfExp_MC      ("rrv_c_ErfExp_MC","rrv_c_ErfExp_MC",-0.026,-0.05, 0.05);
+  RooRealVar rrv_offset_ErfExp_MC ("rrv_offset_ErfExp_MC","rrv_offset_ErfExp_MC",30.1,0.,50);
+  RooRealVar rrv_width_ErfExp_MC  ("rrv_width_ErfExp_MC","rrv_width_ErfExp_MC",29.4,1.,50.);
   
+  RooErfExpPdf const_cheby_fail_sim_MC ("const_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,rrv_c_ErfExp_MC,rrv_offset_ErfExp_MC,rrv_width_ErfExp_MC);
+  #endif
+    
   RooRealVar const_Nbkg_fail_sim_MC("const_Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 1000.,0.,100000000.);
   RooFormulaVar const_k_fail_sim("const_k_fail_sim", "fail norm", "(const_Nsig_sim_MC*(1-const_efficiency))", RooArgList(const_Nsig_sim_MC, const_efficiency));
   RooAddPdf const_model_fail_sim_MC("const_model_fail_sim_MC", "model_fail_sim_MC", RooArgList(const_dcb_fail_sim_MC,const_cheby_fail_sim_MC), RooArgList(const_k_fail_sim, const_Nbkg_fail_sim_MC));
@@ -264,40 +312,54 @@ int main(int argc, char* argv[]){
   //RooRealVar ak08Pruned_1_mass_data("ak08Pruned_1_mass_data","ak08Pruned_1_mass_data",mass_min,mass_max) ;
   //constant part data
   RooRealVar const_data_efficiency ("const_data_efficiency", "efficiency",  .91, 0 ,1.);
+
   RooRealVar const_data_mean_pass_sim_MC("const_data_mean_pass_sim_MC", "Double CB mean", 81., 78., 87.);//78., 75.,85.);
-  RooRealVar const_data_sigma_pass_sim_MC("const_data_sigma_pass_sim_MC", "Double CB Width", 7.,5.,8.5);
-  RooConstVar const_data_dCBCutL_pass_sim_MC("const_data_dCBCutL_pass_sim_MC", "Double CB Cut left", 1.77); 
-  RooConstVar const_data_dCBCutR_pass_sim_MC("const_data_dCBCutR_pass_sim_MC", "Double CB Cut right", 2.);
-  RooConstVar const_data_dCBPowerL_pass_sim_MC("const_data_dCBPowerL_pass_sim_MC", "Double CB Power left", 1.16);
-  RooConstVar const_data_dCBPowerR_pass_sim_MC("const_data_dCBPowerR_pass_sim_MC", "Double CB Power right", 6.09);
+  RooRealVar const_data_sigma_pass_sim_MC("const_data_sigma_pass_sim_MC", "Double CB Width", 7.,5.,10.);
+  RooConstVar const_data_dCBCutL_pass_sim_MC("const_data_dCBCutL_pass_sim_MC", "Double CB Cut left", cutL_pass);//1.77); 
+  RooConstVar const_data_dCBCutR_pass_sim_MC("const_data_dCBCutR_pass_sim_MC", "Double CB Cut right", cutR_pass);//2.);
+  RooConstVar const_data_dCBPowerL_pass_sim_MC("const_data_dCBPowerL_pass_sim_MC", "Double CB Power left", powL_pass);//1.16);
+  RooConstVar const_data_dCBPowerR_pass_sim_MC("const_data_dCBPowerR_pass_sim_MC", "Double CB Power right", powR_pass);//6.09);
   RooDCBShape const_data_dcb_pass_sim_MC("const_data_dcb_pass_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_data_mean_pass_sim_MC, const_data_sigma_pass_sim_MC, const_data_dCBCutL_pass_sim_MC, const_data_dCBCutR_pass_sim_MC, const_data_dCBPowerL_pass_sim_MC, const_data_dCBPowerR_pass_sim_MC);
-  RooRealVar const_data_a_pass_sim_MC("const_data_a_pass_sim_MC","a_pass_sim_MC",.47, .3,.5);
-  RooRealVar const_data_a1_pass_sim_MC("const_data_a1_pass_sim_MC","a1_pass_sim_MC",-.54,-.6,-.4);
-  RooConstVar const_data_a2_pass_sim_MC("const_data_a2_pass_sim_MC","a2_pass_sim_MC",-.1);//.07,-0.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
+
+  RooRealVar const_data_a_pass_sim_MC("const_data_a_pass_sim_MC","a_pass_sim_MC",.138,.1,1.);//questi vanno bene per 0.45 .47, .3,.5);
+  RooRealVar const_data_a1_pass_sim_MC("const_data_a1_pass_sim_MC","a1_pass_sim_MC",-.42,0.,-1.);//questi vanno bene per 0.45 -.54,-.6,-.4);
+  RooConstVar const_data_a2_pass_sim_MC("const_data_a2_pass_sim_MC","a2_pass_sim_MC",.02);//questi vanno bene per 0.45 -.1);//.07,-0.1,.1);//***** tau21_04 -.19);//***** tau21_06  .07);//.07);//0.1,-1,1);
   RooChebychev const_data_cheby_pass_sim_MC("const_data_cheby_pass_pass_MC","cheby_pass_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_pass_sim_MC,const_data_a1_pass_sim_MC, const_data_a2_pass_sim_MC)) ;
-  RooRealVar const_data_Nsig_sim_MC("const_data_Nsig_sim_MC", "Nsig_sim_MC", 300.,100,1000000000000);
+  RooRealVar const_data_Nsig_sim_MC("const_data_Nsig_sim_MC", "Nsig_sim_MC", 300.,100.,10000.);
   RooFormulaVar const_data_k_pass_sim("const_data_k_pass_sim", "pass norm", "(const_data_Nsig_sim_MC*const_data_efficiency)", RooArgList(const_data_Nsig_sim_MC, const_data_efficiency));
-  RooRealVar const_data_Nbkg_pass_sim_MC("const_data_Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 575., 400.,1000000000000.);
+  RooRealVar const_data_Nbkg_pass_sim_MC("const_data_Nbkg_pass_sim_MC", "Nbkg_pass_sim_MC", 575.,0./* 400.*/,10000.);
   RooAddPdf const_data_modelPass_sim_MC("const_data_modelPass_sim_MC", "modelPass_sim_MC", RooArgList(const_data_dcb_pass_sim_MC,const_data_cheby_pass_sim_MC), RooArgList(const_data_k_pass_sim, const_data_Nbkg_pass_sim_MC));
 
 
   //+++ Fail part +++
   //RooConstVar const_data_sigmaRatio("const_data_sigmaRatio", "ratio data sigma", 1.25);
-  RooConstVar const_data_meanRatio("const_data_meanRatio", "ratio mean data", .96);
+  RooConstVar const_data_meanRatio("const_data_meanRatio", "ratio mean data", .98);
   RooFormulaVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", "(const_data_meanRatio*const_data_mean_pass_sim_MC)", RooArgList(const_data_meanRatio,const_data_mean_pass_sim_MC));
   //RooFormulaVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width","(const_data_sigmaRatio*const_data_sigma_pass_sim_MC", RooArgList(const_data_sigmaRatio,const_data_sigma_pass_sim_MC));
-  //RooConstVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", 75.5);//***** tau21_04 76.53);//***** tau21_06 75.5);
-  RooRealVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width", 9.6,8.,11.);
-  RooConstVar const_data_dCBCutL_fail_sim_MC("const_data_dCBCutL_fail_sim_MC", "Double CB Cut left",.8);
-  RooConstVar const_data_dCBCutR_fail_sim_MC("const_data_dCBCutR_fail_sim_MC", "Double CB Cut right", .82);
-  RooConstVar const_data_dCBPowerL_fail_sim_MC("const_data_dCBPowerL_fail_sim_MC", "Double CB Power left", 1.);//***** tau21_04 1.5);//***** tau21_06 .72);//.82); //.72);
-  RooConstVar const_data_dCBPowerR_fail_sim_MC("const_data_dCBPowerR_fail_sim_MC", "Double CB Power right",2.24);
+  //RooRealVar const_data_mean_fail_sim_MC("const_data_mean_fail_sim_MC", "Double CB mean", 81.,80.,85.);//***** tau21_04 76.53);//***** tau21_06 75.5);
+  RooRealVar const_data_sigma_fail_sim_MC("const_data_sigma_fail_sim_MC", "Double CB Width", 4.1,4.,9.);////9.6,8.,11.);
+  RooConstVar const_data_dCBCutL_fail_sim_MC("const_data_dCBCutL_fail_sim_MC", "Double CB Cut left",cutL_fail);//.8);
+  RooConstVar const_data_dCBCutR_fail_sim_MC("const_data_dCBCutR_fail_sim_MC", "Double CB Cut right", cutR_fail);//.82);
+  RooConstVar const_data_dCBPowerL_fail_sim_MC("const_data_dCBPowerL_fail_sim_MC", "Double CB Power left", powL_fail);//1.);//***** tau21_04 1.5);//***** tau21_06 .72);//.82); //.72);
+  RooConstVar const_data_dCBPowerR_fail_sim_MC("const_data_dCBPowerR_fail_sim_MC", "Double CB Power right",powR_fail);//2.24);
   RooDCBShape const_data_dcb_fail_sim_MC("const_data_dcb_fail_sim_MC", "double crystal ball", ak08Pruned_1_mass, const_data_mean_fail_sim_MC, const_data_sigma_fail_sim_MC, const_data_dCBCutL_fail_sim_MC, const_data_dCBCutR_fail_sim_MC, const_data_dCBPowerL_fail_sim_MC, const_data_dCBPowerR_fail_sim_MC);
-  RooRealVar const_data_a_fail_sim_MC("const_data_a_fail_sim_MC","a_fail_sim_MC", -.7,-2.,0.);
-  RooRealVar const_data_a1_fail_sim_MC("const_data_a1_fail_sim_MC","a1_fail_sim_MC", .02,0.,.1);
-  RooConstVar const_data_a2_fail_sim_MC("const_data_a2_fail_sim_MC","a2_fail_sim_MC", .067);//-.05,-1.,0.);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
-  RooChebychev const_data_cheby_fail_sim_MC("const_data_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_fail_sim_MC,const_data_a1_fail_sim_MC, const_data_a2_fail_sim_MC)) ;
+
+
+  #ifdef highTHR
+  RooRealVar const_data_a_fail_sim_MC("const_data_a_fail_sim_MC","a_fail_sim_MC",-.02,-.125,-.019);//// -1.02, -2.,-.5);//-.7,-2.,0.);
+  RooRealVar const_data_a1_fail_sim_MC("const_data_a1_fail_sim_MC","a1_fail_sim_MC", .31,0.,.6);// .02,0.,.1);
+  RooConstVar const_data_a2_fail_sim_MC("const_data_a2_fail_sim_MC","a2_fail_sim_MC", .01);//.067);//-.05,-1.,0.);//***** tau21_04 .07);//-.013);//***** tau21_06 -.05);
+  //RooChebychev const_data_cheby_fail_sim_MC("const_data_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,RooArgSet(const_data_a_fail_sim_MC,const_data_a1_fail_sim_MC, const_data_a2_fail_sim_MC)) ;
+  RooExponential const_data_cheby_fail_sim_MC("const_data_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,const_data_a_fail_sim_MC);
+  #endif
+
+  #ifdef lowTHR
+  RooRealVar rrv_c_ErfExp      ("rrv_c_ErfExp","rrv_c_ErfExp",-0.026,-0.05, 0.05);
+  RooRealVar rrv_offset_ErfExp ("rrv_offset_ErfExp","rrv_offset_ErfExp",30.1,0.,50);
+  RooRealVar rrv_width_ErfExp  ("rrv_width_ErfExp","rrv_width_ErfExp",29.4,1.,50.);
   
+  RooErfExpPdf const_data_cheby_fail_sim_MC ("const_data_cheby_fail_sim_MC","cheby_fail_sim_MC",ak08Pruned_1_mass,rrv_c_ErfExp,rrv_offset_ErfExp,rrv_width_ErfExp);
+  #endif
   RooRealVar const_data_Nbkg_fail_sim_MC("const_data_Nbkg_fail_sim_MC", "Nbkg_fail_sim_MC", 292., 100., 1000000000.);
   RooFormulaVar const_data_k_fail_sim("const_data_k_fail_sim", "fail norm", "(const_data_Nsig_sim_MC*(1-const_data_efficiency))", RooArgList(const_data_Nsig_sim_MC, const_data_efficiency));
   RooAddPdf const_data_model_fail_sim_MC("const_data_model_fail_sim_MC", "model_fail_sim_MC", RooArgList(const_data_dcb_fail_sim_MC,const_data_cheby_fail_sim_MC), RooArgList(const_data_k_fail_sim, const_data_Nbkg_fail_sim_MC));
@@ -372,6 +434,8 @@ int main(int argc, char* argv[]){
   TH1D *allBkgHisto_pass_toy;
   TH1D *allBkgHisto_fail_toy;
   TH1D *signalHisto[MAX_sgn]; //signal histos (if we want to superimpose them)
+  THStack *bkgStack_pass = new THStack("bkgStack_pass","");
+  THStack *bkgStack_fail = new THStack("bkgStack_fail","");
 
   ////////////DataSet Variables declaration
   TFile *file_reduced[MAX_NUMBER];
@@ -497,8 +561,7 @@ int main(int argc, char* argv[]){
   std::string variable="ak08Pruned_1_mass";
   bkg_name="";
   std::string redu_suff= "_redu.root";
-  std::string pass_unbin="ak08Ungroomed_1_tau21<.45";
-  std::string fail_unbin="ak08Ungroomed_1_tau21>.45";
+
   while(inputList>>bkg_nameTMP>>bkg_file>>scaleFactor>>bins>>min>>max){
    std::cout<<"BKG: "<<bkg_nameTMP.c_str()<<" File: "<<bkg_file.c_str()<<" xSection: "<<scaleFactor<<std::endl;
 
@@ -512,15 +575,11 @@ int main(int argc, char* argv[]){
    bkgCounts[file_counter]=((TH1D *)(file[file_counter]->Get("DijetFilter/EventCount/EventCounter")));
    std::cout<<"Total Events: "<<bkgCounts[file_counter]->GetBinContent(1)<<std::endl;
    counts=bkgCounts[file_counter]->GetBinContent(1);
-  // TDirectory * dir = (TDirectory*)file[file_counter]->Get("rootTupleTree");
-  // dir->GetObject("tree", tree[file_counter]);
-   std::cout<<"Creating Histo"<<std::endl;
-   histoD_pass[file_counter] = new TH1D(Form("histo_%d_pass", file_counter), Form("histo_%d_pass", file_counter),bins,min,max);
-   histoD_fail[file_counter] = new TH1D(Form("histo_%d_fail", file_counter), Form("histo_%d_fail", file_counter),bins,min,max);
-  // std::cout<<"Projecting"<<std::endl;
-  // tree[file_counter]->Project(Form("histo_%d_pass", file_counter),Form("%s", variable.c_str()),pass.c_str());
-  // tree[file_counter]->Project(Form("histo_%d_fail", file_counter),Form("%s", variable.c_str()),fail.c_str());
-    
+   TDirectory * dir = (TDirectory*)file[file_counter]->Get("rootTupleTree");
+   dir->GetObject("tree", tree[file_counter]);
+
+
+
    frame("Unbinned part");
    file_reduced[file_counter]=TFile::Open(Form("%s%s",(bkg_file.substr(0,bkg_file.size()-5)).c_str(),redu_suff.c_str()));
    if(file_reduced[file_counter]==0){
@@ -541,6 +600,7 @@ int main(int argc, char* argv[]){
    failDataset[file_counter]->Print();
 
    ds_weight.setVal(scaleFactor*lumi/counts);
+
    if(strcmp(bkg_nameTMP.c_str(), "data")==0) ds_weight.setVal(1.);
    std::cout<<"UNBINNED WEIGHT: "<<ds_weight.getValV()<<std::endl;
    weightFunc[file_counter]= new RooFormulaVar(Form("weightFunc_%d",file_counter),"event weight","ds_weight",RooArgList(ds_weight,ak08Pruned_1_mass)) ; 
@@ -549,6 +609,20 @@ int main(int argc, char* argv[]){
     passWeightDataset[file_counter]= new RooDataSet(passDataset[file_counter]->GetName(),passDataset[file_counter]->GetTitle(),passDataset[file_counter],*passDataset[file_counter]->get(),0,final_Wpass[file_counter]->GetName()) ;
     failWeightDataset[file_counter]= new RooDataSet(failDataset[file_counter]->GetName(),failDataset[file_counter]->GetTitle(),failDataset[file_counter],*failDataset[file_counter]->get(),0,final_Wfail[file_counter]->GetName()) ;    
 
+
+//---
+   frame("Binned Part");
+   std::cout<<"Creating Histo"<<std::endl;
+   histoD_pass[file_counter] = new TH1D(Form("histo_%d_pass", file_counter), Form("histo_%d_pass", file_counter),bins,min,max);
+   histoD_fail[file_counter] = new TH1D(Form("histo_%d_fail", file_counter), Form("histo_%d_fail", file_counter),bins,min,max);
+   histoD_pass[file_counter]->Sumw2();
+   histoD_fail[file_counter]->Sumw2();
+   std::cout<<"Projecting"<<std::endl;
+   tree_reduced[file_counter]->Project(Form("histo_%d_pass", file_counter),Form("%s", variable.c_str()),pass_unbin.c_str());
+   tree_reduced[file_counter]->Project(Form("histo_%d_fail", file_counter),Form("%s", variable.c_str()),fail_unbin.c_str());
+   std::cout<<"------------------ "<<histoD_pass[file_counter]->Integral()<<std::endl;
+   std::cout<<"------------------ "<<histoD_fail[file_counter]->Integral()<<std::endl;
+//---    
 
 
    if(strcmp(bkg_nameTMP.c_str(), "data")==0){
@@ -659,7 +733,8 @@ int main(int argc, char* argv[]){
     //integralBKG=allBkgHisto->Integral();
     std::cout<<"adding back"<<std::endl;
     //histoBkg[i]->Write();
-    //bkgStack->Add(histoBkg[i]);
+    bkgStack_pass->Add(histoBkg_pass[i]);
+    bkgStack_fail->Add(histoBkg_fail[i]);//histoBkg[i]);
   }
 
   TCanvas *c_passed_MC = new TCanvas("c_passed_MC", "Grafico1", 200, 10, 600, 400);
@@ -716,10 +791,10 @@ int main(int argc, char* argv[]){
   RooPlot* frame2_sim = ak08Pruned_1_mass.frame(Bins(bins),Title("Fail sample")) ;
   //TF1* myFunc=(TF1 *)const_modelPass_sim_MC->asTF(ak08Pruned_1_mass,efficiency, RooArgList(const_mean_pass_sim_MC, const_sigma_pass_sim_MC,const_a_pass_sim_MC,const_a1_pass_sim_MC,const_a2_pass_sim_MC,const_Nsig_sim_MC,const_Nbkg_pass_sim_MC,const_mean_fail_sim_MC,const_sigma_fail_sim_MC,const_a_fail_sim_MC,const_a1_fail_sim_MC,const_a2_fail_sim_MC,const_Nbkg_fail_sim_MC));
   //dh_totalPass_sim->plotOn(frame1_sim, DataError(RooAbsData::SumW2), LineColor(2));//, LineStyle(1),LineWidth(2) /* DrawOption("l") , XErrorSize(0)*/); const_modelPass_sim_MC.plotOn(frame1_sim);
-  MC_Pass->plotOn(frame1_sim, DataError(RooAbsData::SumW2));
-  const_modelPass_sim_MC.plotOn(frame1_sim);
-  const_modelPass_sim_MC.plotOn(frame1_sim,Components(const_dcb_pass_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected));
-  const_modelPass_sim_MC.plotOn(frame1_sim,Components(const_cheby_pass_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  MC_Pass->plotOn(frame1_sim, DataError(RooAbsData::None/*SumW2*/), XErrorSize(0),LineColor(0), LineWidth(0), MarkerColor(0), MarkerSize(0) );
+  const_modelPass_sim_MC.plotOn(frame1_sim, LineStyle(6));
+  ////const_modelPass_sim_MC.plotOn(frame1_sim,Components(const_dcb_pass_sim_MC),LineColor(kRed), LineStyle(6));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  ////const_modelPass_sim_MC.plotOn(frame1_sim,Components(const_cheby_pass_sim_MC),LineColor(kGreen), LineStyle(6));//, Normalization(1.0,RooAbsReal::RelativeExpected));
  
   //simPdf_MC.plotOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
   //simPdf_MC.paramOn(frame1_sim,Slice(sample_MC,"passed"),ProjWData(sample_MC,combData_MC)) ;
@@ -727,22 +802,28 @@ int main(int argc, char* argv[]){
   /*gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
   cheby_fail_sim_MC.plotOn(frame2_sim, LineColor(kGreen));*/
   //dh_totalFail_sim->plotOn(frame2_sim, LineColor(2), DataError(RooAbsData::SumW2));
-  MC_Fail->plotOn(frame2_sim, DataError(RooAbsData::SumW2));
-  const_model_fail_sim_MC.plotOn(frame2_sim);
-  const_model_fail_sim_MC.plotOn(frame2_sim,Components(const_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
-  const_model_fail_sim_MC.plotOn(frame2_sim,Components(const_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  MC_Fail->plotOn(frame2_sim, DataError(RooAbsData::None/*SumW2*/),XErrorSize(0),LineColor(0), LineWidth(0), MarkerColor(0), MarkerSize(0) );
+  const_model_fail_sim_MC.plotOn(frame2_sim, LineStyle(6));
+  ///const_model_fail_sim_MC.plotOn(frame2_sim,Components(const_dcb_fail_sim_MC),LineColor(kRed), LineStyle(6));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
+  ///const_model_fail_sim_MC.plotOn(frame2_sim,Components(const_cheby_fail_sim_MC),LineColor(kGreen), LineStyle(6));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+
   /*c_sim_MC->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_sim->GetYaxis()->SetTitleOffset(1.4) ; frame1_sim->Draw() ;
   //c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  bkgStack_pass->Draw("SAMEHIST");
+  frame1_sim->Draw("SAME");
   c_sim_MC_pass->SaveAs(Form("%s_provaRoofitSimPass.png",prefix.c_str()));
   c_sim_MC_pass->SaveAs(Form("%s_provaRoofitSimPass.pdf",prefix.c_str()));
   
   TCanvas *c_sim_MC_fail = new TCanvas("c_sim_MC_fail", "Simultaneous PDF Fail",1);// 200, 10, 600, 400);
   //TH1 * mio = dh_totalFail_sim->createHistogram("mio",ak08Pruned_1_mass);
   gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  bkgStack_fail->Draw("SAMEHIST");
+  frame2_sim->Draw("SAME");
   c_sim_MC_fail->SaveAs(Form("%s_provaRoofitSimFail.png",prefix.c_str()));
   c_sim_MC_fail->SaveAs(Form("%s_provaRoofitSimFail.pdf",prefix.c_str()));
   RooRealVar t("t", "t", 2, 0,10);
   std::cout<<t.getValV()<<std::endl;
+
 
 
   //Data
@@ -760,27 +841,84 @@ int main(int argc, char* argv[]){
   simPdf_data.fitTo(combData_data_unbin);
   TCanvas *c_sim_data_pass = new TCanvas("c_sim_data_pass", "Simultaneous PDF Pass",1);// 200, 10, 600, 400);
   //c_sim_MC->Divide(2) ;
-  RooPlot* frame1_data = ak08Pruned_1_mass.frame(Bins(bins),Title("Pass sample")) ;
-  RooPlot* frame2_data = ak08Pruned_1_mass.frame(Bins(bins),Title("Fail sample")) ;
+  RooPlot* frame1_data = ak08Pruned_1_mass.frame(Bins(bins),Title(/*"Pass sample"*/" ")) ;
+  RooPlot* frame2_data = ak08Pruned_1_mass.frame(Bins(bins),Title(/*"Fail sample"*/" ")) ;
   //dh_totalPass_data->plotOn(frame1_data);//,Cut("sample_MC==sample_MC::passed"));
   dataPass->plotOn(frame1_data);
   const_data_modelPass_sim_MC.plotOn(frame1_data);
-  const_data_modelPass_sim_MC.plotOn(frame1_data,Components(const_data_dcb_pass_sim_MC),LineColor(kRed), Normalization(1.0,RooAbsReal::RelativeExpected));
-  const_data_modelPass_sim_MC.plotOn(frame1_data,Components(const_data_cheby_pass_sim_MC),LineColor(kGreen), Normalization(1.0,RooAbsReal::RelativeExpected));
+  ////const_data_modelPass_sim_MC.plotOn(frame1_data,Components(const_data_dcb_pass_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  ////const_data_modelPass_sim_MC.plotOn(frame1_data,Components(const_data_cheby_pass_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+
   //dh_totalFail_data->plotOn(frame2_data, DataError(RooAbsData::SumW2));
   dataFail->plotOn(frame2_data);
   /*gx_fail_sim_MC.plotOn(frame2_sim, LineColor(kRed));
   cheby_fail_sim_MC.plotOn(frame2_sim, LineColor(kGreen));*/
   const_data_model_fail_sim_MC.plotOn(frame2_data);
-  const_data_model_fail_sim_MC.plotOn(frame2_data,Components(const_data_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
-  const_data_model_fail_sim_MC.plotOn(frame2_data,Components(const_data_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+  ////const_data_model_fail_sim_MC.plotOn(frame2_data,Components(const_data_dcb_fail_sim_MC),LineColor(kRed));//, Normalization(1.0,RooAbsReal::RelativeExpected) );
+  ////const_data_model_fail_sim_MC.plotOn(frame2_data,Components(const_data_cheby_fail_sim_MC),LineColor(kGreen));//, Normalization(1.0,RooAbsReal::RelativeExpected));
+
   /*c_sim_MC->cd(1) ;*/ gPad->SetLeftMargin(0.15) ; frame1_data->GetYaxis()->SetTitleOffset(1.4) ; frame1_data->Draw() ;
   //c_sim_MC->cd(2) ; gPad->SetLeftMargin(0.15) ; frame2_sim->GetYaxis()->SetTitleOffset(1.4) ; frame2_sim->Draw() ;
+  frame1_sim->Draw("SAME");
+  allBkgHisto_pass->DrawCopy("histSAME");
+  bkgStack_pass->Draw("SAMEHIST");
+  allBkgHisto_pass->SetFillColor(kBlack);
+  allBkgHisto_pass->SetFillStyle(3018);
+  allBkgHisto_pass->Draw("e2SAME");
+  frame1_sim->Draw("SAME");
+  frame1_data->Draw("SAME");
+
+
+  //Adding cosmetics informations
+  TLatex latex;
+  TString lumiText = "#it{L}=12.9 fb^{-1} (2016) (13 TeV)";//"#bf{CMS Preliminary} #it{L}=12.9 fb^{-1}";
+  TString cmsLogo = "#bf{CMS}  #it{Preliminary}";
+  latex.SetNDC();
+  latex.SetTextAngle(0);
+  latex.SetTextColor(kBlack);    
+  latex.SetTextFont(42);
+  latex.SetTextAlign(31); 
+  float lumiTextOffset = 0.2;
+  float lumiTextSize = 0.04;
+  latex.SetTextSize(lumiTextSize);    
+  latex.DrawLatex(.9,.92,lumiText);//1-r,1-t+lumiTextOffset*t,lumiText);
+  latex.DrawLatex(.35/*.25*/,.92,cmsLogo);
+  latex.Draw();
+  gPad->Modified();
+  gPad->Update();
+  c_sim_data_pass->Modified();
+  c_sim_data_pass->Update();
+
   c_sim_data_pass->SaveAs(Form("%s_provaRoofitDataPass.png",prefix.c_str()));
   c_sim_data_pass->SaveAs(Form("%s_provaRoofitDataPass.pdf",prefix.c_str()));
   
   TCanvas *c_sim_data_fail = new TCanvas("c_sim_data_fail", "Simultaneous PDF Fail",1);// 200, 10, 600, 400);
   gPad->SetLeftMargin(0.15) ; frame2_data->GetYaxis()->SetTitleOffset(1.4) ; frame2_data->Draw() ;
+  frame2_sim->Draw("SAME");
+  allBkgHisto_fail->DrawCopy("histSAME");
+  bkgStack_fail->Draw("SAMEHIST");
+  allBkgHisto_fail->SetFillColor(kBlack);
+  allBkgHisto_fail->SetFillStyle(3018);
+  allBkgHisto_fail->Draw("e2SAME");
+  frame2_sim->Draw("SAME");
+  frame2_data->Draw("SAME");
+
+  //Adding cosmetics informations
+  TLatex latex1;
+  latex1.SetNDC();
+  latex1.SetTextAngle(0);
+  latex1.SetTextColor(kBlack);    
+  latex1.SetTextFont(42);
+  latex1.SetTextAlign(31); 
+  latex1.SetTextSize(lumiTextSize);    
+  latex1.DrawLatex(.9,.92,lumiText);//1-r,1-t+lumiTextOffset*t,lumiText);
+  latex1.DrawLatex(.35/*.25*/,.92,cmsLogo);
+  latex1.Draw();
+  gPad->Modified();
+  gPad->Update();
+  c_sim_data_fail->Modified();
+  c_sim_data_fail->Update();
+  
   c_sim_data_fail->SaveAs(Form("%s_provaRoofitDataFail.png",prefix.c_str()));
   c_sim_data_fail->SaveAs(Form("%s_provaRoofitDataFail.pdf",prefix.c_str()));
 
