@@ -78,10 +78,11 @@ void analysisClass::Loop()
    std::cout << "analysisClass::Loop(): nentries = " << nentries << std::endl;   
 
    double lepton_mass;
-   std::vector <int> goodLepton, looseLepton, goodAK08, goodAK04, goodAK04_lep, goodEle, goodMuon, looseEle, looseMuon;
-   TLorentzVector electron, muon, genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum, bGen1, bGen2;
-   int btag_ak04_loose, btag_ak04_medium, btag_ak04_tight, b_counter;
+   std::vector <int> goodLepton, looseLepton, goodAK08, goodPuppiAK04, goodPuppiAK04_lep, goodAK04, goodAK04_lep, goodEle, goodMuon, looseEle, looseMuon;
+   TLorentzVector electron, muon, genW, ak04, ak08, ak08Pruned, lepton, leptonLoose, W, MET, wGenQ1, wGenQ2, wGenSumi, subjet1, subjet2, subjetSum, wGenSum, bGen1, bGen2, puppiAK4;
+   int btag_ak04_loose, btag_ak04_medium, btag_ak04_tight,btag_ak04Puppi_loose, btag_ak04Puppi_medium, btag_ak04Puppi_tight, b_counter;
    int subjet_index1, subjet_index2;
+   double drMin;
    ////// The following ~7 lines have been taken from rootNtupleClass->Loop() /////
    ////// If the root version is updated and rootNtupleClass regenerated,     /////
    ////// these lines may need to be updated.                                 /////    
@@ -91,12 +92,15 @@ void analysisClass::Loop()
      Long64_t ientry = LoadTree(jentry);
      if (ientry < 0) break;
      nb = fChain->GetEntry(jentry);   nbytes += nb;
-     if(jentry < 10 || jentry%1000 == 0) std::cout << "analysisClass::Loop(): jentry = " << jentry << std::endl;   
+     //if(jentry < 10 || jentry%1000 == 0) std::cout << "analysisClass::Loop(): jentry = " << jentry << std::endl;   
+     if(jentry < 10 || jentry%10000 == 0) std::cout << "analysisClass::Loop(): jentry = " << jentry << std::endl;
+     if(jentry%1000 == 0 && jentry%10000 !=0) std::cout<<"."<<std::flush;
      // if (Cut(ientry) < 0) continue;
 
      ////////////////////// User's code starts here ///////////////////////
 
      ///Stuff to be done for every event
+     //std::cout<<"Initializing variables"<<std::endl;
      b_counter=0;
      btag_ak04_loose=0;
      btag_ak04_medium=0;
@@ -104,13 +108,15 @@ void analysisClass::Loop()
      goodLepton.clear();
      looseLepton.clear();
      goodAK04.clear();
+     goodPuppiAK04.clear();
      goodAK08.clear();
      goodAK04_lep.clear();
+     goodPuppiAK04_lep.clear();
      goodEle.clear();
      goodMuon.clear();
      looseEle.clear();
      looseMuon.clear();
-
+     //std::cout<<"resetCuts()"<<std::endl;
      resetCuts();
    
      //std::cout<<"reset cuts"<<std::endl;
@@ -123,7 +129,7 @@ void analysisClass::Loop()
      fillVariableWithValue("nJet",widejets.size());
 */
     
-
+    //std::cout<<"Looping over nLepGood"<<std::endl;
     for(int i=0; i<nLepGood; ++i){
       //loop for muons
       //std::cout<<"Loop muon"<<std::endl;
@@ -163,29 +169,46 @@ void analysisClass::Loop()
       }
     }//end loop for electrons
     //std::cout<<"Electrons: "<<goodEle.size()<<" muons: "<<goodMuon.size()<<std::endl;
-
+    drMin=100.;
     for(int i=0; i<nFatJet;++i){
       if((((FatJet_neHEF[i]<0.99 && FatJet_neEmEF[i]<0.99 && (FatJet_chMult[i]+FatJet_neMult[i])>1) && ((abs(FatJet_eta[i])<=2.4 && FatJet_chHEF[i]>0 && FatJet_chMult[i]>0 && FatJet_chEmEF[i]<0.99) || abs(FatJet_eta[i])>2.4) && abs(FatJet_eta[i])<=3.0)||((FatJet_neEmEF[i]<0.90 && FatJet_neMult[i]>10 && abs(FatJet_eta[i])>3.0 ))) && FatJet_pt[i]>100 && abs(FatJet_eta[i])<2.4){
         ak08.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
         for(int j=0; j<goodLepton.size(); ++j){
           lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[j]],LepGood_eta[goodLepton[j]],LepGood_phi[goodLepton[j]],LepGood_mass[goodLepton[j]]);
-          if(ak08.DeltaR(lepton)>.1)goodAK08.push_back(i);
+          if(ak08.DeltaR(lepton)<drMin) drMin=ak08.DeltaR(lepton);
           fillVariableWithValue("ak08_lepton_DR", ak08.DeltaR(lepton));
         }
+        if(drMin>.1) goodAK08.push_back(i);
       }//end if good AK08
     }//end loop over nFatJet
 
+    drMin=100.;
     for(int i=0; i<nJet; ++i){
       if((((Jet_neHEF[i]<0.99 && Jet_phEF[i]<0.99 && (Jet_chHMult[i]+Jet_neHMult[i]+Jet_phMult[i]+Jet_eMult[i])>1) && ((abs(Jet_eta[i])<=2.4 && Jet_chHEF[i]>0 && (Jet_chHMult[i]+Jet_eMult[i])>0 && Jet_eEF[i]<0.99) || abs(Jet_eta[i])>2.4) && abs(Jet_eta[i])<=3.0)||((Jet_phEF[i]<0.90 && (Jet_neHMult[i]+Jet_phMult[i])>10 && abs(Jet_eta[i])>3.0 ))) && Jet_pt[i]>30 && abs(Jet_eta[i])<2.4){
         //CreateAndFillUserTH1D("goodAk04LooseSelection", 2,-.5,1.5, 1);
         ak04.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         for(int j=0; j<goodLepton.size(); ++j){
           lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[j]],LepGood_eta[goodLepton[j]],LepGood_phi[goodLepton[j]],LepGood_mass[goodLepton[j]]);
-          if(ak04.DeltaR(lepton)>.3)goodAK04.push_back(i);
+          if(ak04.DeltaR(lepton)<drMin)drMin=ak04.DeltaR(lepton);
         }
-        goodAK04.push_back(i);
+        if(drMin>.3) goodAK04.push_back(i);
       }
     }//end loop over nJet
+
+    drMin=100.;
+    //std::cout<<"PUPPI"<<std::endl;
+    for(int i=0; i<nPuppiJet; ++i){
+      //std::cout<<"In Puppi"<<std::endl;
+      if((((PuppiJet_neHEF[i]<0.99 && PuppiJet_phEF[i]<0.99 && (PuppiJet_chHMult[i]+PuppiJet_neHMult[i]+PuppiJet_phMult[i]+PuppiJet_eMult[i])>1) && ((abs(PuppiJet_eta[i])<=2.4 && PuppiJet_chHEF[i]>0 && (PuppiJet_chHMult[i]+PuppiJet_eMult[i])>0 && PuppiJet_eEF[i]<0.99) || abs(PuppiJet_eta[i])>2.4) && abs(PuppiJet_eta[i])<=3.0)||((PuppiJet_phEF[i]<0.90 && (PuppiJet_neHMult[i]+PuppiJet_phMult[i])>10 && abs(PuppiJet_eta[i])>3.0 ))) && PuppiJet_pt[i]>30 && abs(PuppiJet_eta[i])<2.4){
+        //CreateAndFillUserTH1D("goodAk04LooseSelection", 2,-.5,1.5, 1);
+        puppiAK4.SetPtEtaPhiM(PuppiJet_pt[i], PuppiJet_eta[i], PuppiJet_phi[i], PuppiJet_mass[i]);
+        for(int j=0; j<goodLepton.size(); ++j){
+          lepton.SetPtEtaPhiM(LepGood_pt[goodLepton[j]],LepGood_eta[goodLepton[j]],LepGood_phi[goodLepton[j]],LepGood_mass[goodLepton[j]]);
+          if(puppiAK4.DeltaR(lepton)<drMin)drMin=puppiAK4.DeltaR(lepton);
+        }
+        if(drMin>.3) goodPuppiAK04.push_back(i);
+      }
+    }//end loop over nPuppiJet
 
     fillVariableWithValue("lepton_goodNumber", goodLepton.size());
    // fillVariableWithValue("lepton_looseNumber", looseLepton.size());
@@ -217,10 +240,24 @@ void analysisClass::Loop()
       fillVariableWithValue("ak08Ungroomed_1_tau21", FatJet_tau2[goodAK08[0]]/FatJet_tau1[goodAK08[0]]);
       fillVariableWithValue("ak08Pruned_1_mass", FatJet_prunedMass[goodAK08[0]]);
       fillVariableWithValue("ak08Ungroomed_1_CSV", FatJet_btagCSV[goodAK08[0]]);
+      fillVariableWithValue("ak08Puppi_1_pt", FatJet_puppiPt[goodAK08[0]]);
+      fillVariableWithValue("ak08Puppi_1_eta", FatJet_puppiEta[goodAK08[0]]);
+      fillVariableWithValue("ak08Puppi_1_phi", FatJet_puppiPhi[goodAK08[0]]);
+      fillVariableWithValue("ak08Puppi_1_mass", FatJet_puppiMass[goodAK08[0]]);
+      fillVariableWithValue("ak08Puppi_1_tau21", FatJet_puppiTau2[goodAK08[0]]/FatJet_puppiTau1[goodAK08[0]]);
       
       ak08.SetPtEtaPhiM(FatJet_pt[goodAK08[0]], FatJet_eta[goodAK08[0]], FatJet_phi[goodAK08[0]], FatJet_mass[goodAK08[0]]);
     }
     
+    //std::cout<<"Prima del custom "<<ncustomPuppiAK8<<std::endl;
+    if(ncustomPuppiAK8>0){
+      std::cout<<" in customPuppi"<<std::endl;
+      fillVariableWithValue("ak08CustomPuppi_Pt", customPuppiAK8_pt[0]);
+      fillVariableWithValue("ak08CustomPuppi_Eta", customPuppiAK8_eta[0]);
+      fillVariableWithValue("ak08CustomPuppi_Phi", customPuppiAK8_phi[0]);
+      fillVariableWithValue("ak08CustomPuppi_Mass", customPuppiAK8_mass[0]);
+      fillVariableWithValue("ak08CustomPuppi_MCorr", customPuppiAK8_massCorrected[0]);
+    }
 
     double minDR_W=999;
     int w_counter=0;
@@ -250,6 +287,7 @@ void analysisClass::Loop()
       fillVariableWithValue("W_Gen_phi", GenPart_phi[w_counter]);
       fillVariableWithValue("lepton_WGen_DR", lepton.DeltaR(genW));
       b_counter=0;
+      //std::cout<<"nGenPart"<<std::endl;
       for(int p=0; p<nGenPart; ++p){
         if((abs(GenPart_pdgId[p])==5) && (abs(GenPart_motherId[p])==6)){//b found
           if(b_counter==0) bGen1.SetPtEtaPhiM(GenPart_pt[p],GenPart_eta[p],GenPart_phi[p],GenPart_mass[p]);
@@ -277,6 +315,7 @@ void analysisClass::Loop()
 
     }//end if isData
 
+    //std::cout<<"end if IsData"<<std::endl;
     if(goodLepton.size()>=1){
       if(abs(LepGood_pdgId[goodLepton[0]])==11) lepton_mass=e_mass;
       if(abs(LepGood_pdgId[goodLepton[0]])==13) lepton_mass=mu_mass;
@@ -293,36 +332,56 @@ void analysisClass::Loop()
       fillVariableWithValue("WType1_eta",W.Eta());
       fillVariableWithValue("WType1_phi",W.Phi());
       fillVariableWithValue("WType1_mT", 2*abs(MET.Pt())*abs(lepton.Pt())*(1-cos(lepton.DeltaPhi(MET))));
-
-      if(goodAK08.size()>=1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08)); //DO NOT USE IT for the analysis cut!!!!!
-      fillVariableWithValue("nAK04", goodAK04.size());
-      for(int j=0; j<goodAK04.size(); ++j){
-        ak04.SetPtEtaPhiM(Jet_pt[goodAK04[j]], Jet_eta[goodAK04[j]], Jet_phi[goodAK04[j]], Jet_mass[goodAK04[j]]);
-        if(ak04.DeltaR(ak08)>.8 ){//&& ak04.DeltaR(lepton)>.3){
-          CreateAndFillUserTH1D("Ak04_lepton&AK08_DRCut", 2,-.5,1.5, 1);
-          goodAK04_lep.push_back(goodAK04[j]);
-          if(Jet_btagCSV[goodAK04[j]]>0.605){
-            ++btag_ak04_loose;
-          }
-          if(Jet_btagCSV[goodAK04[j]]>0.890){
-            ++btag_ak04_medium;
-          }
-          if(Jet_btagCSV[goodAK04[j]]>0.97){
-            ++btag_ak04_tight;
-          }//end if for CSV medium working point
-        }//end if ak04 without leptons and ak08 nearby
-      }//end loop over goodAK04.size()
+    }
+    if(goodAK08.size()>=1) fillVariableWithValue("ak08Ungroomed_lepton_DR", lepton.DeltaR(ak08)); //DO NOT USE IT for the analysis cut!!!!!
+    fillVariableWithValue("nAK04", goodAK04.size());
+    fillVariableWithValue("nPuppiAK04", goodPuppiAK04.size());
+    for(int j=0; j<goodAK04.size(); ++j){
+      ak04.SetPtEtaPhiM(Jet_pt[goodAK04[j]], Jet_eta[goodAK04[j]], Jet_phi[goodAK04[j]], Jet_mass[goodAK04[j]]);
+      if(ak04.DeltaR(ak08)>.8 ){//&& ak04.DeltaR(lepton)>.3){
+        //CreateAndFillUserTH1D("Ak04_lepton&AK08_DRCut", 2,-.5,1.5, 1);
+        goodAK04_lep.push_back(goodAK04[j]);
+        if(Jet_btagCSV[goodAK04[j]]>0.605){
+          ++btag_ak04_loose;
+        }
+        if(Jet_btagCSV[goodAK04[j]]>0.890){
+          ++btag_ak04_medium;
+        }
+        if(Jet_btagCSV[goodAK04[j]]>0.97){
+          ++btag_ak04_tight;
+        }//end if for CSV medium working point
+      }//end if ak04 without leptons and ak08 nearby
+    }//end loop over goodAK04.size()
+    //std::cout<<"before loop over goodPuppiAK04"<<std::endl;
+    for(int j=0; j<goodPuppiAK04.size(); ++j){
+      puppiAK4.SetPtEtaPhiM(PuppiJet_pt[goodPuppiAK04[j]], PuppiJet_eta[goodPuppiAK04[j]], PuppiJet_phi[goodPuppiAK04[j]], PuppiJet_mass[goodPuppiAK04[j]]);
+      if(puppiAK4.DeltaR(ak08)>.8 ){
+        goodPuppiAK04_lep.push_back(goodPuppiAK04[j]);
+        if(PuppiJet_btagCSV[goodPuppiAK04[j]]>0.605){
+          ++btag_ak04Puppi_loose;
+        }
+        if(PuppiJet_btagCSV[goodPuppiAK04[j]]>0.890){
+          ++btag_ak04Puppi_medium;
+        }
+        if(PuppiJet_btagCSV[goodPuppiAK04[j]]>0.97){
+          ++btag_ak04Puppi_tight;
+        }
+      }//end if NOT nearby ak08
+    }//end loop over goodPuppiAK04
+   
       
-    }//end loop over goodLepton.size()
+
     if(goodLepton.size()>=2){
       fillVariableWithValue("lepton2_pt", LepGood_pt[goodLepton[1]]);
       fillVariableWithValue("lepton2_eta", LepGood_eta[goodLepton[1]]);
       fillVariableWithValue("lepton2_phi", LepGood_phi[goodLepton[1]]);
       fillVariableWithValue("lepton2_pdgID", LepGood_pdgId[goodLepton[1]]);
     }
+    std::cout<<"after goodLepton.size()>=2"<<std::endl;
     fillVariableWithValue("btag_loose",btag_ak04_loose);
     fillVariableWithValue("btag_medium",btag_ak04_medium);
     fillVariableWithValue("btag_tight",btag_ak04_tight);
+    std::cout<<"after filling btag"<<std::endl;
     if(goodAK04_lep.size()>=1){
       fillVariableWithValue("ak04_1_pt", Jet_pt[goodAK04_lep[0]]);
       fillVariableWithValue("ak04_1_eta", Jet_eta[goodAK04_lep[0]]);
@@ -331,12 +390,20 @@ void analysisClass::Loop()
       //=== TH1D to check the fillReduceSkim procedure ===
       CreateAndFillUserTH1D("ak04_first_pt", 1000,0,500, Jet_pt[goodAK04_lep[0]]);
     }
+    if(goodPuppiAK04_lep.size()>=1){
+      fillVariableWithValue("ak04Puppi_1_pt", PuppiJet_pt[goodPuppiAK04_lep[0]]);
+      fillVariableWithValue("ak04Puppi_1_eta", PuppiJet_eta[goodPuppiAK04_lep[0]]);
+      fillVariableWithValue("ak04Puppi_1_phi", PuppiJet_phi[goodPuppiAK04_lep[0]]);
+      fillVariableWithValue("ak04Puppi_1_mass", PuppiJet_mass[goodPuppiAK04_lep[0]]);
+      fillVariableWithValue("ak04Puppi_1_MCorr", PuppiJet_massCorrected[goodPuppiAK04_lep[0]]);
+    }
     if(goodAK04_lep.size()>=2){
       fillVariableWithValue("ak04_2_pt", Jet_pt[goodAK04_lep[1]]);
       fillVariableWithValue("ak04_2_eta", Jet_eta[goodAK04_lep[1]]);
       fillVariableWithValue("ak04_2_phi", Jet_phi[goodAK04_lep[1]]);
       fillVariableWithValue("ak04_2_mass", Jet_mass[goodAK04_lep[1]]);
     }
+    fillVariableWithValue("metPuppi", metPuppi_pt);
     fillVariableWithValue("met",met_pt);
     fillVariableWithValue("nPrimaryVertexes", nVert);
     fillVariableWithValue("CSC_filter",Flag_CSCTightHaloFilter);
@@ -345,6 +412,7 @@ void analysisClass::Loop()
     //fillVariableWithValue("run", run);
 
 
+    //std::cout<<"End of loop"<<std::endl;
 
      // Evaluate cuts (but do not apply them)
      evaluateCuts();
