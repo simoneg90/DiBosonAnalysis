@@ -241,7 +241,7 @@ int baseClass::readInputList()
         ////  }
         ////  std::cout<<"Events processed: "<<evtProcessed<<std::endl;
         ////  //exit(-1);
-	  string s0 = "ntuplizer/hCounter";//"Count";
+	  string s0 = "Count";//"ntuplizer/hCounter";//"Count";
         /////////////  TriggerPass = new TH1F("TriggerPass","TriggerPass",1, 0, 2);
         /////////////  TriggerPass->SetBinContent(1,10);//evtProcessed);
 	  TriggerPass = (TH1F*)f->Get(s0.c_str());  //removed by Simone...

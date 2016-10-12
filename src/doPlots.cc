@@ -5,6 +5,7 @@
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "TPad.h"
+#include "TLatex.h"
 #include "time.h"
 //#include "CMS_lumi.h"
 //#include "CMS_lumi.C"
@@ -13,213 +14,42 @@
 
 #define MAX_bkg 8 //also the n of colors
 #define MAX_sgn 8
-/*
-TPaveText* get_labelCMStop(bool wide) const {
 
-  //TLatex *latex = new TLatex();
-  //latex->SetNDC();
-  TPaveText* label_cmstop = new TPaveText(0.10, 0.94, 0.96, 0.98, "brNDC");
-  label_cmstop->SetTextSize(0.045);
-  label_cmstop->SetFillColor(0);
-  label_cmstop->SetTextFont(42);
 
-  label_cmstop->SetTextAlign(31); // align right
-  //latex->DrawLatex(wide ? 0.98 : 0.95, 0.96, "#sqrt{s} = 7 TeV");
-  label_cmstop->AddText("#sqrt{s} = 13 TeV");
-  std::string leftText;
-  if (dataFiles_.size() == 0) {
-    leftText = "CMS Simulation 2015";
-  } else {
-    if (isCMSArticle_) {
-      leftText = "CMS 2015";
-    } else {
-      leftText = "CMS Preliminary 2015";
-    }
-  }
-
-  if (lumi_ > 0.) {
-    label_cmstop->SetTextAlign(11); // align left
-    std::string lumiText = this->get_lumiText();
-    if (dataFiles_.size() == 0) {
-      lumiText = "L = " + lumiText;
-    }
-    //label_cmstop->DrawLatex(wide ? 0.06 : 0.15, 0.96, Form("%s, %s", leftText.c_str(), lumiText.c_str()));
-    label_cmstop->AddText(Form("%s, %s", leftText.c_str(), lumiText.c_str()));
-  } else {
-    label_cmstop->SetTextAlign(11); // align left
-    //label_cmstop->DrawLatex(wide ? 0.06 : 0.15, 0.96, Form("%s", leftText.c_str()));
-    label_cmstop->AddText(Form("%s", leftText.c_str()));
-  }
-
-  return label_cmstop;
-
-} // cmsPrel
+class Chebyshev {
+    public:
+        Chebyshev(int n, double xmin, double xmax) :
+                      fA(xmin), fB(xmax),
+                      fT(std::vector<double>(n) )  {}
+ 
+        double operator() (const double * xx, const double *p) {
+            double x = (xx[0] - fA -fB)/(fB-fA);
+            int order = fT.size();
+            if (order == 1) return p[0];
+            if (order == 2) return p[0] + x*p[1];
+            // build the polynomials
+            fT[0] = 1;
+            fT[1] = x;
+            for (int i = 1; i< order; ++i) {
+                fT[i+1] =  2 *x * fT[i] - fT[i-1];
+            }
+            double sum = p[0]*fT[0];
+            for (int i = 1; i<= order; ++i) {
+                sum += p[i] * fT[i];
+            }
+            return sum;
+        }
+       
+    private:
+        double fA;
+        double fB;
+        std::vector<double> fT; // polynomial
+        std::vector<double> fC; // coefficients
+};
 
 
 
-TPaveText* get_labelCMS(int legendQuadrant, bool hasRatio) const {
 
-  if (legendQuadrant != 0 && legendQuadrant != 1 && legendQuadrant != 2 && legendQuadrant != 3) {
-    std::cout << "WARNING! Legend quadrant '" << legendQuadrant << "' not yet implemented for CMS label. Using 2." << std::endl;
-    legendQuadrant = 2;
-  }
-
-  float x1, y1, x2, y2;
-  if (legendQuadrant == 1) {
-    x1 = 0.63;
-    y1 = 0.86;
-    x2 = 0.8;
-    y2 = 0.92;
-  } else if (legendQuadrant == 2) {
-    x1 = 0.10;
-    y1 = 0.86;
-    x2 = (isCMSArticle_) ? 0.39 : 0.42;
-    y2 = 0.92;
-  } else if (legendQuadrant == 3) {
-    x1 = 0.25;
-    y1 = 0.2;
-    x2 = 0.42;
-    y2 = 0.24;
-  } else if (legendQuadrant == 0) {
-    x1 = hasRatio ? 0.25 : 0.30;
-    y1 = 0.963;
-    x2 = 0.65;
-    y2 = 0.985;
-  }
-
-
-  TPaveText* cmslabel = new TPaveText(x1, y1, x2, y2, "brNDC");
-  cmslabel->SetFillColor(kWhite);
-  cmslabel->SetTextSize(0.038);
-  if (legendQuadrant == 0) {
-    //cmslabel->SetTextAlign(11);
-  }
-  cmslabel->SetTextFont(42);
-  std::string label_CMS_text = this->get_CMSText();
-  if (legendQuadrant != 0) {
-    cmslabel->AddText(label_CMS_text.c_str());
-  } else {
-    std::string leftText;
-    if (dataFiles_.size() == 0) {
-      leftText = "CMS Simulation 2015";
-    } else {
-      if (isCMSArticle_) {
-	leftText = "CMS 2015";
-      } else {
-	leftText = "CMS Preliminary 2015";
-      }
-    }
-    if (lumi_ > 0.) {
-      //cmslabel->SetTextAlign(11); // align left
-      std::string lumiText = this->get_lumiText();
-      cmslabel->AddText(Form("%s, %s", leftText.c_str(), lumiText.c_str()));
-    } else {
-      //cmslabel->SetTextAlign(11); // align left
-      cmslabel->AddText(Form("%s", leftText.c_str()));
-    }
-  }
-
-  return cmslabel;
-
-}
-
-TPaveText* get_labelSqrt(int legendQuadrant) const {
-
-  if (legendQuadrant != 0 && legendQuadrant != 1 && legendQuadrant != 2 && legendQuadrant != 3) {
-    std::cout << "WARNING! Legend quadrant '" << legendQuadrant << "' not yet implemented for Sqrt label. Using 2." << std::endl;
-    legendQuadrant = 2;
-  }
-
-
-  float x1, y1, x2, y2;
-  if (legendQuadrant == 1) {
-    x1 = 0.63;
-    y1 = 0.82;
-    x2 = 0.8;
-    y2 = 0.86;
-  } else if (legendQuadrant == 2) {
-    x1 = (isCMSArticle_) ? 0.22 : 0.25;
-    y1 = 0.82;
-    x2 = (isCMSArticle_) ? 0.39 : 0.42;
-    y2 = 0.86;
-  } else if (legendQuadrant == 3) {
-    x1 = 0.25;
-    y1 = 0.16;
-    x2 = 0.42;
-    y2 = 0.2;
-  } else if (legendQuadrant == 0) {
-    x1 = 0.7;
-    y1 = 0.953;
-    x2 = 0.96;
-    y2 = 0.975;
-  }
-
-
-  TPaveText* label_sqrt = new TPaveText(x1, y1, x2, y2, "brNDC");
-  label_sqrt->SetFillColor(kWhite);
-  label_sqrt->SetTextSize(0.038);
-  label_sqrt->SetTextFont(42);
-  std::string label_sqrt_text = this->get_sqrtText();
-  if (legendQuadrant != 0) {
-    label_sqrt->AddText(label_sqrt_text.c_str());
-  } else {
-    label_sqrt->SetTextAlign(31); // align right
-    label_sqrt->AddText("#sqrt{s} = 13 TeV");
-  }
-
-  return label_sqrt;
-
-}
-
-
-TPaveText* get_labelAlgo(int legendQuadrant) const {
-
-
-  float x1, y1, x2, y2;
-  if (legendQuadrant == 1) {
-    x1 = 0.77;
-    y1 = 0.88;
-    x2 = 0.82;
-    y2 = 0.92;
-  } else if (legendQuadrant == 2) {
-    x1 = 0.30;
-    y1 = 0.86;
-    x2 = 0.35;
-    y2 = 0.92;
-  } else if (legendQuadrant == 3) {
-    x1 = 0.3;
-    //y1 = 0.15;
-    y1 = 0.18;
-    x2 = 0.35;
-    //y2 = 0.2;
-    y2 = 0.21;
-  } else if (legendQuadrant == 4) {
-    x1 = 0.75;
-    y1 = 0.18;
-    x2 = 0.8;
-    y2 = 0.21;
-  } else {
-    std::cout << "WARNING! Legend quadrant '" << legendQuadrant << "' not yet implemented for Algo label. Using 3." << std::endl;
-    x1 = 0.27;
-    y1 = 0.15;
-    x2 = 0.32;
-    y2 = 0.2;
-  }
-
-  Float_t labelTextSize = 0.035;
-  std::string jetAlgoName = (recoType_ != "" && jetAlgo_ != "") ? get_algoName() : "";
-  TPaveText* label_algo = new TPaveText(x1, y1, x2, y2, "brNDC");
-  label_algo->SetTextFont(42);
-  label_algo->SetFillColor(kWhite);
-  label_algo->SetTextSize(labelTextSize);
-  label_algo->AddText(jetAlgoName.c_str());
-  //label_algo->SetTextAlign(11);
-
-  return label_algo;
-
-}
-
-*/
 int main(int argc, char* argv[]){
 
   frame("Plotter env");
@@ -227,9 +57,15 @@ int main(int argc, char* argv[]){
   //setTDRStyle(); 
   //Color_t COLOR[] = {kRed+1, kGreen+3, kAzure-1, kViolet-3, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
   //Color_t COLOR[] = {kGreen+2,kAzure-1, kCyan, kSpring-9,kOrange+9,kGreen+2,kBlue+0, kOrange+8, kCyan+0};
-  Color_t COLOR[] = {kAzure-1, kRed, kCyan, kSpring+7,kGreen+2, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
+  //Color_t COLOR[] = {kAzure-1, kRed, kCyan, kSpring+7,kGreen+2, kViolet, kOrange+10, kSpring-9, kCyan+0, kBlue+0};
+  //Color_t COLOR[] = {kAzure-1, kViolet, kCyan, kSpring+7,kGreen+2, kOrange+1, kSpring+9, kRed+1, kBlue+0}; //ZGamma MIO
+  Color_t COLOR[] = {kOrange-3,kGreen-7,kMagenta-7,kAzure-3,kBlue,kViolet+2 ,kGreen-3, kRed-3};
   //Color_t COLOR[] = {kAzure+8,kAzure-2, kTeal+9, kSpring+7, kPink+7, kPink+6,kOrange-3,kOrange-2,kOrange-1, kMagenta, kCyan};
 
+  //gStyle->SetStripDecimals(kTRUE);
+  //gStyle->SetTickLength(0.03, "XYZ");
+  //gStyle->SetNdivisions(510, "XYZ");
+  //gStyle->SetPadTickY(.1);
   TH1D *histoD[MAX_NUMBER];//histos for project
   TH1D *bkgCounts[MAX_NUMBER];//histos to count events to rescale
   TH1D *histoBkg[MAX_bkg];    //1 histo for each background
@@ -243,7 +79,9 @@ int main(int argc, char* argv[]){
   TCanvas *c[MAX_NUMBER];
   //TLegend *leg[MAX_NUMBER];
   TFile *file[MAX_NUMBER];
-  TLegend *leg = new TLegend(0.65,0.65,0.9,0.9);
+  TLegend *leg = new TLegend(0.65,0.5,0.8,0.85);
+  leg->SetFillStyle(3004);
+  leg->SetTextSize(.04);
   TStopwatch timer;
   timer.Start(true);
 
@@ -259,13 +97,13 @@ int main(int argc, char* argv[]){
      breakLine();
      std::cout<<"This program superimposes or Stacks the same histogram from different files"<<std::endl;
      std::cout<<"Program usage:"<<std::endl;
-     std::cout<<"./doPlots inputList lumi[fb-1] output eff_file"<<std::endl;
+     std::cout<<"./doPlots inputList lumi[fb-1] output eff_file doScale superimpose"<<std::endl;
      //argv[1]=inputList 
      breakLine();
      exit(-1);
   }
 
-  if(argc>5){
+  if(argc>8){
      breakLine();
      std::cout<<"ATTENTION! TOO MANY ARGUMENTS ADDED!"<<std::endl;
      std::cout<<"Exiting program"<<std::endl;
@@ -282,6 +120,9 @@ int main(int argc, char* argv[]){
   std::cout<<"Opened: " <<argv[1]<<std::endl;
   std::cout<<"OutPutFile: "<< argv[3]<<std::endl;
   std::string outString = argv[3];
+  int doScale = atoi(argv[5]);
+  int superimpose = atoi(argv[6]);
+  int doLogY = atoi(argv[7]);
   
   std::cout<<"Will be writing .pdf, .png, .root: "<<outString.c_str()<<std::endl;
   std::string filePath;
@@ -348,6 +189,7 @@ int main(int argc, char* argv[]){
         std::cout<<"Data counts: "<<counts<<std::endl;
         //dataHisto->GetXaxis()->SetTitle(xTitle.c_str());
         dataHisto->GetYaxis()->SetTitle(yTitle.c_str());
+        //dataHisto->GetYaxis()->SetRangeUser(-1000.,dataHisto->GetMaximum()*1.3);
         dataHisto->SetMarkerStyle(8);
         dataHisto->SetMarkerColor(1);
         dataHisto->SetLineColor(1);
@@ -359,11 +201,21 @@ int main(int argc, char* argv[]){
       signalHisto[sgn_counter]= new TH1D(Form("signalHisto_%d",sgn_counter),Form("signalHisto_%d",sgn_counter), bins,min,max);
       //signalHisto[sgn_counter]->Sumw2();
       leg->AddEntry(signalHisto[sgn_counter],"Signal", "l");
+      if(doScale==0){
+        scaleFactor=1; 
+        lumi=1; 
+        counts=1;
+      }
       histoD[file_counter]->Scale(scaleFactor*lumi/counts);
       signalHisto[sgn_counter]->Add(histoD[file_counter]);
       ++sgn_counter;
 
     }else{
+      if(doScale==0) {
+        scaleFactor=1; 
+        lumi=1; 
+        counts=1;
+      }
       histoD[file_counter]->Scale(scaleFactor*lumi/counts);
       std::cout<<" " <<scaleFactor<<" "<<lumi<<" "<<counts<<std::endl;
       std::cout<<"Total scale factor: "<<scaleFactor*lumi/counts<<std::endl;
@@ -385,6 +237,7 @@ int main(int argc, char* argv[]){
         histoBkg[bkg_counter]->Add(histoD[file_counter]);
         leg->AddEntry(histoBkg[bkg_counter], bkg_nameTMP.c_str(), "f");
         std::cout<<"New Background: "<<bkg_name.c_str()<<std::endl;
+        std::cout<<"Color: "<<COLOR[bkg_counter]<<std::endl;
       }
 
     }
@@ -394,7 +247,14 @@ int main(int argc, char* argv[]){
   }//end while over inputFile
   std::cout<<"counter del bkg "<<bkg_counter<<std::endl; 
   //TCanvas *c[10];
-  TFile *outFile = new TFile(Form("%s.root",outString.c_str()), "RECREATE");
+  std::string outFileName = "";
+  if(outString.size()<100) {
+    outFileName = outString;
+  }else{
+    outFileName = "long_variable";
+  }
+
+  TFile *outFile = new TFile(Form("%s.root",outFileName.c_str()), "RECREATE");
   for(int i=0; i<=bkg_counter; ++i){
     c[i]=new TCanvas(Form("c%d",i), "Grafico1",1);// 200, 10, 600, 400);
     histoBkg[i]->Draw("hist");
@@ -420,14 +280,28 @@ int main(int argc, char* argv[]){
   effList.open(Form("%s.txt",effFile.c_str()), std::fstream::app);
   
   if(isData==1){
-    TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.3);
+    if(doLogY==1) {
+      c_histo->SetLogy();
+    }
+    TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.25);
     pad2->SetBottomMargin(0.2);
     pad2->SetTopMargin(0);
+    //pad2->SetNdivisions(10);
     pad2->Draw();
     TPad *pad1=new TPad("pad1", "top pad", 0,0.3,1,1);
     pad1->SetBottomMargin(0);
+    //if(doLogY==1) pad1->SetLogy();
     pad1->Draw();
     pad1->cd();
+    if(doLogY==1) gPad-> SetLogy();
+    float H = pad1->GetWh();
+    float W = pad1->GetWw();
+    float l = pad1->GetLeftMargin();
+    float t = pad1->GetTopMargin();
+    float r = pad1->GetRightMargin();
+    float b = pad1->GetBottomMargin();
+    TString lumiText = Form("#it{L}=%.01f fb^{-1} (2016) (13 TeV)", lumi/1000);
+    TString cmsLogo = "#bf{CMS}  #it{Preliminary}";
     dataHisto->SetStats(0);
     dataHisto->Write();
     std::cout<<"DataHisto Entries: "<<dataHisto->GetEntries()<<std::endl;   
@@ -444,11 +318,39 @@ int main(int argc, char* argv[]){
     bkgStack->Write();
     //bkgStack->Draw("");
     std::cout<<"Drawing bkg"<<std::endl;
+    if(doLogY==1){
+      dataHisto->GetYaxis()->SetRangeUser(1.,dataHisto->GetMaximum()*10);
+    }else{
+      dataHisto->GetYaxis()->SetRangeUser(0.,dataHisto->GetMaximum()*1.3);
+    }
+
+    //TPaveText *ptText = new TPaveText(.5,.5,.6,.6);
+    //ptText->AddText("stocazzo");
+    //ptText->Draw();
+
     dataHisto->Draw("EP");
     bkgStack->Draw("SAME");
     dataHisto->Draw("EPSAME");
+    //gPad->Modified();
+    //ptText->Draw();
+    TLatex latex;
+    latex.SetNDC();
+    latex.SetTextAngle(0);
+    latex.SetTextColor(kBlack);    
+    latex.SetTextFont(42);
+    latex.SetTextAlign(31); 
+    float lumiTextOffset = 0.2;
+    float lumiTextSize = 0.04;
+    latex.SetTextSize(lumiTextSize);    
+    latex.DrawLatex(.9,.92,lumiText);//1-r,1-t+lumiTextOffset*t,lumiText);
+    latex.DrawLatex(.25,.92,cmsLogo);
+    latex.Draw();
+    gPad->Modified();
+    gPad->Update();
+    pad1->Update();
     std::cout<<"Redrawing data"<<std::endl;
     TGraphErrors *gr = new TGraphErrors(0);
+    TH1D *fake_plotHisto = new TH1D("fake_plotHisto","fake_plotHisto", bins,min,max);
     integralData=dataHisto->Integral();
     integralBKG=allBkgHisto->Integral();
     double error, ratio;
@@ -458,26 +360,59 @@ int main(int argc, char* argv[]){
       gr->SetPoint(w, dataHisto->GetBinCenter(w),(dataHisto->GetBinContent(w))/(allBkgHisto->GetBinContent(w)));
       ratio= (dataHisto->GetBinContent(w))/(allBkgHisto->GetBinContent(w));
       error= (dataHisto->GetBinContent(w)*sqrt(allBkgHisto->GetBinContent(w)) + allBkgHisto->GetBinContent(w)*sqrt(dataHisto->GetBinContent(w)))/(allBkgHisto->GetBinContent(w)*allBkgHisto->GetBinContent(w));
-      std::cout<<"VALUE: "<<ratio<<" ERROR: "<<error<<std::endl;
+      std::cout<<"XAXIS: "<<dataHisto->GetBinCenter(w)<<" VALUE: "<<ratio<<" ERROR: "<<error<<std::endl;
       gr->SetPointError(w, dataHisto->GetBinWidth(w)/2,error);
 
     }
-    gr->GetHistogram()->SetMaximum(2);//1.5);
+    gr->GetHistogram()->SetMaximum(2.);//1.5);
     gr->GetHistogram()->SetMinimum(0.1);
     gr->GetXaxis()->SetLimits(min, max);
+    gr->GetYaxis()->SetTitleOffset(.2);
+    gr->GetYaxis()->SetTitleFont(42);
+    gr->GetYaxis()->SetTitleSize(.15);
+    gr->GetXaxis()->SetTitleFont(42);
+    gr->GetXaxis()->SetTitleSize(.15);
+    gr->GetXaxis()->SetTitle(xTitle.c_str());
+    gr->GetYaxis()->SetTitle("DATA/MC");
     //TGraphAsymmErrors *gr= new TGraphAsymmErrors();
     //gr->Divide(dataHisto,allBkgHisto, "pois");
     pad2->cd();
     gStyle->SetTextSize(14);
     gROOT->ForceStyle();
     pad2->SetGrid();
-    gr->Draw("ZAP");
+    fake_plotHisto->GetYaxis()->SetRangeUser(0.,2.);
+    //fake_plotHisto->SetNdivisions(400);
+    fake_plotHisto->SetTitle("");
+    fake_plotHisto->SetStats(0);
+    fake_plotHisto->SetLineColor(0);
+   // fake_plotHisto->Draw("hist");
+    gr->Draw("ZAP");//SAME");
     gr->GetXaxis()->SetLabelFont(43);
     gr->GetXaxis()->SetLabelSize(14);
     gr->GetYaxis()->SetLabelFont(43);
     gr->GetYaxis()->SetLabelSize(14);
+    gr->GetYaxis()->SetNdivisions(5);
     gr->SetMarkerStyle(8);
     gr->SetTitle("");
+    Chebyshev * cheb = new Chebyshev(4,min,max);
+    TF1 * f1 = new TF1("f1",cheb,min,1230,5,"Chebyshev");
+    TFile* gJet_correction = TFile::Open("/cmshome/gellisim/CMSSW_VGamma/src/DiBosonAnalysis/uncertainties_EWK_24bins.root", "r");
+    if (!gJet_correction ){
+       frame("GammaJets corrections file not found! ERROR!");
+       exit(-1);
+    }
+    TH1F* gCorrNominal = (TH1F*)gJet_correction->Get("GJets_1j_NLO/nominal_G");
+    TH1F* gCorrInv = (TH1F*)gJet_correction->Get("GJets_LO/inv_pt_G");
+    TGraphAsymmErrors *grCorr = new TGraphAsymmErrors(0);
+    grCorr->Divide(gCorrNominal,gCorrInv, "pois");
+    for (int i = 0; i <=5; ++i) f1->SetParameter(i,1);
+    grCorr->Fit(f1, "R");
+    if(strcmp(variable.c_str(),"photon_pt")==0){
+      f1->Draw("SAME");
+      grCorr->SetMarkerColor(2);
+      grCorr->Draw("PSAME");
+    }
+    std::cout<<"Drawing chebyshev"<<std::endl;
     allBkgHisto->GetXaxis()->SetLabelFont(43);
     allBkgHisto->GetXaxis()->SetLabelSize(14);
     allBkgHisto->GetYaxis()->SetLabelFont(43);
@@ -494,6 +429,41 @@ int main(int argc, char* argv[]){
   /*  bkgStack->GetXaxis()->SetTitle(xTitle.c_str());
     bkgStack->GetYaxis()->SetTitle(yTitle.c_str());
     */bkgStack->Draw();
+    if (superimpose==1){
+      for(int i=0; i<=bkg_counter; ++i){
+        histoBkg[i]->SetFillColor(0);
+        histoBkg[i]->SetLineColor(COLOR[i]);
+        histoBkg[i]->SetLineWidth(2.5);
+        histoBkg[i]->Scale(1/(histoBkg[i]->Integral()));
+        if(i==0) {
+          histoBkg[i]->GetXaxis()->SetTitle(xTitle.c_str());
+          histoBkg[i]->GetYaxis()->SetTitle(yTitle.c_str());
+          histoBkg[i]->Draw("hist");
+        }
+        if(i>0) histoBkg[i]->Draw("histSAME");
+      }
+    }else{
+      bkgStack->GetXaxis()->SetTitle(xTitle.c_str());
+      bkgStack->GetYaxis()->SetTitle(yTitle.c_str());
+      bkgStack->Draw();
+    }
+    TLatex latex;
+    TString lumiText = Form("#it{L}=%.01f fb^{-1} (2016) (13 TeV)", lumi/1000);//"#bf{CMS Preliminary} #it{L}=12.9 fb^{-1}";
+    TString cmsLogo = "#bf{CMS}  #it{Preliminary}";
+    latex.SetNDC();
+    latex.SetTextAngle(0);
+    latex.SetTextColor(kBlack);
+    latex.SetTextFont(42);
+    latex.SetTextAlign(31);
+    float lumiTextOffset = 0.2;
+    float lumiTextSize = 0.04; 
+    latex.SetTextSize(lumiTextSize);
+    latex.DrawLatex(.9,.92,lumiText);//1-r,1-t+lumiTextOffset*t,lumiText);
+    latex.DrawLatex(.35/*.25*/,.92,cmsLogo);
+    latex.Draw();
+    gPad->Modified();
+    gPad->Update();
+
     std::cout<<"Drawing BKG"<<std::endl;
   }
   
@@ -504,11 +474,12 @@ int main(int argc, char* argv[]){
     std::cout<<"++++++++++++++++++++++ "<<(signalHisto[i]->Integral())<<std::endl;
     signalHisto[i]->SetStats(0);
     signalHisto[i]->SetLineColor(1);
-    signalHisto[i]->SetLineWidth(4);
-    signalHisto[i]->SetLineStyle(8);
+    signalHisto[i]->SetLineWidth(2);
+    signalHisto[i]->SetLineStyle(2);
     signalHisto[i]->Draw("histSAME");
 
   }
+  leg->SetBorderSize(0);
   leg->Draw("SAME");
 
   /*Float_t cmsTextSize = 0.043;
@@ -524,8 +495,14 @@ int main(int argc, char* argv[]){
   //TTree *T2 = tree[file_counter]->CopyTree(0);
   //std::cout<<"Drawing legend"<<std::endl;
   //T2->Write();
-  c_histo->SaveAs(Form("%s.png", outString.c_str()));
-  c_histo->SaveAs(Form("%s.pdf", outString.c_str()));
+  if(doLogY==1){
+    std::cout<<"LOGY scale"<<std::endl;
+    if(isData==0){
+      c_histo->SetLogy();
+    }
+  }
+  c_histo->SaveAs(Form("%s.png", outFileName.c_str()));
+  c_histo->SaveAs(Form("%s.pdf", outFileName.c_str()));
   //c_histo->SaveAs("histograms.png");
   //c_histo->SaveAs("histograms.pdf");
 

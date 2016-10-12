@@ -210,6 +210,7 @@ class baseClass : public rootNtupleClass {
   TFile * output_root_;
   
   string * inputList_; 
+  
 
   private :
   int crabCount_; //to keep track of the initial number of events - added *Simone

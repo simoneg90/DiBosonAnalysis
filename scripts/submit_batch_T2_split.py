@@ -41,7 +41,7 @@ parser.add_option('-I', '--interactive',
 
 parser.add_option("-c", "--cut", dest="cutfile",
     help="cutfile",                  
-    default="config/cutFile_ttbarSelection.txt",#cutFile_mainDiBosonSelection.txt ",
+    default="config/cutFile_VGammaSelection.txt",#cutFile_mainDiBosonSelection.txt ",
     )
 
 (opt, args) = parser.parse_args()
