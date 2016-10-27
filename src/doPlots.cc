@@ -52,6 +52,7 @@ class Chebyshev {
 
 int main(int argc, char* argv[]){
 
+  TH1::SetDefaultSumw2();
   frame("Plotter env");
   
   //setTDRStyle(); 
@@ -175,7 +176,8 @@ int main(int argc, char* argv[]){
     histoD[file_counter] = new TH1D(Form("histo_%d", file_counter), Form("histo_%d", file_counter),bins,min,max);
     //histoD[file_counter]->Sumw2();
     std::cout<<"Projecting"<<std::endl;
-    tree[file_counter]->Project(Form("histo_%d", file_counter),Form("%s", variable.c_str()),cut.c_str());
+    //tree[file_counter]->Project(Form("histo_%d", file_counter),Form("%s", variable.c_str()),cut.c_str());
+    tree[file_counter]->Draw(Form("%s>>histo_%d", variable.c_str(), file_counter),Form("photonCorrection*(%s)",cut.c_str()));
     //std::cout<<"Scaling"<<std::endl;
     //histoD[file_counter]->Scale(scaleFactor);//rescale for the crossSection and the number of events
 
@@ -197,10 +199,10 @@ int main(int argc, char* argv[]){
       }
       isData=1;
       dataHisto->Add(histoD[file_counter]);
-    }else if(strcmp(bkg_nameTMP.c_str(), "signal")==0){
+    }else if(strncmp(bkg_nameTMP.c_str(), "signal", 6)==0){
       signalHisto[sgn_counter]= new TH1D(Form("signalHisto_%d",sgn_counter),Form("signalHisto_%d",sgn_counter), bins,min,max);
       //signalHisto[sgn_counter]->Sumw2();
-      leg->AddEntry(signalHisto[sgn_counter],"Signal", "l");
+      leg->AddEntry(signalHisto[sgn_counter],bkg_nameTMP.c_str()/*"Signal"*/, "l");
       if(doScale==0){
         scaleFactor=1; 
         lumi=1; 
@@ -329,7 +331,7 @@ int main(int argc, char* argv[]){
     //ptText->Draw();
 
     dataHisto->Draw("EP");
-    bkgStack->Draw("SAME");
+    bkgStack->Draw("histoSAME");
     dataHisto->Draw("EPSAME");
     //gPad->Modified();
     //ptText->Draw();
@@ -394,24 +396,24 @@ int main(int argc, char* argv[]){
     gr->GetYaxis()->SetNdivisions(5);
     gr->SetMarkerStyle(8);
     gr->SetTitle("");
-    Chebyshev * cheb = new Chebyshev(4,min,max);
-    TF1 * f1 = new TF1("f1",cheb,min,1230,5,"Chebyshev");
-    TFile* gJet_correction = TFile::Open("/cmshome/gellisim/CMSSW_VGamma/src/DiBosonAnalysis/uncertainties_EWK_24bins.root", "r");
-    if (!gJet_correction ){
-       frame("GammaJets corrections file not found! ERROR!");
-       exit(-1);
-    }
-    TH1F* gCorrNominal = (TH1F*)gJet_correction->Get("GJets_1j_NLO/nominal_G");
-    TH1F* gCorrInv = (TH1F*)gJet_correction->Get("GJets_LO/inv_pt_G");
-    TGraphAsymmErrors *grCorr = new TGraphAsymmErrors(0);
-    grCorr->Divide(gCorrNominal,gCorrInv, "pois");
-    for (int i = 0; i <=5; ++i) f1->SetParameter(i,1);
-    grCorr->Fit(f1, "R");
-    if(strcmp(variable.c_str(),"photon_pt")==0){
-      f1->Draw("SAME");
-      grCorr->SetMarkerColor(2);
-      grCorr->Draw("PSAME");
-    }
+    //Chebyshev * cheb = new Chebyshev(4,min,max);
+    //TF1 * f1 = new TF1("f1",cheb,min,1230,5,"Chebyshev");
+    //TFile* gJet_correction = TFile::Open("/cmshome/gellisim/CMSSW_VGamma/src/DiBosonAnalysis/uncertainties_EWK_24bins.root", "r");
+    //if (!gJet_correction ){
+    //   frame("GammaJets corrections file not found! ERROR!");
+    //   exit(-1);
+    //}
+    //TH1F* gCorrNominal = (TH1F*)gJet_correction->Get("GJets_1j_NLO/nominal_G");
+    //TH1F* gCorrInv = (TH1F*)gJet_correction->Get("GJets_LO/inv_pt_G");
+    //TGraphAsymmErrors *grCorr = new TGraphAsymmErrors(0);
+    //grCorr->Divide(gCorrNominal,gCorrInv, "pois");
+    //for (int i = 0; i <=5; ++i) f1->SetParameter(i,1);
+    //grCorr->Fit(f1, "R");
+    //if(strcmp(variable.c_str(),"photon_pt")==0){
+    //  //f1->Draw("SAME");
+    //  //grCorr->SetMarkerColor(2);
+    //  //grCorr->Draw("PSAME");
+    //}
     std::cout<<"Drawing chebyshev"<<std::endl;
     allBkgHisto->GetXaxis()->SetLabelFont(43);
     allBkgHisto->GetXaxis()->SetLabelSize(14);
@@ -445,7 +447,7 @@ int main(int argc, char* argv[]){
     }else{
       bkgStack->GetXaxis()->SetTitle(xTitle.c_str());
       bkgStack->GetYaxis()->SetTitle(yTitle.c_str());
-      bkgStack->Draw();
+      bkgStack->Draw("h");
     }
     TLatex latex;
     TString lumiText = Form("#it{L}=%.01f fb^{-1} (2016) (13 TeV)", lumi/1000);//"#bf{CMS Preliminary} #it{L}=12.9 fb^{-1}";
@@ -475,8 +477,9 @@ int main(int argc, char* argv[]){
     signalHisto[i]->SetStats(0);
     signalHisto[i]->SetLineColor(1);
     signalHisto[i]->SetLineWidth(2);
-    signalHisto[i]->SetLineStyle(2);
+    signalHisto[i]->SetLineStyle(i+1);
     signalHisto[i]->Draw("histSAME");
+    signalHisto[i]->Write();
 
   }
   leg->SetBorderSize(0);
@@ -501,6 +504,7 @@ int main(int argc, char* argv[]){
       c_histo->SetLogy();
     }
   }
+  gPad->RedrawAxis();
   c_histo->SaveAs(Form("%s.png", outFileName.c_str()));
   c_histo->SaveAs(Form("%s.pdf", outFileName.c_str()));
   //c_histo->SaveAs("histograms.png");
@@ -522,6 +526,7 @@ int main(int argc, char* argv[]){
   std::cout<<integralData<<" "<<integralBKG_all<<std::endl;
   std::cout<<"Wrote: "<<outString.c_str()<<std::endl; 
   c_histo->Write();
+  leg->Write();
   std::cout<<"Closing output file"<<std::endl;
   outFile->Close();
 

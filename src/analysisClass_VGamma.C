@@ -93,10 +93,11 @@ void analysisClass::Loop()
    
 
    /////////initialize and define variables
-   TLorentzVector photon, genPhoton, electron, muon, ak04, ak08, ak04_photon, ak08_photon;
+   TLorentzVector photon, genPhoton, electron, muon, ak04, ak08, ak04_photon, ak08_photon, ak08_puppi, ak08_puppiSoftdrop;
    std::vector <int> goodPhoton, goodElectron, goodMuon, goodAk04, goodAk08;
    bool mu_jet_DR, el_jet_DR;
-   int drMin;
+   double drMin;
+   int matchSoftDrop;
    std::vector <int> jetID, photonID;
    Long64_t nentries = fChain->GetEntriesFast();
    std::cout << "analysisClass::Loop(): nentries = " << nentries << std::endl;   
@@ -113,6 +114,11 @@ void analysisClass::Loop()
    TH1F* gCorrNominal = (TH1F*)gJet_correction->Get("GJets_1j_NLO/nominal_G");
    TH1F* gCorrInv = (TH1F*)gJet_correction->Get("GJets_LO/inv_pt_G");
    TH1D* puw = (TH1D*)puwFile->Get("pileup");
+   Chebyshev * cheb = new Chebyshev(4,200,1230);
+   TF1 * f1_ = new TF1("f1_",cheb,200,1230,5,"Chebyshev");
+   TGraphAsymmErrors *grCorr = new TGraphAsymmErrors(0);
+   grCorr->Divide(gCorrNominal,gCorrInv, "pois");
+   grCorr->Fit(f1_, "");//, "R");
    double pu_weight=1.;
    double gJets_correction=1.;
    Long64_t nbytes = 0, nb = 0;
@@ -124,7 +130,7 @@ void analysisClass::Loop()
      if(jentry < 10 || jentry%10000 == 0) std::cout << "analysisClass::Loop(): jentry = " << jentry << std::endl;   
      if(jentry%1000 == 0 && jentry%10000 !=0) std::cout<<"."<<std::flush; 
     
-     if(!isData && nTrueInt>0) pu_weight=1;//pu_weight=puw->GetBinContent(puw->FindBin(nTrueInt));
+     if(!isData && nTrueInt>0) pu_weight=puw->GetBinContent(puw->FindBin(nTrueInt));
 
      ////////////////////// User's code starts here ///////////////////////
 
@@ -147,7 +153,8 @@ void analysisClass::Loop()
       //  if(GammaGood_pt[i]>80 && abs(GammaGood_eta[i])<2.4){
           //std::cout<<"Good photon"<<std::endl;
           goodPhoton.push_back(i);
-          if((abs(GammaGood_eta[i])<1.4442&&GammaGood_hOverE[i]<.05&&GammaGood_sigmaIetaIeta[i]<0.0102&&GammaGood_chHadIso[i]<3.32&&GammaGood_neuHadIso[i]<(11.86+0.0139*GammaGood_pt[i]+0.000025*GammaGood_pt[i]*GammaGood_pt[i])&&GammaGood_phIso[i]<(.83+0.0034*GammaGood_pt[i]))|| ((abs(GammaGood_eta[i])<2.5||abs(GammaGood_eta[i])>1.566)&&GammaGood_hOverE[i]<.05&&GammaGood_sigmaIetaIeta[i]<0.0274&&GammaGood_chHadIso[i]<1.97&&GammaGood_neuHadIso[i]<(11.86+0.0139*GammaGood_pt[i]+0.000025*GammaGood_pt[i]*GammaGood_pt[i])&&GammaGood_phIso[i]<(.83+0.0034*GammaGood_pt[i]))){
+          if((abs(GammaGood_eta[i])<1.4442&&GammaGood_hOverE[i]<.05&&GammaGood_sigmaIetaIeta[i]<0.0102&&GammaGood_chHadIso[i]<3.32&&GammaGood_neuHadIso[i]<(1.92+0.014*GammaGood_pt[i]+0.000019*GammaGood_pt[i]*GammaGood_pt[i])&&GammaGood_phIso[i]<(.81+0.0053*GammaGood_pt[i]))|| ((abs(GammaGood_eta[i])<2.5&&abs(GammaGood_eta[i])>1.566)&&GammaGood_hOverE[i]<.05&&GammaGood_sigmaIetaIeta[i]<0.0274&&GammaGood_chHadIso[i]<1.97&&GammaGood_neuHadIso[i]<(11.86+0.0139*GammaGood_pt[i]+0.000025*GammaGood_pt[i]*GammaGood_pt[i])&&GammaGood_phIso[i]<(.83+0.0034*GammaGood_pt[i]))){
+          //if((abs(GammaGood_eta[i])<1.4442&&GammaGood_hOverE[i]<.05&&GammaGood_sigmaIetaIeta[i]<0.0102&&GammaGood_chHadIso[i]<3.32&&GammaGood_neuHadIso[i]<(11.86+0.0139*GammaGood_pt[i]+0.000025*GammaGood_pt[i]*GammaGood_pt[i])&&GammaGood_phIso[i]<(.83+0.0034*GammaGood_pt[i]))|| ((abs(GammaGood_eta[i])<2.5||abs(GammaGood_eta[i])>1.566)&&GammaGood_hOverE[i]<.05&&GammaGood_sigmaIetaIeta[i]<0.0274&&GammaGood_chHadIso[i]<1.97&&GammaGood_neuHadIso[i]<(11.86+0.0139*GammaGood_pt[i]+0.000025*GammaGood_pt[i]*GammaGood_pt[i])&&GammaGood_phIso[i]<(.83+0.0034*GammaGood_pt[i]))){
             photonID.push_back(1);
           }else{
             photonID.push_back(0);
@@ -286,23 +293,18 @@ void analysisClass::Loop()
          if(closestGen>=0) {
            //std::cout<<"deriving correction"<<std::endl;
            //std::cout<<"Pt: "<<GenPart_pt[closestGen]<<std::endl;
-           Chebyshev * cheb = new Chebyshev(4,200,1230);
-           TF1 * f1_ = new TF1("f1_",cheb,200,1230,5,"Chebyshev");
-           TGraphAsymmErrors *grCorr = new TGraphAsymmErrors(0);
-           grCorr->Divide(gCorrNominal,gCorrInv, "pois");
-           grCorr->Fit(f1_, "");//, "R");
+
            gJets_correction=f1_->Eval(GenPart_pt[closestGen]);//(gCorrNominal->GetBinContent(GenPart_pt[closestGen])/gCorrInv->GetBinContent(GenPart_pt[closestGen]));
          //  std::cout<<"---> "<<f1_->Eval(GenPart_pt[closestGen])<<" "<<std::endl;
          }
        } 
        //std::cout<<"---> "<< gJets_correction<<" "<<std::endl;      
 
-       fillVariableWithValue("photon_ptUncorrected", GammaGood_pt[goodPhoton[0]], pu_weight);
-       fillVariableWithValue("photonCorrection", gJets_correction, pu_weight);
-       fillVariableWithValue("photon_pt", GammaGood_pt[goodPhoton[0]], gJets_correction*pu_weight);
-       fillVariableWithValue("photon_ptCorrected1",GammaGood_pt[goodPhoton[0]]*gJets_correction,pu_weight);
-       fillVariableWithValue("photon_eta", GammaGood_eta[goodPhoton[0]], pu_weight);
-       fillVariableWithValue("photon_phi", GammaGood_phi[goodPhoton[0]], pu_weight);
+       fillVariableWithValue("pw_correction",pu_weight);
+       fillVariableWithValue("photonCorrection", gJets_correction);
+       fillVariableWithValue("photon_pt", GammaGood_pt[goodPhoton[0]]);
+       fillVariableWithValue("photon_eta", GammaGood_eta[goodPhoton[0]]);
+       fillVariableWithValue("photon_phi", GammaGood_phi[goodPhoton[0]]);
        fillVariableWithValue("photonLooseID", photonID[0]);
        //std::cout<<"++++++++++++ "<<GammaGood_pt[goodPhoton[0]]<<std::endl;
      } 
@@ -320,51 +322,74 @@ void analysisClass::Loop()
 /////     }
 
      if(goodAk08.size()>0){
-       fillVariableWithValue("ak08_pt", FatJet_pt[goodAk08[0]],pu_weight);
-       fillVariableWithValue("ak08_eta", FatJet_eta[goodAk08[0]],pu_weight);
-       fillVariableWithValue("ak08_phi", FatJet_phi[goodAk08[0]],pu_weight);
-       fillVariableWithValue("ak08_mass", FatJet_mass[goodAk08[0]],pu_weight);
-       fillVariableWithValue("ak08_prunedMass", FatJet_prunedMass[goodAk08[0]],pu_weight);
-       fillVariableWithValue("ak08_CSV", FatJet_btagCSV[goodAk08[0]],pu_weight);
-       fillVariableWithValue("ak08_tau21", (FatJet_tau2[goodAk08[0]])/(FatJet_tau1[goodAk08[0]]),pu_weight);
-       fillVariableWithValue("ak08_puppiTau21", (FatJet_puppiTau2[goodAk08[0]])/(FatJet_puppiTau1[goodAk08[0]]),pu_weight);
+       fillVariableWithValue("ak08_pt", FatJet_pt[goodAk08[0]] );
+       fillVariableWithValue("ak08_eta", FatJet_eta[goodAk08[0]] );
+       fillVariableWithValue("ak08_phi", FatJet_phi[goodAk08[0]] );
+       fillVariableWithValue("ak08_mass", FatJet_mass[goodAk08[0]] );
+       fillVariableWithValue("ak08_prunedMass", FatJet_prunedMass[goodAk08[0]] );
+       fillVariableWithValue("ak08_CSV", FatJet_btagCSV[goodAk08[0]] );
+       fillVariableWithValue("ak08_tau21", (FatJet_tau2[goodAk08[0]])/(FatJet_tau1[goodAk08[0]]) );
+       fillVariableWithValue("ak08_puppiTau21", (FatJet_puppiTau2[goodAk08[0]])/(FatJet_puppiTau1[goodAk08[0]]) );
+       fillVariableWithValue("ak08_puppiPt",FatJet_puppiPt[goodAk08[0]]);
+       fillVariableWithValue("ak08_puppiEta",FatJet_puppiEta[goodAk08[0]]);
+       fillVariableWithValue("ak08_puppiPhi",FatJet_puppiPhi[goodAk08[0]]);
        fillVariableWithValue("ak08_neEmHF", FatJet_neEmEF[goodAk08[0]]);
        fillVariableWithValue("jetTightLepVetoID", jetID[0]);
      }
 
      if(goodAk04.size()>0){
-       fillVariableWithValue("ak04_pt", Jet_pt[goodAk04[0]],pu_weight);
-       fillVariableWithValue("ak04_eta", Jet_eta[goodAk04[0]],pu_weight);
-       fillVariableWithValue("ak04_phi", Jet_phi[goodAk04[0]],pu_weight);
-       fillVariableWithValue("ak04_mass", Jet_mass[goodAk04[0]],pu_weight);
+       fillVariableWithValue("ak04_pt", Jet_pt[goodAk04[0]] );
+       fillVariableWithValue("ak04_eta", Jet_eta[goodAk04[0]] );
+       fillVariableWithValue("ak04_phi", Jet_phi[goodAk04[0]] );
+       fillVariableWithValue("ak04_mass", Jet_mass[goodAk04[0]] );
      }
 
      if(goodPhoton.size()>0 && goodAk08.size()>0){
        ak08.SetPtEtaPhiM(FatJet_pt[goodAk08[0]], FatJet_eta[goodAk08[0]], FatJet_phi[goodAk08[0]], FatJet_mass[goodAk08[0]]);
        photon.SetPtEtaPhiM(GammaGood_pt[goodPhoton[0]], GammaGood_eta[goodPhoton[0]], GammaGood_phi[goodPhoton[0]], 0);
        ak08_photon = ak08 + photon;
-       fillVariableWithValue("ak08_photon_pt", ak08_photon.Pt(),pu_weight);
-       fillVariableWithValue("ak08_photon_eta", ak08_photon.Eta(),pu_weight);
-       fillVariableWithValue("ak08_photon_phi", ak08_photon.Phi(),pu_weight);
-       fillVariableWithValue("ak08_photon_mass", ak08_photon.M(),pu_weight);;
+       fillVariableWithValue("ak08_photon_pt", ak08_photon.Pt() );
+       fillVariableWithValue("ak08_photon_eta", ak08_photon.Eta() );
+       fillVariableWithValue("ak08_photon_phi", ak08_photon.Phi() );
+       fillVariableWithValue("ak08_photon_mass", ak08_photon.M() );;
        fillVariableWithValue("photonPt_over_ak08PhotMass", GammaGood_pt[goodPhoton[0]]/ak08_photon.M());
        fillVariableWithValue("cosThetaStar_ak08Photon",TMath::TanH((GammaGood_eta[goodPhoton[0]]-FatJet_eta[goodAk08[0]])/2));
        fillVariableWithValue("DeltaEta_photonAk08", GammaGood_eta[goodPhoton[0]]-FatJet_eta[goodAk08[0]]);
+       drMin=100.;
+       for(int i=0; i<ncustomPuppiSoftDropAK8; ++i){
+         ak08_puppiSoftdrop.SetPtEtaPhiM(customPuppiSoftDropAK8_pt[i],customPuppiSoftDropAK8_eta[i],customPuppiSoftDropAK8_phi[i],customPuppiSoftDropAK8_mass[i]);
+         if(ak08.DeltaR(ak08_puppiSoftdrop)<drMin) {
+           drMin=ak08.DeltaR(ak08_puppiSoftdrop);
+           matchSoftDrop=i;
+         }
+       }//end loop over puppi/softDrop Quantities
+       if(drMin<.3){
+
+         ak08_puppiSoftdrop.SetPtEtaPhiM(customPuppiSoftDropAK8_pt[matchSoftDrop],customPuppiSoftDropAK8_eta[matchSoftDrop],customPuppiSoftDropAK8_phi[matchSoftDrop],customPuppiSoftDropAK8_massCorrected[matchSoftDrop]);
+         ak08_photon = ak08_puppiSoftdrop + photon;
+         fillVariableWithValue("ak08_photon_massSoftDropCorr", ak08_photon.M());
+         ak08_puppiSoftdrop.SetPtEtaPhiM(customPuppiSoftDropAK8_pt[matchSoftDrop],customPuppiSoftDropAK8_pt[matchSoftDrop],customPuppiSoftDropAK8_pt[matchSoftDrop],customPuppiSoftDropAK8_mass[matchSoftDrop]);
+         ak08_photon = ak08_puppiSoftdrop + photon;
+         fillVariableWithValue("ak08_photon_massSoftDrop", ak08_photon.M());
+
+       }
+
+       
      }
      if(goodPhoton.size()>0 && goodAk04.size()>0){
        ak04.SetPtEtaPhiM(Jet_pt[goodAk04[0]], Jet_eta[goodAk04[0]], Jet_phi[goodAk04[0]], Jet_mass[goodAk04[0]]);
        photon.SetPtEtaPhiM(GammaGood_pt[goodPhoton[0]], GammaGood_eta[goodPhoton[0]], GammaGood_phi[goodPhoton[0]], 0);
        ak04_photon = ak04 + photon;
-       fillVariableWithValue("ak04_photon_pt", ak04_photon.Pt(),pu_weight);
-       fillVariableWithValue("ak04_photon_eta", ak04_photon.Eta(),pu_weight);
-       fillVariableWithValue("ak04_photon_phi", ak04_photon.Phi(),pu_weight);
-       fillVariableWithValue("ak04_photon_mass", ak04_photon.M(),pu_weight);
+       fillVariableWithValue("ak04_photon_pt", ak04_photon.Pt() );
+       fillVariableWithValue("ak04_photon_eta", ak04_photon.Eta() );
+       fillVariableWithValue("ak04_photon_phi", ak04_photon.Phi() );
+       fillVariableWithValue("ak04_photon_mass", ak04_photon.M() );
      }
      fillVariableWithValue("nPhotons", goodPhoton.size());
      fillVariableWithValue("nAk04", goodAk04.size());
      fillVariableWithValue("nAk08", goodAk08.size());
-     fillVariableWithValue("nTrueInteractions", nTrueInt, pu_weight);
-     fillVariableWithValue("nVert", nVert, pu_weight);
+     fillVariableWithValue("nTrueInteractions", nTrueInt);
+     fillVariableWithValue("nVert", nVert);
      fillVariableWithValue("HLT_BIT_HLT_PFJet40_v",HLT_BIT_HLT_PFJet40_v);
      fillVariableWithValue("HLT_BIT_HLT_PFHT800_v", HLT_BIT_HLT_PFHT800_v);
      fillVariableWithValue("HLT_BIT_HLT_Photon165_HE10_v",HLT_BIT_HLT_Photon165_HE10_v);
@@ -374,8 +399,8 @@ void analysisClass::Loop()
      fillVariableWithValue("HLT_BIT_HLT_PFJet500_v",HLT_BIT_HLT_PFJet500_v);
      fillVariableWithValue("HLT_BIT_HLT_PFJet260_v",HLT_BIT_HLT_PFJet260_v);
      fillVariableWithValue("HLT_BIT_HLT_PFJet200_v",HLT_BIT_HLT_PFJet200_v);
-     fillVariableWithValue("metRaw", met_rawPt,pu_weight);
-     fillVariableWithValue("met", met_pt,pu_weight);
+     fillVariableWithValue("metRaw", met_rawPt );
+     fillVariableWithValue("met", met_pt );
 
      evaluateCuts();
      fillReducedSkimTree(); 

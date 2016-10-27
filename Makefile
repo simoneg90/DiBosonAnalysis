@@ -21,7 +21,7 @@ HHLIST=$(filter-out include/LinkDef.h,$(wildcard include/*.h))
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOTLIBS) -o $@  $(SELECTIONLIB) $@.o
 # *********************************
 
-all: ${EXE} histoPlotter singleHistoPlotter doPlots fit_simultaneous #CMS_lumi #superimposeDataset 
+all: ${EXE} histoPlotter singleHistoPlotter doPlots fit_simultaneous dcbfitter computeQuantiles gausFitter chebyFitter dijetFunctionFitter #CMS_lumi #superimposeDataset 
 #all: histoPlotter singleHistoPlotter doPlots
 
 main: $(SRC)/main.o $(SELECTIONLIB) 
@@ -36,11 +36,30 @@ singleHistoPlotter: $(SRC)/singleHistoPlotter.o $(HISTOLIB)
 doPlots: $(SRC)/doPlots.o $(HISTOLIB)
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
 
+#doBKGQuantile: $(SRC)/doBKGQuantile.o $(HISTOLIB)
+#	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
+
 #RooDCBShape: $(SRC)/RooDCBShape.o $(HISTOLIB)
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
 
 fit_simultaneous: $(SRC)/fit_simultaneous.o $(HISTOLIB)
 	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
+
+dcbfitter: $(SRC)/dcbfitter.o $(HISTOLIB)
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
+
+computeQuantiles: $(SRC)/computeQuantiles.o $(HISTOLIB)
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
+
+gausFitter: $(SRC)/gausFitter.o $(HISTOLIB)
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
+
+chebyFitter: $(SRC)/chebyFitter.o $(HISTOLIB)
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
+
+dijetFunctionFitter: $(SRC)/dijetFunctionFitter.o $(HISTOLIB)
+	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(ROOFITLIB) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) ./include/LinkDef.h $(SRC)/$@.o
+
 
 #CMS_lumi: $(SRC)/CMS_lumi.o $(HISTOLIB)
 #	$(COMP) $(INC) $(ROOTINC) $(LIBS) $(FLAGS) `$(call scram,fastjet,FASTJET_BASE)/bin/fastjet-config --cxxflags --plugins --libs` -o $@  $(HISTOLIB) $(SRC)/$@.o
