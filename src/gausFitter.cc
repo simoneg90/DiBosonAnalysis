@@ -46,8 +46,8 @@ int main(int argc, char* argv[]){
 
     TF1* f1 = new TF1( "gaussian", "gaus", rangeMin, rangeMax);//histo->GetMean() - sigma * histo->GetRMS(),  histo->GetMean() + sigma * histo->GetRMS() );
     std::cout<<"Range: "<<histo->GetMean() - sigma * histo->GetRMS()<<" - "<<histo->GetMean() + sigma * histo->GetRMS()<<std::endl;
-    f1->SetParameters(histo->GetMaximum(), histo->GetMean(), histo->GetRMS());
-    f1->SetParLimits( 2, 0.2*histo->GetRMS(), 3*histo->GetRMS() );
+    f1->SetParameters(histo->Integral(),(rangeMin+rangeMax)/2, (rangeMax-rangeMin)/4); // /4 because is rangeMax-rangeMin is 2 sigmas
+    f1->SetParLimits( 2, 0.2*(rangeMax-rangeMin)/4, 3*(rangeMax-rangeMin)/4 );
     //histo->Scale(1/histo->Integral());
 
 
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
 
    std::ofstream outList;
    outList.open("integrallistSignal.txt", std::fstream::app);
-   outList<<histo->Integral(/*histo->FindBin(rangeMin), histo->FindBin(rangeMax)*/)<<std::endl;//f1->Integral(rangeMin, rangeMax)<<std::endl;
+   outList<<histo->Integral(rangeMin/50, rangeMax/50/*histo->FindBin(rangeMin), histo->FindBin(rangeMax)*/)<<std::endl;//f1->Integral(rangeMin, rangeMax)<<std::endl;
    std::cout<<"---- "<<histo->FindBin(rangeMin)<<std::endl;
 
    std::cout<<""<<std::endl;

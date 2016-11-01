@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string.h>
+#include<math.h>
 #include "fit_functions.cc"
 #include "TFile.h"
 #include "TF1.h"
@@ -37,6 +38,7 @@
 #include "TCanvas.h"
 #include "TAxis.h"
 #include "RooChi2Var.h"
+#include "TMath.h"
 #include "RooMinuit.h"
 #include "RooPlot.h"
 #include "RooRealProxy.h"
@@ -66,15 +68,15 @@ int main(int argc, char* argv[]){
   TH1D *histo2 = (TH1D *)histo->Clone();
 
   for(int i = 0; i < histo->GetNbinsX(); ++i){
-        if(histo->GetBinContent(i) <1 ){
-           histo->SetBinError(i,0);
-           std::cout<<"<1"<<std::endl;
-        }
-        std::cout<<"----- "<<histo->GetBinContent(i)<<std::endl;
-//        if(histo->GetBinContent(i) == 0){
-//          std::cout<<"negativo!"<<std::endl;
-//           histo->SetBinError(i, histo->Integral());//9999999999);
+//        if(histo->GetBinContent(i) <1 ){
+//           histo->SetBinError(i,0);
+//           std::cout<<"<1"<<std::endl;
 //        }
+ //       std::cout<<"----- "<<histo->GetBinContent(i)<<std::endl;
+        if(histo->GetBinContent(i) == 0){
+   //       std::cout<<"negativo!"<<std::endl;
+           histo->SetBinError(i, histo->Integral());//9999999999);
+        }
   }
   
 
@@ -82,19 +84,29 @@ int main(int argc, char* argv[]){
 
   double max_range = atof(argv[3]);
   double p1_value = atof(argv[4]);
-  RooRealVar x("x","x",600,max_range);//4500);
-  RooDataHist dh("dh","dh",x,Import(*histo));
-  RooRealVar bg_p0("bg_p0", "bg_p0", 13, -1000., 1000.);
+  RooRealVar y("y","y",600,max_range);//4500);
+  RooDataHist dh("dh","dh",y,Import(*histo));
+  RooRealVar bg_p0("bg_p0", "bg_p0", 3000, 100, 100000.);
   RooRealVar bg_p1("bg_p1", "bg_p1", -13., -16.,-12.);//-13., -1000., 1000.);
   //bg_p1.setVal(p1_value);
   RooRealVar bg_p2("bg_p2", "bg_p2", -1.4, -2.,-1.);//-1000, 1000.);
   RooRealVar bg_p3("bg_p3", "bg_p3", .2,0.01,10.);
   //RooGenericPdf bg_pure = RooGenericPdf((std::string("bg_pure_")+blah).c_str(),"(pow(@0/13000,@1+@2*log(@0/13000)))",RooArgList(x,bg_p1,bg_p2));
   //RooGenericPdf bg = RooGenericPdf("bg","(pow((1-(@0/13000)),@3)*pow(@0/13000,@1+@2*log(@0/13000)))",RooArgList(x,bg_p1,bg_p2,bg_p3));
-  RooGenericPdf bg = RooGenericPdf("bg","(pow((1-(x/13000)),bg_p3)*pow(x/13000,bg_p1+bg_p2*log(x/13000)))",RooArgList(x,bg_p1,bg_p2,bg_p3));
+  RooGenericPdf bg = RooGenericPdf("bg","bg_p0*(pow((1-(y/13000)),bg_p3)*pow(y/13000,(bg_p1+bg_p2*log(y/13000))))",RooArgList(y,bg_p1,bg_p2,bg_p3,bg_p0));
   //RooGenericPdf bg = RooGenericPdf("bg","@3*(pow(1-@0/13000,@4))*pow(@0/13000,@1+@2*log(@0/13000))",RooArgList(x,bg_p1,bg_p2,bg_p0,bg_p3));
   //RooGenericPdf bg = RooGenericPdf("bg","@1*exp(1-@0)", RooArgList(x, bg_p3));
   //TF1* f1 = new TF1( "gaussian", "gaus",  histo->GetMean() - sigma * histo->GetRMS(),  histo->GetMean() + sigma * histo->GetRMS() );
+
+  //double x;
+  TF1* f1 = new TF1( "f1", "(TMath::Power((1-(x/13000)),[2])*TMath::Power(x/13000,[0]+[1]*TMath::Log(x/13000)))", 600,2800);
+  f1->SetParameters(-13,-1.4, .2);
+  histo->Fit("f1","R");
+  f1->SetParameters(f1->GetParameter(0),f1->GetParameter(1),f1->GetParameter(2));
+  histo->Fit("f1","R");
+
+  std::cout<<"++++++++ "<<f1->Integral(600,1000)<<std::endl;
+  std::cout<<"++++++++ "<<f1->Integral(660,820)<<std::endl;
 
   //bg.fitTo(dh, /*RooFit::Strategy(2),*/ SumW2Error(kTRUE));
 
@@ -108,31 +120,32 @@ int main(int argc, char* argv[]){
   //RooFitResult* r_chi2_wgt = m.save() ;
 //  bg.plotOn(frame,LineStyle(kDashed),LineColor(kRed)) ;
 
-  bg.chi2FitTo(dh, RooFit::Strategy(2), SumW2Error(kTRUE));
+////  bg.chi2FitTo(dh, RooFit::Strategy(2), SumW2Error(kTRUE));
 //  bg.chi2FitTo(dh, RooFit::Strategy(2), SumW2Error(kTRUE));
 //  bg.fitTo(dh, /*RooFit::Strategy(2),*/ SumW2Error(kTRUE));
   TCanvas *c = new TCanvas("c", "Double Crystal Ball Fit",1);
-  RooPlot* frame1 = x.frame(Bins(histo->GetNbinsX()),Title("dijet"));//, Range(500,5000)) ;
+  RooPlot* frame1 = y.frame(Bins(histo->GetNbinsX()),Title("dijet"));//, Range(500,5000)) ;
   dh.plotOn(frame1, DataError(RooAbsData::SumW2),LineColor(0), MarkerColor(0));
   bg.plotOn(frame1, LineColor(2), LineWidth(2));//,Normalization(1.0,RooAbsReal::RelativeExpected) );
   bg.paramOn(frame1);
   //x.setRange("my_range", 600, 5000);
   //bg.plotOn(frame1, LineColor(3), LineWidth(2));
-  TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.25);
-  pad2->SetBottomMargin(0.2);
-  pad2->SetTopMargin(0);
-  pad2->Draw();
-  TPad *pad1=new TPad("pad1", "top pad", 0,0.3,1,1);
-  pad1->SetBottomMargin(0);
-  pad1->Draw();
-  pad1->cd();
-  gPad/*c*/->SetLogy();
+  //TPad *pad2=new TPad("pad2", "bottom pad", 0.,0.05,1,0.25);
+  //pad2->SetBottomMargin(0.2);
+  //pad2->SetTopMargin(0);
+  //pad2->Draw();
+  //TPad *pad1=new TPad("pad1", "top pad", 0,0.3,1,1);
+  //pad1->SetBottomMargin(0);
+  //pad1->Draw();
+  //pad1->cd();
+  c->SetLogy();
 
-  std::cout<<"chi square! "<<frame1->chiSquare()<<std::endl;
+  std::cout<<"chi square! "<< f1->GetChisquare()<<std::endl;//frame1->chiSquare()<<std::endl;
+  std::cout<<"NDF: "<<f1->GetNDF()<<std::endl;
 
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);//.7,.75,.9,.85);
   //TText *t1 = pt->AddText(Form("#Chi^{2} = %f", frame1->chiSquare()),"brNDC");
-  TPaveLabel *t1 = new TPaveLabel(0.7,0.6,0.9,0.68, Form("#chi^{2} = %f", frame1->chiSquare()),"brNDC");//"bg","dh")),"brNDC"); 
+  TPaveLabel *t1 = new TPaveLabel(0.7,0.6,0.9,0.68, Form("#chi^{2} = %f", f1->GetChisquare()/f1->GetNDF()/*frame1->chiSquare()*/),"brNDC");//"bg","dh")),"brNDC"); 
   frame1->addObject(t1);
 
   //TPaveLabel *t1 = new TPaveLabel(0.7,0.6,0.9,0.68, Form("#chi^{2} = %f", frame1->chiSquare())); 
@@ -143,13 +156,18 @@ int main(int argc, char* argv[]){
   histo->SetMarkerStyle(8);
   histo->GetXaxis()->SetRangeUser(600,5000);
   histo->Draw();
-  frame1->Draw("SAME");
+  //frame1->Draw("SAME");
+  f1->Draw("SAME");
+  f1->SetRange(600,4000);
+  f1->SetLineStyle(2);
+  f1->SetLineColor(3);
+  f1->Draw("SAME");
   histo->Draw("E1same");
   t1->Draw("SAME");
 
   pt->Draw("SAME");
 
-  pad2->cd();
+  //pad2->cd();
   TH1D *histoRatio = (TH1D *) histo->Clone();
   TGraphErrors *grRatio = new TGraphErrors(0);
 
@@ -167,12 +185,12 @@ int main(int argc, char* argv[]){
   }
   //histoRatio->Draw("histo");
 
-  RooPlot* frame2 = x.frame(Bins(histo->GetNbinsX()),Title(""));
-  frame2->addObject(frame1->pullHist()) ; 
-  frame2->SetMinimum(-5.);
-  frame2->SetMaximum(5.);
+  //RooPlot* frame2 = y.frame(Bins(histo->GetNbinsX()),Title(""));
+  //frame2->addObject(frame1->pullHist()) ; 
+  //frame2->SetMinimum(-5.);
+  //frame2->SetMaximum(5.);
   //frame2->getAttText()->SetTextSize(.15) ;
-  frame2->Draw();
+  //frame2->Draw();
   //grRatio->SetFillColor(2);
   //grRatio->Draw("ac");
 
@@ -187,15 +205,23 @@ int main(int argc, char* argv[]){
   Double_t x0 = atof(argv[5]);
   Double_t x_max = atof(argv[6]);
 
-  x.setRange("my_range", x0, x_max); // create range to integrate over
-  RooAbsReal* i = bg.createIntegral(x, RooFit::NormSet(x), RooFit::Range("my_range"));
+  y.setRange("my_range", x0, x_max); // create range to integrate over
+  RooAbsReal* i = bg.createIntegral(y, RooFit::NormSet(y), RooFit::Range("my_range"));
   // alternatively: RooAbsReal* i = pdf->createIntegral(*x, *x, "my_range");
   // // in my example, I am also using RooArgSet(*x) as a normalisation set; you might want to use a different one; be sure to check out the documentation for RooAbsReal::createIntegral
   std::cout << "Integral value: " << i->getVal() << std::endl;
+  std::cout<< "bg_p0 value " <<bg_p0.getValV()<<std::endl;
+  std::cout<< "histo integral: "<<histo->Integral(11,19)<<std::endl;
+  std::cout<< "histo total integral: "<<histo->Integral(0,150)<<std::endl;
+  std::cout<< "n bins " <<histo->GetNbinsX()<<std::endl;
+  std::cout<< "entries histo: "<<histo->GetEntries()<<std::endl;
+  std::cout<< "sumOfWeights: "<<histo->GetSumOfWeights()<<std::endl;
+  //std::cout<<" bg norm "<<bg.getNormIntegral()<<std::endl;
 
   std::ofstream outList;
   outList.open("integrallist.txt", std::fstream::app);
-  outList<<histo->Integral()*i->getVal()<<std::endl;
+  outList<<f1->Integral(x0, x_max)<<std::endl;
+  return 0;
 
   TFile *file1 = TFile::Open ("tau21Quantiles/ak08_photon_mass_All_tau020.root");
   TFile *file2 = TFile::Open ("tau21Quantiles/ak08_photon_mass_All_tau025.root");

@@ -212,6 +212,8 @@ class baseClass : public rootNtupleClass {
   string * inputList_; 
   
 
+  int genEvents_; //added by Simone
+
   private :
   int crabCount_; //to keep track of the initial number of events - added *Simone
   TTree * outTree_; //added *Simone

@@ -185,7 +185,7 @@ int main(int argc, char* argv[]){
       std::cout<<"DATA!"<<std::endl;
       if(isData==0) {
         allBkgHisto= new TH1D("allBkgHisto","allBkgHisto", bins,min,max);
-        allBkgHisto->Sumw2();
+        //allBkgHisto->Sumw2();
         dataHisto= new TH1D("dataHisto","dataHisto", bins,min,max);
         //dataHisto->Sumw2();
         std::cout<<"Data counts: "<<counts<<std::endl;
@@ -224,6 +224,10 @@ int main(int argc, char* argv[]){
       if(strcmp(bkg_name.c_str(),bkg_nameTMP.c_str())==0){//if the bkg is always the same
         std::cout<<"Background: "<<bkg_name.c_str()<<std::endl;
         histoBkg[bkg_counter]->Add(histoD[file_counter]);
+        for(int m=0; m<histoD[file_counter]->GetNbinsX();++m){
+          std::cout<<"BIN: "<<m<<" "<<histoD[file_counter]->GetBinContent(m)<<std::endl;
+          //std::cout<<"BIN1: "<<m<<" "<<histoBkg[file_counter]->GetBinContent(m)<<std::endl;
+        }
       }//end for the same bkg
       else{
         bkg_name=bkg_nameTMP;
