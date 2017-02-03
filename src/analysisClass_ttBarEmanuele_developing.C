@@ -251,12 +251,16 @@ void analysisClass::Loop()
     
     //std::cout<<"Prima del custom "<<ncustomPuppiAK8<<std::endl;
     if(ncustomPuppiAK8>0){
-      std::cout<<" in customPuppi"<<std::endl;
+      //std::cout<<" in customPuppi"<<std::endl;
       fillVariableWithValue("ak08CustomPuppi_Pt", customPuppiAK8_pt[0]);
       fillVariableWithValue("ak08CustomPuppi_Eta", customPuppiAK8_eta[0]);
       fillVariableWithValue("ak08CustomPuppi_Phi", customPuppiAK8_phi[0]);
       fillVariableWithValue("ak08CustomPuppi_Mass", customPuppiAK8_mass[0]);
-      fillVariableWithValue("ak08CustomPuppi_MCorr", customPuppiAK8_massCorrected[0]);
+  /*    if(isData==0){
+        fillVariableWithValue("ak08CustomPuppi_MCorr", customPuppiAK8_mass[0]);
+      }else{
+    */    fillVariableWithValue("ak08CustomPuppi_MCorr", customPuppiAK8_massCorrected[0]);
+      //}
     }
 
     double minDR_W=999;
@@ -285,6 +289,7 @@ void analysisClass::Loop()
       fillVariableWithValue("W_Gen_pt", GenPart_pt[w_counter]);
       fillVariableWithValue("W_Gen_eta", GenPart_eta[w_counter]);
       fillVariableWithValue("W_Gen_phi", GenPart_phi[w_counter]);
+      fillVariableWithValue("W_Gen_mass", GenPart_mass[w_counter]);
       fillVariableWithValue("lepton_WGen_DR", lepton.DeltaR(genW));
       b_counter=0;
       //std::cout<<"nGenPart"<<std::endl;
@@ -377,11 +382,11 @@ void analysisClass::Loop()
       fillVariableWithValue("lepton2_phi", LepGood_phi[goodLepton[1]]);
       fillVariableWithValue("lepton2_pdgID", LepGood_pdgId[goodLepton[1]]);
     }
-    std::cout<<"after goodLepton.size()>=2"<<std::endl;
+    //std::cout<<"after goodLepton.size()>=2"<<std::endl;
     fillVariableWithValue("btag_loose",btag_ak04_loose);
     fillVariableWithValue("btag_medium",btag_ak04_medium);
     fillVariableWithValue("btag_tight",btag_ak04_tight);
-    std::cout<<"after filling btag"<<std::endl;
+    //std::cout<<"after filling btag"<<std::endl;
     if(goodAK04_lep.size()>=1){
       fillVariableWithValue("ak04_1_pt", Jet_pt[goodAK04_lep[0]]);
       fillVariableWithValue("ak04_1_eta", Jet_eta[goodAK04_lep[0]]);
